@@ -3,235 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>GQ Box | Тест сканера штрихкодов</title>
+    <title>GQ Box | Тест: ШК → Артикул</title>
     
-    <!-- Библиотека сканера -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(145deg, #eef2f7 0%, #d9e2ec 100%);
-            min-height: 100vh;
-            padding: 12px;
-            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(145deg, #eef2f7, #d9e2ec);
+            min-height: 100vh; padding: 12px; -webkit-tap-highlight-color: transparent;
         }
         .app-container { max-width: 500px; margin: 0 auto; width: 100%; }
         
         .glass-card {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(2px);
-            border-radius: 28px;
-            box-shadow: 0 10px 30px -8px rgba(0,0,0,0.15);
-            padding: 20px;
-            margin-bottom: 20px;
+            background: rgba(255,255,255,0.96); backdrop-filter: blur(2px);
+            border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 20px; margin-bottom: 16px;
         }
-        .logo-container { display: flex; justify-content: center; margin-bottom: 16px; }
+        .logo-container { display: flex; justify-content: center; margin-bottom: 14px; }
         .logo-oval {
-            background: #1e5a8a;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 28px;
-            border-radius: 100px;
+            background: #1e5a8a; display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 28px; border-radius: 100px;
         }
-        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; color: white; }
+        .logo-text { font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; color: white; }
         
         .header-dash {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            border-bottom: 2px solid #dce5ef;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #dce5ef;
+            padding-bottom: 10px; margin-bottom: 14px;
         }
         .user-greeting { font-size: 1.1rem; font-weight: 700; color: #1e3a5f; }
-        .role-badge {
-            background: #2c7cb6;
-            color: white;
-            padding: 3px 12px;
-            border-radius: 60px;
-            font-size: 0.65rem;
-            display: inline-block;
-        }
+        .role-badge { background: #2c7cb6; color: white; padding: 3px 12px; border-radius: 60px; font-size: 0.65rem; display: inline-block; }
         
-        .form-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 14px;
-            color: #1f4e79;
-        }
+        label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #5b6f86; margin-bottom: 4px; display: block; }
+        input, select { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1.5px solid #cfdfed; border-radius: 24px; background: white; outline: none; }
         
-        label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #5b6f86;
-            margin-bottom: 4px;
-            display: block;
-        }
-        input, select {
-            width: 100%;
-            padding: 12px 14px;
-            font-size: 1rem;
-            border: 1.5px solid #cfdfed;
-            border-radius: 28px;
-            background: white;
-            outline: none;
-        }
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
         
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-        
-        .article-row {
-            display: flex;
-            gap: 6px;
-            align-items: flex-end;
-        }
+        .article-row { display: flex; gap: 6px; align-items: flex-end; }
         .article-row input { flex: 1; }
         
         button {
-            background: #2c7cb6;
-            border: none;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            width: 100%;
+            background: #2c7cb6; border: none; color: white; padding: 12px 20px;
+            border-radius: 30px; font-weight: 600; font-size: 0.95rem; cursor: pointer; width: 100%;
         }
-        button:disabled { background: #a0b8cc; cursor: not-allowed; }
+        button:disabled { background: #a0b8cc; }
         
         .scan-btn {
-            background: #8e44ad;
-            padding: 12px 16px;
-            border-radius: 28px;
-            font-size: 1.2rem;
-            width: auto;
-            flex-shrink: 0;
-            transition: all 0.3s;
+            background: #8e44ad; padding: 12px 16px; border-radius: 24px;
+            font-size: 1.2rem; width: auto; flex-shrink: 0; transition: all 0.3s;
         }
-        .scan-btn.scanning {
-            background: #e74c3c;
-            animation: pulse 1.5s infinite;
-        }
+        .scan-btn.scanning { background: #e74c3c; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
         
-        /* Сканер */
         #scannerOverlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            flex-direction: column; align-items: center; padding: 16px;
         }
-        #scannerOverlay.active {
-            display: flex;
-        }
+        #scannerOverlay.active { display: flex; }
+        #scannerView { width: 100%; max-width: 400px; border-radius: 16px; overflow: hidden; margin-top: 40px; }
+        .scanner-hint { color: white; text-align: center; margin-top: 14px; font-size: 0.9rem; opacity: 0.8; }
+        #closeScannerBtn { margin-top: 18px; background: #e74c3c; width: auto; padding: 14px 40px; }
         
-        #scannerView {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 40px;
-        }
-        
-        .scanner-hint {
-            color: white;
-            text-align: center;
-            margin-top: 16px;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        
-        #closeScannerBtn {
-            margin-top: 20px;
-            background: #e74c3c;
-            width: auto;
-            padding: 14px 40px;
-            font-size: 1rem;
-        }
+        .success-msg { background: #e0f7ea; color: #1e6f3f; padding: 10px 14px; border-radius: 20px; margin-top: 10px; font-size: 0.85rem; }
+        .error-msg { background: #ffe6e2; color: #b13e24; padding: 10px 14px; border-radius: 20px; margin-top: 10px; font-size: 0.85rem; }
+        .info-msg { background: #e8f0fe; color: #1e5a8a; padding: 10px 14px; border-radius: 20px; margin-top: 10px; font-size: 0.85rem; }
         
         .debug-info {
-            background: #1e1e1e;
-            color: #00ff00;
-            font-family: monospace;
-            font-size: 0.7rem;
-            padding: 8px;
-            border-radius: 12px;
-            margin-top: 10px;
-            max-height: 100px;
-            overflow-y: auto;
-            word-break: break-all;
-        }
-        
-        .success-msg {
-            background: #e0f7ea;
-            color: #1e6f3f;
-            padding: 8px 14px;
-            border-radius: 40px;
-            margin-top: 10px;
-            font-size: 0.85rem;
-        }
-        .error-msg {
-            background: #ffe6e2;
-            color: #b13e24;
-            padding: 8px 14px;
-            border-radius: 40px;
-            margin-top: 10px;
-            font-size: 0.85rem;
+            background: #1e1e1e; color: #00ff00; font-family: monospace;
+            font-size: 0.7rem; padding: 8px; border-radius: 12px; margin-top: 10px;
+            max-height: 100px; overflow-y: auto; word-break: break-all;
         }
         
         .logout-btn {
-            background: none;
-            border: 1px solid #bacddc;
-            padding: 6px 14px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 500;
-            color: #2c3e4e;
-            font-size: 0.8rem;
-            width: auto;
+            background: none; border: 1px solid #bacddc; padding: 6px 14px;
+            border-radius: 30px; cursor: pointer; font-weight: 500; color: #2c3e4e;
+            font-size: 0.8rem; width: auto;
         }
         
-        .test-barcode {
-            background: #f8fafd;
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 14px;
-            font-size: 0.8rem;
-            text-align: center;
+        .result-card {
+            background: #f0fdf4; border: 2px solid #22c55e; border-radius: 16px;
+            padding: 12px; margin-top: 8px; text-align: center;
         }
-        .test-barcode img {
-            width: 200px;
-            height: auto;
-            margin: 8px 0;
-        }
+        .result-card .article { font-size: 1.3rem; font-weight: 800; color: #1e3a5f; }
+        .result-card .label { font-size: 0.7rem; color: #5b6f86; }
     </style>
 </head>
 <body>
-<div id="appRoot">
-    <div style="text-align:center;padding:40px;color:#5b6f86;">Загрузка...</div>
-</div>
+<div id="appRoot"><div style="text-align:center;padding:40px;">Загрузка...</div></div>
 
 <script>
     // ========== FIREBASE ==========
@@ -246,7 +109,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    db.enablePersistence().catch(() => {});
+    db.enablePersistence().catch(()=>{});
     
     // ========== ПЕРЕМЕННЫЕ ==========
     let currentUser = null;
@@ -254,8 +117,15 @@
     let isScanning = false;
     let debugLogs = [];
     
-    const SESSION_KEY = "gqbox_scanner_test";
-    const IP_LIST = ["КАА", "КЮА", "БМС", "ДЕВ"];
+    // ТЕСТОВАЯ БАЗА ШТРИХКОДОВ (локальная + Firebase)
+    const LOCAL_BARCODES = {
+        'ABC-abc-1234': { article: 'AR-1112', name: 'Тестовый товар' },
+        '4601234567890': { article: 'XR-901', name: 'Крем для рук' },
+        '4601234567891': { article: 'XR-902', name: 'Шампунь' }
+    };
+    
+    const SESSION_KEY = "gqbox_scanner_test2";
+    const IP_LIST = ["КАА","КЮА","БМС","ДЕВ"];
     
     function saveSession(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
     function getSession() { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; }
@@ -269,23 +139,47 @@
         console.log(msg);
     }
     
+    // ========== ПОИСК ШТРИХКОДА ==========
+    async function findBarcode(barcode) {
+        addDebug(`🔍 Ищу штрихкод: "${barcode}"`);
+        
+        // 1. Сначала ищем в Firebase
+        try {
+            const snap = await db.collection('barcodes')
+                .where('barcode', '==', barcode)
+                .limit(1)
+                .get();
+            
+            if (!snap.empty) {
+                const data = snap.docs[0].data();
+                addDebug(`✅ Найдено в Firebase: ${data.article}`);
+                return { found: true, article: data.article, name: data.name || '', source: 'Firebase' };
+            }
+        } catch (e) {
+            addDebug('⚠️ Ошибка поиска в Firebase: ' + e.message);
+        }
+        
+        // 2. Ищем в локальной базе
+        if (LOCAL_BARCODES[barcode]) {
+            const data = LOCAL_BARCODES[barcode];
+            addDebug(`✅ Найдено локально: ${data.article}`);
+            return { found: true, article: data.article, name: data.name || '', source: 'Локально' };
+        }
+        
+        // 3. Не найдено
+        addDebug('❌ Штрихкод не найден в базе');
+        return { found: false, article: barcode, name: '', source: 'Не найден' };
+    }
+    
     // ========== ВХОД ==========
     async function loginUser(l, p) {
-        try {
-            const a = await db.collection('employees').get();
-            if (a.empty) {
-                addDebug('Создаю тестовых пользователей...');
-                await db.collection('employees').add({ login: 'safonova', password: 'admin0111', name: 'Сафонова Е.', role: 'admin' });
-                await db.collection('employees').add({ login: 'test', password: '123', name: 'Тест', role: 'packer' });
-            }
-            const s = await db.collection('employees').where('login', '==', l).where('password', '==', p).get();
-            if (s.empty) return null;
-            addDebug(`Вход: ${s.docs[0].data().name}`);
-            return { id: s.docs[0].id, ...s.docs[0].data() };
-        } catch (e) {
-            addDebug('Ошибка входа: ' + e.message);
-            return null;
+        const a = await db.collection('employees').get();
+        if (a.empty) {
+            await db.collection('employees').add({ login: 'safonova', password: 'admin0111', name: 'Сафонова Е.', role: 'admin' });
+            await db.collection('employees').add({ login: 'test', password: '123', name: 'Тест', role: 'packer' });
         }
+        const s = await db.collection('employees').where('login','==',l).where('password','==',p).get();
+        return s.empty ? null : { id: s.docs[0].id, ...s.docs[0].data() };
     }
     
     // ========== СКАНЕР ==========
@@ -293,15 +187,11 @@
         const overlay = document.getElementById('scannerOverlay');
         const view = document.getElementById('scannerView');
         
-        addDebug('Запуск сканера...');
+        addDebug('📷 Запуск сканера...');
         overlay.classList.add('active');
         view.innerHTML = '';
         
-        // Очищаем предыдущий экземпляр
-        if (html5QrCode) {
-            html5QrCode.stop().catch(() => {});
-            html5QrCode = null;
-        }
+        if (html5QrCode) { html5QrCode.stop().catch(()=>{}); html5QrCode = null; }
         
         html5QrCode = new Html5Qrcode("scannerView");
         
@@ -309,7 +199,6 @@
             fps: 10,
             qrbox: { width: 280, height: 180 },
             aspectRatio: 1.5,
-            disableFlip: false,
             videoConstraints: {
                 facingMode: "environment",
                 focusMode: "continuous",
@@ -318,49 +207,35 @@
             }
         };
         
-        addDebug('Пробую заднюю камеру...');
-        
         html5QrCode.start(
             { facingMode: "environment" },
             config,
-            (decodedText, decodedResult) => {
-                // УСПЕХ!
-                addDebug(`✅ РАСПОЗНАНО: "${decodedText}"`);
-                addDebug(`Формат: ${decodedResult?.result?.format?.formatName || 'неизвестно'}`);
+            async (decodedText) => {
+                addDebug(`📸 Сканировано: "${decodedText}"`);
                 
-                // Вибрация
-                if (navigator.vibrate) {
-                    navigator.vibrate([50, 50, 50]);
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+                
+                // Ищем артикул по штрихкоду
+                const result = await findBarcode(decodedText.trim());
+                
+                document.getElementById('articleInput').value = result.article;
+                
+                // Показываем результат
+                const msg = document.getElementById('msgPanel');
+                if (result.found) {
+                    msg.innerHTML = `<div class="success-msg">✅ ШК: ${decodedText} → Артикул: <strong>${result.article}</strong>${result.name ? ' (' + result.name + ')' : ''} [${result.source}]</div>`;
+                } else {
+                    msg.innerHTML = `<div class="info-msg">⚠️ Штрихкод не найден в базе. Использован как есть: <strong>${result.article}</strong></div>`;
                 }
                 
-                document.getElementById('articleInput').value = decodedText;
                 stopScanner();
+                document.getElementById('qtyInput').focus();
             },
-            (errorMessage) => {
-                // Это нормально — камера сканирует, но код ещё не попал в кадр
-                // Не логируем чтобы не засорять консоль
-            }
-        ).then(() => {
-            addDebug('Камера запущена! Наведите на штрихкод.');
-        }).catch(err => {
-            addDebug('❌ Ошибка задней камеры: ' + err.message);
-            
-            // Пробуем фронтальную камеру
-            addDebug('Пробую фронтальную камеру...');
-            html5QrCode.start(
-                { facingMode: "user" },
-                config,
-                (decodedText) => {
-                    addDebug(`✅ РАСПОЗНАНО (фронт): "${decodedText}"`);
-                    document.getElementById('articleInput').value = decodedText;
-                    stopScanner();
-                },
-                () => {}
-            ).catch(err2 => {
-                addDebug('❌ Ошибка фронтальной камеры: ' + err2.message);
-                alert('❌ Не удалось запустить камеру.\n\nПроверьте:\n1. Сайт открыт по HTTPS\n2. Доступ к камере разрешён\n3. Вы используете Chrome или Safari');
-                stopScanner();
-            });
+            (error) => {}
+        ).catch(err => {
+            addDebug('❌ Ошибка: ' + err.message);
+            alert('Не удалось запустить камеру. Проверьте разрешения и HTTPS.');
+            stopScanner();
         });
         
         document.getElementById('scanBtn').classList.add('scanning');
@@ -368,16 +243,11 @@
     }
     
     function stopScanner() {
-        addDebug('Остановка сканера.');
-        if (html5QrCode) {
-            html5QrCode.stop().then(() => {
-                addDebug('Сканер остановлен.');
-            }).catch(() => {});
-            html5QrCode = null;
-        }
+        if (html5QrCode) { html5QrCode.stop().catch(()=>{}); html5QrCode = null; }
         document.getElementById('scannerOverlay').classList.remove('active');
         document.getElementById('scanBtn').classList.remove('scanning');
         document.getElementById('scanBtn').textContent = '📷';
+        addDebug('Сканер остановлен');
     }
     
     // ========== РЕНДЕРИНГ ==========
@@ -385,15 +255,15 @@
         return `<div class="app-container">
             <div class="glass-card">
                 <div class="logo-container"><div class="logo-oval"><span class="logo-text">GQ box</span></div></div>
-                <div style="text-align:center;margin-bottom:16px;"><h3>🧪 Тест сканера штрихкодов</h3></div>
+                <div style="text-align:center;margin-bottom:14px;"><h3>🧪 Тест: ШК → Артикул</h3></div>
                 <div class="input-group">
                     <div><label>👤 Логин</label><input id="loginUser" placeholder="Логин"></div>
                     <div><label>🔒 Пароль</label><input type="password" id="loginPass" placeholder="Пароль"></div>
                     <button id="doLogin">Войти</button>
                 </div>
                 <div id="loginError" class="error-msg" style="display:none;"></div>
-                <div style="text-align:center;margin-top:12px;font-size:0.78rem;color:#5b6f86;">
-                    👉 <strong>test / 123</strong> &nbsp;|&nbsp; 👑 <strong>safonova / admin0111</strong>
+                <div style="text-align:center;margin-top:10px;font-size:0.75rem;color:#5b6f86;">
+                    👉 <strong>test / 123</strong>
                 </div>
             </div>
         </div>`;
@@ -410,18 +280,20 @@
                     <button id="logoutBtn" class="logout-btn">Выйти</button>
                 </div>
                 
-                <div class="form-title">📦 Тест сканирования</div>
+                <div class="form-title">📦 Сканирование с автоподстановкой</div>
                 
-                <div class="test-barcode">
-                    💡 <strong>Совет:</strong> Для теста откройте <a href="https://barcode.tec-it.com/ru/EAN13" target="_blank" style="color:#2c7cb6;">генератор штрихкодов</a> на компьютере, сгенерируйте код и наведите камеру телефона на экран.
+                <div class="info-msg" style="margin-bottom:12px;">
+                    💡 <strong>Тестовая база:</strong><br>
+                    • <code>ABC-abc-1234</code> → <strong>AR-1112</strong> (Тестовый товар)<br>
+                    • <code>4601234567890</code> → <strong>XR-901</strong> (Крем для рук)
                 </div>
                 
                 <div class="input-group">
                     <div>
-                        <label>🏷️ Артикул (отсканируйте или введите)</label>
+                        <label>🏷️ Артикул</label>
                         <div class="article-row">
                             <input type="text" id="articleInput" placeholder="Нажмите 📷 для сканирования">
-                            <button id="scanBtn" class="scan-btn" title="Сканировать штрихкод">📷</button>
+                            <button id="scanBtn" class="scan-btn" title="Сканировать">📷</button>
                         </div>
                     </div>
                     <div><label>🔢 Количество</label><input type="number" id="qtyInput" min="1" value="1"></div>
@@ -436,15 +308,13 @@
                 </div>
                 <div id="msgPanel"></div>
                 
-                <!-- Отладка -->
-                <div class="debug-info" id="debugLog" style="margin-top:12px;">Жду действий...</div>
+                <div class="debug-info" id="debugLog">Готов к работе...</div>
             </div>
             
-            <!-- Сканер -->
             <div id="scannerOverlay">
                 <div id="scannerView"></div>
-                <div class="scanner-hint">📷 Наведите камеру на штрихкод</div>
-                <button id="closeScannerBtn">✕ Закрыть сканер</button>
+                <div class="scanner-hint">📷 Наведите на штрихкод</div>
+                <button id="closeScannerBtn">✕ Закрыть</button>
             </div>
         </div>`;
     }
@@ -456,12 +326,11 @@
         if (!session) {
             root.innerHTML = renderLogin();
             attachLoginEvents();
-            addDebug('Экран входа.');
         } else {
             currentUser = session;
             root.innerHTML = renderPackerPanel(session);
             attachPackerEvents();
-            addDebug(`Вошли как: ${session.name}`);
+            addDebug(`Вошли: ${session.name}`);
         }
     }
     
@@ -473,9 +342,8 @@
             const lb = document.getElementById("doLogin");
             if (!lv || !pv) { le.style.display="block"; le.innerText="Введите логин и пароль"; return; }
             le.style.display="none"; lb.disabled=true; lb.textContent="Вход...";
-            addDebug(`Попытка входа: ${lv}`);
             const u = await loginUser(lv, pv);
-            if (!u) { le.style.display="block"; le.innerText="Неверный логин или пароль"; lb.disabled=false; lb.textContent="Войти"; addDebug('❌ Вход не удался'); return; }
+            if (!u) { le.style.display="block"; le.innerText="Неверный логин или пароль"; lb.disabled=false; lb.textContent="Войти"; return; }
             saveSession(u); renderApp();
         };
         document.getElementById("doLogin").onclick = dl;
@@ -483,25 +351,15 @@
     }
     
     function attachPackerEvents() {
-        // Сканер
         document.getElementById('scanBtn').addEventListener('click', () => {
-            if (isScanning) {
-                stopScanner();
-            } else {
-                startScanner();
-            }
+            isScanning ? stopScanner() : startScanner();
         });
-        
         document.getElementById('closeScannerBtn').addEventListener('click', stopScanner);
         
-        // Выход
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            stopScanner();
-            clearSession();
-            renderApp();
+            stopScanner(); clearSession(); renderApp();
         });
         
-        // Добавление
         document.getElementById('addBtn').addEventListener('click', () => {
             const article = document.getElementById('articleInput').value.trim();
             const qty = document.getElementById('qtyInput').value;
@@ -514,21 +372,17 @@
             }
             
             addDebug(`Добавлено: ${article} x${qty} ${ip}`);
-            msg.innerHTML = `<div class="success-msg">✅ ${ip ? ip + ' | ' : ''}${article.toUpperCase()} x ${qty} шт. — ДОБАВЛЕНО (тест)</div>`;
+            msg.innerHTML = `<div class="success-msg">✅ ${ip ? ip + ' | ' : ''}${article.toUpperCase()} x ${qty} шт. — ДОБАВЛЕНО</div>`;
             document.getElementById('articleInput').value = '';
             document.getElementById('qtyInput').value = '1';
             setTimeout(() => { msg.innerHTML = ''; }, 2500);
         });
         
-        // Enter в артикуле → фокус на количество
         document.getElementById('articleInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('qtyInput').focus();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('qtyInput').focus(); }
         });
         
-        addDebug('Интерфейс готов.');
+        addDebug('Готов к сканированию');
     }
     
     window.addEventListener('DOMContentLoaded', () => renderApp());
