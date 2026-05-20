@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>GQ Box | Упаковка WB/OZON (тест сканера)</title>
+    
+    <!-- Библиотека сканера штрихкодов -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #eef2f7 0%, #d9e2ec 100%);
+            min-height: 100vh; padding: 12px; -webkit-tap-highlight-color: transparent;
+        }
+        .app-container { max-width: 600px; margin: 0 auto; width: 100%; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(2px);
+            border-radius: 28px; box-shadow: 0 10px 30px -8px rgba(0,0,0,0.15);
+            padding: 20px; margin-bottom: 20px;
+        }
+        .logo-container { display: flex; justify-content: center; margin-bottom: 20px; }
+        .logo-oval { background: #1e5a8a; display: inline-flex; align-items: center; justify-content: center; padding: 10px 28px; border-radius: 100px; }
+        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; color: white; }
+        
+        .header-dash { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid #dce5ef; padding-bottom: 12px; margin-bottom: 16px; }
+        .user-greeting { font-size: 1.2rem; font-weight: 700; color: #1e3a5f; }
+        .role-badge { background: #2c7cb6; color: white; padding: 3px 12px; border-radius: 60px; font-size: 0.65rem; display: inline-block; }
+        
+        .form-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; color: #1f4e79; }
+        .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        .input-field { flex: 1; min-width: 0; }
+        label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #5b6f86; margin-bottom: 5px; display: block; }
+        input, select { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1.5px solid #cfdfed; border-radius: 28px; background: white; transition: 0.2s; outline: none; }
+        
+        .article-row { display: flex; gap: 6px; align-items: flex-end; }
+        .article-row input { flex: 1; }
+        
+        button { background: #2c7cb6; border: none; color: white; padding: 12px 20px; border-radius: 40px; font-weight: 600; font-size: 0.95rem; cursor: pointer; width: 100%; }
+        button:disabled { background: #a0b8cc; cursor: not-allowed; }
+        
+        .scan-btn {
+            background: #8e44ad;
+            padding: 12px 16px;
+            border-radius: 28px;
+            font-size: 1.2rem;
+            width: auto;
+            flex-shrink: 0;
+        }
+        .scan-btn.scanning { background: #e74c3c; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+        
+        /* Сканер */
+        #scannerOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #scannerOverlay.active { display: flex; }
+        #scannerView { width: 100%; max-width: 400px; border-radius: 16px; overflow: hidden; }
+        #closeScannerBtn { margin-top: 20px; background: #e74c3c; width: auto; padding: 12px 30px; }
+        
+        .success-msg { background: #e0f7ea; color: #1e6f3f; padding: 8px 14px; border-radius: 40px; margin-top: 12px; font-size: 0.85rem; }
+        .error-msg { background: #ffe6e2; color: #b13e24; padding: 8px 14px; border-radius: 40px; margin-top: 12px; font-size: 0.85rem; }
+        
+        .logout-btn { background: none; border: 1px solid #bacddc; padding: 6px 14px; border-radius: 40px; cursor: pointer; font-weight: 500; color: #2c3e4e; font-size: 0.85rem; width: auto; }
+    </style>
+</head>
+<body>
+<div id="appRoot"></div>
+
+<script>
+    // ========== FIREBASE ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyAWmeGhe0wFrqULYqvnCX4WY9EhuPFEjHs",
+        authDomain: "packing23-11afd.firebaseapp.com",
+        projectId: "packing23-11afd",
+        storageBucket: "packing23-11afd.firebasestorage.app",
+        messagingSenderId: "786002108142",
+        appId: "1:786002108142:web:213b1f60bd6ec5f9429dff",
+        measurementId: "G-KJSR3NESZM"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    db.enablePersistence().catch(()=>{});
+    
+    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    let currentUser = null;
+    let html5QrCode = null;
+    let isScanning = false;
+    
+    const SESSION_KEY = "gqbox_session_test";
+    const IP_LIST = ["КАА","КЮА","БМС","ДЕВ"];
+    
+    function saveSession(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
+    function getSession() { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; }
+    function clearSession() { localStorage.removeItem(SESSION_KEY); }
+    
+    async function loginUser(l, p) {
+        const a = await db.collection('employees').get();
+        if (a.empty) {
+            await db.collection('employees').add({ login: 'safonova', password: 'admin0111', name: 'Сафонова Е.', role: 'admin' });
+            await db.collection('employees').add({ login: 'test', password: '123', name: 'Тест', role: 'packer' });
+        }
+        const s = await db.collection('employees').where('login','==',l).where('password','==',p).get();
+        return s.empty ? null : { id: s.docs[0].id, ...s.docs[0].data() };
+    }
+    
+    // ========== СКАНЕР ==========
+    function startScanner() {
+        const overlay = document.getElementById('scannerOverlay');
+        const view = document.getElementById('scannerView');
+        
+        overlay.classList.add('active');
+        view.innerHTML = ''; // Очищаем предыдущий сканер
+        
+        html5QrCode = new Html5Qrcode("scannerView");
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, // задняя камера
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+                // УСПЕХ! Штрихкод распознан
+                console.log('✅ Распознано:', decodedText);
+                document.getElementById('articleInput').value = decodedText;
+                stopScanner();
+            },
+            (errorMessage) => {
+                // Ошибка или просто кадр без кода — игнорируем
+            }
+        ).catch(err => {
+            console.error('Ошибка сканера:', err);
+            alert('Не удалось запустить камеру. Проверьте разрешения.');
+            stopScanner();
+        });
+        
+        document.getElementById('scanBtn').classList.add('scanning');
+        document.getElementById('scanBtn').textContent = '⏹';
+    }
+    
+    function stopScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().catch(()=>{});
+            html5QrCode = null;
+        }
+        document.getElementById('scannerOverlay').classList.remove('active');
+        document.getElementById('scanBtn').classList.remove('scanning');
+        document.getElementById('scanBtn').textContent = '📷';
+    }
+    
+    // ========== РЕНДЕРИНГ ==========
+    function renderLogin() {
+        return `<div class="app-container">
+            <div class="glass-card" style="max-width:400px;margin:0 auto;">
+                <div class="logo-container"><div class="logo-oval"><span class="logo-text">GQ box</span></div></div>
+                <div style="text-align:center;margin-bottom:20px;"><h3>Вход (тест сканера)</h3></div>
+                <div class="input-field" style="margin-bottom:12px;"><label>👤 Логин</label><input id="loginUser" placeholder="Логин"></div>
+                <div class="input-field" style="margin-bottom:12px;"><label>🔒 Пароль</label><input type="password" id="loginPass" placeholder="Пароль"></div>
+                <button id="doLogin">Войти</button>
+                <div id="loginError" class="error-msg" style="display:none;"></div>
+                <div style="text-align:center;margin-top:16px;font-size:0.8rem;color:#5b6f86;">
+                    Тест: <strong>test / 123</strong> или <strong>safonova / admin0111</strong>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    function renderPackerPanel(user) {
+        return `<div class="app-container">
+            <div class="glass-card">
+                <div class="header-dash">
+                    <div>
+                        <div class="user-greeting">👋 ${user.name}</div>
+                        <span class="role-badge">Упаковщица (тест)</span>
+                    </div>
+                    <button id="logoutBtn" class="logout-btn">Выйти</button>
+                </div>
+                
+                <div class="form-title">📦 Добавить упаковку (со сканером)</div>
+                
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>🏷️ Артикул</label>
+                        <div class="article-row">
+                            <input type="text" id="articleInput" placeholder="Отсканируйте или введите">
+                            <button id="scanBtn" class="scan-btn" title="Сканировать штрихкод">📷</button>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>🔢 Количество</label>
+                        <input type="number" id="qtyInput" min="1" value="1">
+                    </div>
+                    <div class="input-field">
+                        <label>👤 ИП</label>
+                        <select id="ipSelect">
+                            <option value="">-- Выберите --</option>
+                            ${IP_LIST.map(ip => `<option value="${ip}">${ip}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button id="addBtn">➕ Добавить</button>
+                </div>
+                <div id="msgPanel"></div>
+            </div>
+            
+            <!-- Скрытый сканер -->
+            <div id="scannerOverlay">
+                <div id="scannerView"></div>
+                <button id="closeScannerBtn">Закрыть сканер</button>
+            </div>
+        </div>`;
+    }
+    
+    async function renderApp() {
+        const root = document.getElementById('appRoot');
+        const session = getSession();
+        
+        if (!session) {
+            root.innerHTML = renderLogin();
+            attachLoginEvents();
+        } else {
+            currentUser = session;
+            root.innerHTML = renderPackerPanel(session);
+            attachPackerEvents();
+        }
+    }
+    
+    function attachLoginEvents() {
+        const dl = async () => {
+            const lv = document.getElementById("loginUser").value.trim();
+            const pv = document.getElementById("loginPass").value.trim();
+            const le = document.getElementById("loginError");
+            const lb = document.getElementById("doLogin");
+            if (!lv || !pv) { le.style.display="block"; le.innerText="Введите логин и пароль"; return; }
+            le.style.display="none"; lb.disabled=true; lb.textContent="Вход...";
+            const u = await loginUser(lv, pv);
+            if (!u) { le.style.display="block"; le.innerText="Неверный логин или пароль"; lb.disabled=false; lb.textContent="Войти"; return; }
+            saveSession(u); renderApp();
+        };
+        document.getElementById("doLogin").onclick = dl;
+        document.getElementById("loginPass")?.addEventListener("keypress", e => { if(e.key==="Enter") dl(); });
+    }
+    
+    function attachPackerEvents() {
+        // Кнопка сканирования
+        document.getElementById('scanBtn').addEventListener('click', () => {
+            if (isScanning) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
+        });
+        
+        // Закрытие сканера
+        document.getElementById('closeScannerBtn').addEventListener('click', stopScanner);
+        
+        // Выход
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            clearSession();
+            renderApp();
+        });
+        
+        // Добавление товара (тестовая версия — просто показываем что добавили)
+        document.getElementById('addBtn').addEventListener('click', () => {
+            const article = document.getElementById('articleInput').value.trim();
+            const qty = document.getElementById('qtyInput').value;
+            const ip = document.getElementById('ipSelect').value;
+            const msg = document.getElementById('msgPanel');
+            
+            if (!article) {
+                msg.innerHTML = '<div class="error-msg">❌ Введите или отсканируйте артикул</div>';
+                return;
+            }
+            
+            msg.innerHTML = `<div class="success-msg">✅ ${ip ? ip + ' | ' : ''}Артикул: ${article.toUpperCase()} x ${qty} шт. — ДОБАВЛЕНО (тест)</div>`;
+            document.getElementById('articleInput').value = '';
+            document.getElementById('qtyInput').value = '1';
+            
+            setTimeout(() => { msg.innerHTML = ''; }, 2500);
+        });
+        
+        // Enter в поле артикула = сканировать
+        document.getElementById('articleInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('qtyInput').focus();
+            }
+        });
+    }
+    
+    window.addEventListener('DOMContentLoaded', () => renderApp());
+</script>
+</body>
+</html>
