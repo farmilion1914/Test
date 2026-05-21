@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>GQ Box | Тест: ШК → Артикул</title>
+    <title>GQ Box | Тест: ШК → Артикул (реальная база)</title>
     
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -17,80 +17,49 @@
             min-height: 100vh; padding: 12px; -webkit-tap-highlight-color: transparent;
         }
         .app-container { max-width: 500px; margin: 0 auto; width: 100%; }
-        
         .glass-card {
             background: rgba(255,255,255,0.96); backdrop-filter: blur(2px);
             border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            padding: 20px; margin-bottom: 16px;
+            padding: 18px; margin-bottom: 14px;
         }
-        .logo-container { display: flex; justify-content: center; margin-bottom: 14px; }
+        .logo-container { display: flex; justify-content: center; margin-bottom: 12px; }
         .logo-oval {
             background: #1e5a8a; display: inline-flex; align-items: center; justify-content: center;
             padding: 10px 28px; border-radius: 100px;
         }
         .logo-text { font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; color: white; }
         
-        .header-dash {
-            display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #dce5ef;
-            padding-bottom: 10px; margin-bottom: 14px;
-        }
-        .user-greeting { font-size: 1.1rem; font-weight: 700; color: #1e3a5f; }
-        .role-badge { background: #2c7cb6; color: white; padding: 3px 12px; border-radius: 60px; font-size: 0.65rem; display: inline-block; }
+        .header-dash { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #dce5ef; padding-bottom: 10px; margin-bottom: 12px; }
+        .user-greeting { font-size: 1rem; font-weight: 700; color: #1e3a5f; }
+        .role-badge { background: #2c7cb6; color: white; padding: 3px 10px; border-radius: 40px; font-size: 0.6rem; display: inline-block; }
         
-        label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #5b6f86; margin-bottom: 4px; display: block; }
-        input, select { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1.5px solid #cfdfed; border-radius: 24px; background: white; outline: none; }
+        label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #5b6f86; margin-bottom: 3px; display: block; }
+        input, select { width: 100%; padding: 11px 13px; font-size: 0.95rem; border: 1.5px solid #cfdfed; border-radius: 22px; background: white; outline: none; }
         
-        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-        
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .article-row { display: flex; gap: 6px; align-items: flex-end; }
         .article-row input { flex: 1; }
         
-        button {
-            background: #2c7cb6; border: none; color: white; padding: 12px 20px;
-            border-radius: 30px; font-weight: 600; font-size: 0.95rem; cursor: pointer; width: 100%;
-        }
+        button { background: #2c7cb6; border: none; color: white; padding: 11px 18px; border-radius: 30px; font-weight: 600; font-size: 0.9rem; cursor: pointer; width: 100%; }
         button:disabled { background: #a0b8cc; }
-        
-        .scan-btn {
-            background: #8e44ad; padding: 12px 16px; border-radius: 24px;
-            font-size: 1.2rem; width: auto; flex-shrink: 0; transition: all 0.3s;
-        }
+        .scan-btn { background: #8e44ad; padding: 11px 15px; border-radius: 22px; font-size: 1.1rem; width: auto; flex-shrink: 0; }
         .scan-btn.scanning { background: #e74c3c; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
         
-        #scannerOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 1000;
-            flex-direction: column; align-items: center; padding: 16px;
-        }
+        #scannerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; align-items: center; padding: 16px; }
         #scannerOverlay.active { display: flex; }
         #scannerView { width: 100%; max-width: 400px; border-radius: 16px; overflow: hidden; margin-top: 40px; }
-        .scanner-hint { color: white; text-align: center; margin-top: 14px; font-size: 0.9rem; opacity: 0.8; }
-        #closeScannerBtn { margin-top: 18px; background: #e74c3c; width: auto; padding: 14px 40px; }
+        .scanner-hint { color: white; text-align: center; margin-top: 12px; font-size: 0.85rem; opacity: 0.8; }
+        #closeScannerBtn { margin-top: 16px; background: #e74c3c; width: auto; padding: 12px 36px; }
         
-        .success-msg { background: #e0f7ea; color: #1e6f3f; padding: 10px 14px; border-radius: 20px; margin-top: 10px; font-size: 0.85rem; }
-        .error-msg { background: #ffe6e2; color: #b13e24; padding: 10px 14px; border-radius: 20px; margin-top: 10px; font-size: 0.85rem; }
-        .info-msg { background: #e8f0fe; color: #1e5a8a; padding: 10px 14px; border-radius: 20px; margin-top: 10px; font-size: 0.85rem; }
+        .success-msg { background: #e0f7ea; color: #1e6f3f; padding: 10px 14px; border-radius: 20px; margin-top: 8px; font-size: 0.85rem; }
+        .error-msg { background: #ffe6e2; color: #b13e24; padding: 10px 14px; border-radius: 20px; margin-top: 8px; font-size: 0.85rem; }
+        .info-msg { background: #e8f0fe; color: #1e5a8a; padding: 8px 12px; border-radius: 16px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.4; }
         
-        .debug-info {
-            background: #1e1e1e; color: #00ff00; font-family: monospace;
-            font-size: 0.7rem; padding: 8px; border-radius: 12px; margin-top: 10px;
-            max-height: 100px; overflow-y: auto; word-break: break-all;
-        }
-        
-        .logout-btn {
-            background: none; border: 1px solid #bacddc; padding: 6px 14px;
-            border-radius: 30px; cursor: pointer; font-weight: 500; color: #2c3e4e;
-            font-size: 0.8rem; width: auto;
-        }
-        
-        .result-card {
-            background: #f0fdf4; border: 2px solid #22c55e; border-radius: 16px;
-            padding: 12px; margin-top: 8px; text-align: center;
-        }
-        .result-card .article { font-size: 1.3rem; font-weight: 800; color: #1e3a5f; }
-        .result-card .label { font-size: 0.7rem; color: #5b6f86; }
+        .debug-info { background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 0.65rem; padding: 8px; border-radius: 10px; margin-top: 8px; max-height: 80px; overflow-y: auto; }
+        .logout-btn { background: none; border: 1px solid #bacddc; padding: 5px 12px; border-radius: 30px; cursor: pointer; font-weight: 500; color: #2c3e4e; font-size: 0.75rem; width: auto; }
+        .badge-ean { background: #e8f5e9; color: #2e7d32; padding: 1px 6px; border-radius: 10px; font-size: 0.55rem; }
+        .badge-code128 { background: #fff3e0; color: #e65100; padding: 1px 6px; border-radius: 10px; font-size: 0.55rem; }
     </style>
 </head>
 <body>
@@ -104,78 +73,89 @@
         projectId: "packing23-11afd",
         storageBucket: "packing23-11afd.firebasestorage.app",
         messagingSenderId: "786002108142",
-        appId: "1:786002108142:web:213b1f60bd6ec5f9429dff",
-        measurementId: "G-KJSR3NESZM"
+        appId: "1:786002108142:web:213b1f60bd6ec5f9429dff"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     db.enablePersistence().catch(()=>{});
     
-    // ========== ПЕРЕМЕННЫЕ ==========
-    let currentUser = null;
-    let html5QrCode = null;
-    let isScanning = false;
-    let debugLogs = [];
-    
-    // ТЕСТОВАЯ БАЗА ШТРИХКОДОВ (локальная + Firebase)
-    const LOCAL_BARCODES = {
-        'ABC-abc-1234': { article: 'AR-1112', name: 'Тестовый товар' },
-        '4601234567890': { article: 'XR-901', name: 'Крем для рук' },
-        '4601234567891': { article: 'XR-902', name: 'Шампунь' }
+    // ========== БАЗА ШТРИХКОДОВ (реальные данные) ==========
+    const BARCODE_DB = {
+        // EAN13
+        '4673769270258': { article: 'V19004-ST1' },
+        '2048611227247': { article: '10025-2/01' },
+        '2037318436311': { article: 'калич2' },
+        '2051237285430': { article: '10026/06' },
+        '4673769270494': { article: 'D98005/28-W' },
+        '2041404394300': { article: 'V10009/02' },
+        '2037697803117': { article: 'V19004-ST1' },
+        '4673769270579': { article: 'D98005/01-W' },
+        '2042197553509': { article: 'D98005/01-W' },
+        '4673769270241': { article: 'V10011-2/02' },
+        '4673769270517': { article: 'D98005/24-W' },
+        '2041960619107': { article: 'D98005/24-W' },
+        
+        // Code128 (OZN...)
+        'OZN2031212969': { article: '11019-2/01' },
+        'OZN3181658516': { article: 'Z19024-2.1/02' },
+        'OZN2859613852': { article: 'K13005' },
+        'OZN2859768951': { article: 'V13004' },
+        'OZN2859641939': { article: 'K13002' },
+        'OZN3181577729': { article: 'Z19024-1.2/02' },
+        'OZN2859515879': { article: 'K13006' },
+        'OZN2859470569': { article: 'K13014' },
+        'OZN2859489067': { article: 'K13001' },
+        'OZN2859552736': { article: 'K13015' },
     };
     
-    const SESSION_KEY = "gqbox_scanner_test2";
+    let currentUser = null;
+    let html5QrCode = null;
+    const SESSION_KEY = "gqbox_test_real";
     const IP_LIST = ["КАА","КЮА","БМС","ДЕВ"];
     
     function saveSession(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
     function getSession() { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; }
     function clearSession() { localStorage.removeItem(SESSION_KEY); }
     
-    function addDebug(msg) {
-        debugLogs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
-        if (debugLogs.length > 20) debugLogs.shift();
-        const el = document.getElementById('debugLog');
-        if (el) el.textContent = debugLogs.join('\n');
-        console.log(msg);
+    // ========== ПОИСК ШТРИХКОДА ==========
+    function findBarcode(barcode) {
+        const clean = barcode.trim();
+        addDebug(`🔍 Поиск: "${clean}"`);
+        
+        // 1. Локальная база
+        if (BARCODE_DB[clean]) {
+            const data = BARCODE_DB[clean];
+            addDebug(`✅ Найдено локально: ${data.article}`);
+            return { found: true, article: data.article, type: 'Локально' };
+        }
+        
+        // 2. Частичное совпадение (если сканер добавил лишние символы)
+        for (const [key, val] of Object.entries(BARCODE_DB)) {
+            if (clean.includes(key) || key.includes(clean)) {
+                addDebug(`✅ Частичное совпадение: ${val.article}`);
+                return { found: true, article: val.article, type: 'Частичное' };
+            }
+        }
+        
+        addDebug('❌ Не найдено');
+        return { found: false, article: clean, type: 'Не найден' };
     }
     
-    // ========== ПОИСК ШТРИХКОДА ==========
-    async function findBarcode(barcode) {
-        addDebug(`🔍 Ищу штрихкод: "${barcode}"`);
-        
-        // 1. Сначала ищем в Firebase
-        try {
-            const snap = await db.collection('barcodes')
-                .where('barcode', '==', barcode)
-                .limit(1)
-                .get();
-            
-            if (!snap.empty) {
-                const data = snap.docs[0].data();
-                addDebug(`✅ Найдено в Firebase: ${data.article}`);
-                return { found: true, article: data.article, name: data.name || '', source: 'Firebase' };
-            }
-        } catch (e) {
-            addDebug('⚠️ Ошибка поиска в Firebase: ' + e.message);
+    function addDebug(msg) {
+        const el = document.getElementById('debugLog');
+        if (el) {
+            const lines = el.textContent.split('\n');
+            lines.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+            if (lines.length > 15) lines.shift();
+            el.textContent = lines.join('\n');
         }
-        
-        // 2. Ищем в локальной базе
-        if (LOCAL_BARCODES[barcode]) {
-            const data = LOCAL_BARCODES[barcode];
-            addDebug(`✅ Найдено локально: ${data.article}`);
-            return { found: true, article: data.article, name: data.name || '', source: 'Локально' };
-        }
-        
-        // 3. Не найдено
-        addDebug('❌ Штрихкод не найден в базе');
-        return { found: false, article: barcode, name: '', source: 'Не найден' };
+        console.log(msg);
     }
     
     // ========== ВХОД ==========
     async function loginUser(l, p) {
         const a = await db.collection('employees').get();
         if (a.empty) {
-            await db.collection('employees').add({ login: 'safonova', password: 'admin0111', name: 'Сафонова Е.', role: 'admin' });
             await db.collection('employees').add({ login: 'test', password: '123', name: 'Тест', role: 'packer' });
         }
         const s = await db.collection('employees').where('login','==',l).where('password','==',p).get();
@@ -186,60 +166,38 @@
     function startScanner() {
         const overlay = document.getElementById('scannerOverlay');
         const view = document.getElementById('scannerView');
-        
-        addDebug('📷 Запуск сканера...');
         overlay.classList.add('active');
         view.innerHTML = '';
-        
         if (html5QrCode) { html5QrCode.stop().catch(()=>{}); html5QrCode = null; }
-        
         html5QrCode = new Html5Qrcode("scannerView");
-        
-        const config = {
-            fps: 10,
-            qrbox: { width: 280, height: 180 },
-            aspectRatio: 1.5,
-            videoConstraints: {
-                facingMode: "environment",
-                focusMode: "continuous",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
-        };
         
         html5QrCode.start(
             { facingMode: "environment" },
-            config,
+            { fps: 10, qrbox: { width: 280, height: 180 }, aspectRatio: 1.5 },
             async (decodedText) => {
-                addDebug(`📸 Сканировано: "${decodedText}"`);
-                
                 if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-                
-                // Ищем артикул по штрихкоду
-                const result = await findBarcode(decodedText.trim());
-                
+                const result = findBarcode(decodedText.trim());
                 document.getElementById('articleInput').value = result.article;
-                
-                // Показываем результат
                 const msg = document.getElementById('msgPanel');
                 if (result.found) {
-                    msg.innerHTML = `<div class="success-msg">✅ ШК: ${decodedText} → Артикул: <strong>${result.article}</strong>${result.name ? ' (' + result.name + ')' : ''} [${result.source}]</div>`;
+                    const isEAN = /^\d+$/.test(decodedText);
+                    const badge = isEAN ? '<span class="badge-ean">EAN13</span>' : '<span class="badge-code128">Code128</span>';
+                    msg.innerHTML = `<div class="success-msg">✅ ${badge} ШК: ${decodedText} → <strong>${result.article}</strong></div>`;
                 } else {
-                    msg.innerHTML = `<div class="info-msg">⚠️ Штрихкод не найден в базе. Использован как есть: <strong>${result.article}</strong></div>`;
+                    msg.innerHTML = `<div class="info-msg">⚠️ Не найдено. Использован: <strong>${result.article}</strong></div>`;
                 }
-                
                 stopScanner();
                 document.getElementById('qtyInput').focus();
             },
             (error) => {}
         ).catch(err => {
-            addDebug('❌ Ошибка: ' + err.message);
-            alert('Не удалось запустить камеру. Проверьте разрешения и HTTPS.');
+            addDebug('Ошибка: ' + err.message);
+            alert('Не удалось запустить камеру. Проверьте HTTPS и разрешения.');
             stopScanner();
         });
         
         document.getElementById('scanBtn').classList.add('scanning');
-        document.getElementById('scanBtn').textContent = '⏹ Стоп';
+        document.getElementById('scanBtn').textContent = '⏹';
     }
     
     function stopScanner() {
@@ -247,7 +205,6 @@
         document.getElementById('scannerOverlay').classList.remove('active');
         document.getElementById('scanBtn').classList.remove('scanning');
         document.getElementById('scanBtn').textContent = '📷';
-        addDebug('Сканер остановлен');
     }
     
     // ========== РЕНДЕРИНГ ==========
@@ -255,16 +212,14 @@
         return `<div class="app-container">
             <div class="glass-card">
                 <div class="logo-container"><div class="logo-oval"><span class="logo-text">GQ box</span></div></div>
-                <div style="text-align:center;margin-bottom:14px;"><h3>🧪 Тест: ШК → Артикул</h3></div>
+                <div style="text-align:center;margin-bottom:12px;"><h3>🧪 Тест: Реальная база ШК</h3></div>
                 <div class="input-group">
-                    <div><label>👤 Логин</label><input id="loginUser" placeholder="Логин"></div>
-                    <div><label>🔒 Пароль</label><input type="password" id="loginPass" placeholder="Пароль"></div>
+                    <div><label>Логин</label><input id="loginUser" placeholder="Логин"></div>
+                    <div><label>Пароль</label><input type="password" id="loginPass" placeholder="Пароль"></div>
                     <button id="doLogin">Войти</button>
                 </div>
                 <div id="loginError" class="error-msg" style="display:none;"></div>
-                <div style="text-align:center;margin-top:10px;font-size:0.75rem;color:#5b6f86;">
-                    👉 <strong>test / 123</strong>
-                </div>
+                <div style="text-align:center;margin-top:8px;font-size:0.7rem;color:#5b6f86;">test / 123</div>
             </div>
         </div>`;
     }
@@ -273,116 +228,69 @@
         return `<div class="app-container">
             <div class="glass-card">
                 <div class="header-dash">
-                    <div>
-                        <div class="user-greeting">👋 ${user.name}</div>
-                        <span class="role-badge">Упаковщица (тест)</span>
-                    </div>
+                    <div><div class="user-greeting">👋 ${user.name}</div><span class="role-badge">Тест</span></div>
                     <button id="logoutBtn" class="logout-btn">Выйти</button>
                 </div>
                 
-                <div class="form-title">📦 Сканирование с автоподстановкой</div>
-                
-                <div class="info-msg" style="margin-bottom:12px;">
-                    💡 <strong>Тестовая база:</strong><br>
-                    • <code>ABC-abc-1234</code> → <strong>AR-1112</strong> (Тестовый товар)<br>
-                    • <code>4601234567890</code> → <strong>XR-901</strong> (Крем для рук)
+                <div class="info-msg">
+                    💡 <strong>База:</strong> EAN13 (цифры) и Code128 (OZN...)<br>
+                    Примеры: <span class="badge-ean">4673769270258</span> → V19004-ST1<br>
+                    <span class="badge-code128">OZN2031212969</span> → 11019-2/01
                 </div>
                 
                 <div class="input-group">
-                    <div>
-                        <label>🏷️ Артикул</label>
+                    <div><label>Артикул</label>
                         <div class="article-row">
-                            <input type="text" id="articleInput" placeholder="Нажмите 📷 для сканирования">
-                            <button id="scanBtn" class="scan-btn" title="Сканировать">📷</button>
+                            <input type="text" id="articleInput" placeholder="Нажмите 📷">
+                            <button id="scanBtn" class="scan-btn">📷</button>
                         </div>
                     </div>
-                    <div><label>🔢 Количество</label><input type="number" id="qtyInput" min="1" value="1"></div>
-                    <div>
-                        <label>👤 ИП</label>
-                        <select id="ipSelect">
-                            <option value="">-- Выберите --</option>
-                            ${IP_LIST.map(ip => `<option value="${ip}">${ip}</option>`).join('')}
-                        </select>
-                    </div>
+                    <div><label>Количество</label><input type="number" id="qtyInput" min="1" value="1"></div>
+                    <div><label>ИП</label><select id="ipSelect"><option value="">-- Выберите --</option>${IP_LIST.map(ip => `<option>${ip}</option>`).join('')}</select></div>
                     <button id="addBtn">➕ Добавить (тест)</button>
                 </div>
                 <div id="msgPanel"></div>
-                
-                <div class="debug-info" id="debugLog">Готов к работе...</div>
+                <div class="debug-info" id="debugLog">Готов...</div>
             </div>
-            
-            <div id="scannerOverlay">
-                <div id="scannerView"></div>
-                <div class="scanner-hint">📷 Наведите на штрихкод</div>
-                <button id="closeScannerBtn">✕ Закрыть</button>
-            </div>
+            <div id="scannerOverlay"><div id="scannerView"></div><div class="scanner-hint">📷 Наведите на штрихкод</div><button id="closeScannerBtn">✕ Закрыть</button></div>
         </div>`;
     }
     
     async function renderApp() {
         const root = document.getElementById('appRoot');
         const session = getSession();
-        
-        if (!session) {
-            root.innerHTML = renderLogin();
-            attachLoginEvents();
-        } else {
-            currentUser = session;
-            root.innerHTML = renderPackerPanel(session);
-            attachPackerEvents();
-            addDebug(`Вошли: ${session.name}`);
-        }
+        if (!session) { root.innerHTML = renderLogin(); attachLoginEvents(); }
+        else { currentUser = session; root.innerHTML = renderPackerPanel(session); attachPackerEvents(); }
     }
     
     function attachLoginEvents() {
         const dl = async () => {
             const lv = document.getElementById("loginUser").value.trim();
             const pv = document.getElementById("loginPass").value.trim();
-            const le = document.getElementById("loginError");
-            const lb = document.getElementById("doLogin");
+            const le = document.getElementById("loginError"), lb = document.getElementById("doLogin");
             if (!lv || !pv) { le.style.display="block"; le.innerText="Введите логин и пароль"; return; }
             le.style.display="none"; lb.disabled=true; lb.textContent="Вход...";
             const u = await loginUser(lv, pv);
-            if (!u) { le.style.display="block"; le.innerText="Неверный логин или пароль"; lb.disabled=false; lb.textContent="Войти"; return; }
+            if (!u) { le.style.display="block"; le.innerText="Неверно"; lb.disabled=false; lb.textContent="Войти"; return; }
             saveSession(u); renderApp();
         };
         document.getElementById("doLogin").onclick = dl;
-        document.getElementById("loginPass")?.addEventListener("keypress", e => { if(e.key==="Enter") dl(); });
     }
     
     function attachPackerEvents() {
-        document.getElementById('scanBtn').addEventListener('click', () => {
-            isScanning ? stopScanner() : startScanner();
-        });
+        document.getElementById('scanBtn').addEventListener('click', () => { if (document.getElementById('scanBtn').classList.contains('scanning')) stopScanner(); else startScanner(); });
         document.getElementById('closeScannerBtn').addEventListener('click', stopScanner);
-        
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            stopScanner(); clearSession(); renderApp();
-        });
-        
+        document.getElementById('logoutBtn').addEventListener('click', () => { stopScanner(); clearSession(); renderApp(); });
         document.getElementById('addBtn').addEventListener('click', () => {
             const article = document.getElementById('articleInput').value.trim();
             const qty = document.getElementById('qtyInput').value;
             const ip = document.getElementById('ipSelect').value;
             const msg = document.getElementById('msgPanel');
-            
-            if (!article) {
-                msg.innerHTML = '<div class="error-msg">❌ Введите или отсканируйте артикул</div>';
-                return;
-            }
-            
-            addDebug(`Добавлено: ${article} x${qty} ${ip}`);
-            msg.innerHTML = `<div class="success-msg">✅ ${ip ? ip + ' | ' : ''}${article.toUpperCase()} x ${qty} шт. — ДОБАВЛЕНО</div>`;
+            if (!article) { msg.innerHTML = '<div class="error-msg">Введите артикул</div>'; return; }
+            msg.innerHTML = `<div class="success-msg">✅ ${ip?ip+' | ':''}${article.toUpperCase()} x ${qty} шт. — ДОБАВЛЕНО</div>`;
             document.getElementById('articleInput').value = '';
-            document.getElementById('qtyInput').value = '1';
-            setTimeout(() => { msg.innerHTML = ''; }, 2500);
+            setTimeout(() => msg.innerHTML = '', 2000);
         });
-        
-        document.getElementById('articleInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('qtyInput').focus(); }
-        });
-        
-        addDebug('Готов к сканированию');
     }
     
     window.addEventListener('DOMContentLoaded', () => renderApp());
