@@ -3,61 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1e5a8a">
     <title>GQ Box | Упаковка WB/OZON</title>
     
-    <!-- Сканер -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GQ%20Box%20%E2%80%94%20%D0%A3%D0%BF%D0%B0%D0%BA%D0%BE%D0%B2%D0%BA%D0%B0%22%2C%22short_name%22%3A%22GQ%20Box%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231e5a8a%22%2C%22theme_color%22%3A%22%231e5a8a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI%2BPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MCIgZmlsbD0iIzFlNWE4YSIvPjx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HUTwvdGV4dD48L3N2Zz4%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI%2BPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMDAiIGZpbGw9IiMxZTVhOGEiLz48dGV4dCB4PSIyNTYiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxNjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HUTwvdGV4dD48L3N2Zz4%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%22%7D%5D%7D">
     
-    <!-- Firebase -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(145deg, #eef2f7 0%, #d9e2ec 100%);
-            min-height: 100vh; padding: 12px; -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(145deg, #eef2f7, #d9e2ec); min-height: 100vh; padding: 12px; -webkit-tap-highlight-color: transparent; padding-top: max(12px, env(safe-area-inset-top)); }
         @media (min-width: 768px) { body { padding: 20px; } }
         .app-container { max-width: 1400px; margin: 0 auto; width: 100%; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(2px);
-            border-radius: 28px; box-shadow: 0 10px 30px -8px rgba(0,0,0,0.15);
-            padding: 20px; margin-bottom: 20px;
-        }
+        .glass-card { background: rgba(255,255,255,0.96); backdrop-filter: blur(2px); border-radius: 28px; box-shadow: 0 10px 30px -8px rgba(0,0,0,0.15); padding: 20px; margin-bottom: 20px; }
         @media (min-width: 768px) { .glass-card { padding: 24px 28px; border-radius: 38px; margin-bottom: 24px; } }
         .dashboard { display: flex; flex-direction: column; gap: 16px; }
-        @media (min-width: 768px) { .dashboard { gap: 20px; } }
         .header-dash { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid #dce5ef; padding-bottom: 12px; }
         .user-info { display: flex; flex-direction: column; min-width: 120px; }
         .user-greeting { font-size: 1.2rem; font-weight: 700; color: #1e3a5f; }
         @media (min-width: 768px) { .user-greeting { font-size: 1.5rem; } }
-        .role-badge { padding: 3px 12px; border-radius: 60px; font-size: 0.65rem; font-weight: 500; display: inline-block; margin-top: 4px; width: fit-content; }
-        .role-badge { background: #2c7cb6; color: white; }
+        .role-badge { padding: 3px 12px; border-radius: 60px; font-size: 0.65rem; font-weight: 500; display: inline-block; margin-top: 4px; width: fit-content; background: #2c7cb6; color: white; }
         .role-badge.operator { background: #e67e22; }
         .role-badge.admin-badge { background: #ffd700; color: #1e3a5f; }
-        .rate-center { background: #e8f0fe; padding: 6px 18px; border-radius: 60px; text-align: center; }
-        .rate-label { font-size: 0.6rem; color: #5b6f86; letter-spacing: 0.5px; }
-        .rate-value { font-size: 1.2rem; font-weight: 800; color: #1e5a8a; line-height: 1.2; }
-        .logout-btn { background: none; border: 1px solid #bacddc; padding: 6px 14px; border-radius: 40px; cursor: pointer; font-weight: 500; color: #2c3e4e; font-size: 0.85rem; }
+        .rate-center { background: #e8f0fe; padding: 8px 18px; border-radius: 60px; text-align: center; }
+        .rate-label { font-size: 0.6rem; color: #5b6f86; }
+        .rate-value { font-size: 1.2rem; font-weight: 800; color: #1e5a8a; }
+        .rate-earned { font-size: 0.75rem; font-weight: 600; color: #2a6b3c; margin-top: 2px; }
+        .logout-btn { background: none; border: 1px solid #bacddc; padding: 6px 14px; border-radius: 40px; cursor: pointer; font-weight: 500; color: #2c3e4e; font-size: 0.85rem; transition: all 0.2s; }
+        .logout-btn:hover { background: #e74c3c; color: white; border-color: #e74c3c; }
+        .logout-btn:active { transform: scale(0.95); }
+        .export-btn { background: #2a6b3c; border: none; color: white; padding: 6px 14px; border-radius: 40px; cursor: pointer; font-weight: 500; font-size: 0.85rem; width: auto; }
+        .export-btn:hover { background: #235530; }
         .form-panel { background: #ffffffdd; border-radius: 24px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .form-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; color: #1f4e79; }
         .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
         @media (min-width: 640px) { .input-group { flex-direction: row; gap: 16px; flex-wrap: wrap; } }
         .input-field { flex: 1; min-width: 150px; }
         label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #5b6f86; margin-bottom: 5px; display: block; }
-        input, select { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1.5px solid #cfdfed; border-radius: 28px; background: white; transition: 0.2s; outline: none; }
-        button { background: #2c7cb6; border: none; color: white; padding: 12px 20px; border-radius: 40px; font-weight: 600; font-size: 0.95rem; cursor: pointer; width: 100%; }
+        input, select { width: 100%; padding: 12px 14px; font-size: 1rem; border: 1.5px solid #cfdfed; border-radius: 28px; background: white; outline: none; transition: border-color 0.2s; }
+        input:focus, select:focus { border-color: #2c7cb6; box-shadow: 0 0 0 3px rgba(44,124,182,0.15); }
+        button { background: #2c7cb6; border: none; color: white; padding: 12px 20px; border-radius: 40px; font-weight: 600; font-size: 0.95rem; cursor: pointer; width: 100%; transition: all 0.2s; }
         @media (min-width: 640px) { button { width: auto; padding: 12px 26px; } }
-        button:disabled { background: #a0b8cc; cursor: not-allowed; }
-        .stats-period-buttons { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        .period-btn { background: #eef2f7; color: #2c5f8a; padding: 8px 16px; font-size: 0.8rem; border-radius: 40px; flex: 1; text-align: center; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:active { transform: scale(0.97); }
+        button:disabled { background: #a0b8cc; cursor: not-allowed; transform: none; }
+        .period-btn { background: #eef2f7; color: #2c5f8a; padding: 8px 16px; font-size: 0.8rem; border-radius: 40px; flex: 1; text-align: center; border: none; }
         .period-btn.active { background: #2c7cb6; color: white; }
         .stats-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-card { background: #eef3fc; border-radius: 20px; padding: 14px 12px; text-align: center; }
         .stat-card .value { font-size: 1.5rem; font-weight: 800; color: #1e3a5f; }
-        .stat-card .label { font-size: 0.65rem; color: #5b6f86; text-transform: uppercase; margin-top: 5px; }
+        .stat-card .label { font-size: 0.65rem; color: #5b6f86; margin-top: 5px; }
+        .comparison-card { background: #e8f5e9; border-radius: 16px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .comparison-card .comp-label { font-size: 0.7rem; color: #2e7d32; font-weight: 600; }
+        .comparison-card .comp-value { font-size: 0.95rem; font-weight: 700; }
+        .comparison-card .comp-up { color: #2e7d32; }
+        .comparison-card .comp-down { color: #c62828; }
+        .comparison-card .comp-neutral { color: #5b6f86; }
         .history-section { background: white; border-radius: 24px; padding: 16px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px; }
         th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #e6edf4; }
@@ -75,262 +81,432 @@
         .badge-wb { background: #7c3aed20; color: #6d28d9; }
         .badge-ozon { background: #f9731620; color: #ea580c; }
         .ip-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 700; }
-        .ip-KAA { background: #e3f2fd; color: #1565c0; }
-        .ip-KUA { background: #fce4ec; color: #c62828; }
-        .ip-BMS { background: #e8f5e9; color: #2e7d32; }
-        .ip-DEV { background: #fff3e0; color: #e65100; }
+        .ip-KAA { background: #e3f2fd; color: #1565c0; } .ip-KUA { background: #fce4ec; color: #c62828; }
+        .ip-BMS { background: #e8f5e9; color: #2e7d32; } .ip-DEV { background: #fff3e0; color: #e65100; }
         .current-location-card { background: #e8f0fe; border-radius: 20px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid #2c7cb6; }
         @media (min-width: 480px) { .current-location-card { flex-direction: row; justify-content: space-between; align-items: center; } }
         .current-location-value { font-size: 1rem; font-weight: 700; color: #1e3a5f; }
         .change-location-btn { background: #e2eaf1; color: #2c7cb6; padding: 6px 14px; font-size: 0.75rem; border-radius: 30px; width: auto; }
-        .delete-icon { cursor: pointer; color: #b1624b; font-size: 1.1rem; font-weight: bold; padding: 0 6px; }
+        .current-ip-card { background: #f0f4e8; border-radius: 20px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid #4a7c59; }
+        @media (min-width: 480px) { .current-ip-card { flex-direction: row; justify-content: space-between; align-items: center; } }
+        .current-ip-value { font-size: 1rem; font-weight: 700; color: #2d5a3d; }
+        .change-ip-btn { background: #e2eaf1; color: #4a7c59; padding: 6px 14px; font-size: 0.75rem; border-radius: 30px; width: auto; }
         .delete-user-btn { background: #b1624b; color: white; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.75rem; border: none; }
         .adminDelBtn { background: #b1624b; color: white; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.75rem; border: none; }
         .filter-bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         @media (min-width: 640px) { .filter-bar { flex-direction: row; align-items: flex-end; flex-wrap: wrap; } }
-        .filter-bar .input-field { min-width: 120px; }
         .logo-container { display: flex; justify-content: center; margin-bottom: 20px; }
         .logo-oval { background: #1e5a8a; display: inline-flex; align-items: center; justify-content: center; padding: 10px 28px; border-radius: 100px; }
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; color: white; }
-        .rank-1 { font-weight: 800; color: #d4af37; }
-        .rank-2 { font-weight: 700; color: #6c757d; }
-        .rank-3 { font-weight: 700; color: #cd7f32; }
+        .rank-1 { font-weight: 800; color: #d4af37; } .rank-2 { font-weight: 700; color: #6c757d; } .rank-3 { font-weight: 700; color: #cd7f32; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
-        #locationModalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
-        #locationModalOverlay > div { background: white; border-radius: 32px; padding: 24px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        #locationModalOverlay, #ipModalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+        #locationModalOverlay > div, #ipModalOverlay > div { background: white; border-radius: 32px; padding: 24px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
         .loading-spinner { text-align: center; padding: 40px; color: #5b6f86; }
         .role-selector { display: flex; gap: 10px; margin-bottom: 16px; }
         .role-option { flex: 1; background: #f3f9ff; border: 2px solid #d9e2ec; padding: 12px; border-radius: 20px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #1e3a5f; }
         .role-option.active { border-color: #2c7cb6; background: #e8f0fe; }
         .role-option.operator-active { border-color: #e67e22; background: #fef5ec; }
         .summary-card { display: flex; flex-wrap: wrap; gap: 8px; background: #f8fafd; padding: 10px; border-radius: 14px; margin-bottom: 10px; font-size: 0.8rem; }
-        @media (min-width: 768px) { .summary-card { font-size: 0.9rem; } }
         .page-btn { background: #2c7cb6; color: white; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.75rem; cursor: pointer; width: auto; }
-        .page-btn:disabled { background: #a0b8cc; cursor: not-allowed; }
-        
-        /* Сканер */
+        .page-btn:disabled { background: #a0b8cc; }
         .article-row { display: flex; gap: 6px; align-items: flex-end; }
         .article-row input { flex: 1; }
-        .scan-btn { background: #8e44ad; padding: 12px 16px; border-radius: 28px; font-size: 1.2rem; width: auto; flex-shrink: 0; transition: all 0.3s; }
+        .scan-btn { background: #8e44ad; padding: 12px 16px; border-radius: 28px; font-size: 1.2rem; width: auto; flex-shrink: 0; transition: all 0.3s; cursor: pointer; }
+        .scan-btn:hover { background: #9b59b6; }
         .scan-btn.scanning { background: #e74c3c; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
         #scannerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1001; flex-direction: column; align-items: center; padding: 16px; }
         #scannerOverlay.active { display: flex; }
-        #scannerView { width: 100%; max-width: 400px; border-radius: 16px; overflow: hidden; margin-top: 40px; }
+        #scannerView { width: 100%; max-width: 400px; border-radius: 16px; overflow: hidden; margin-top: 40px; background: #000; }
         .scanner-hint { color: white; text-align: center; margin-top: 12px; font-size: 0.9rem; opacity: 0.8; }
-        #closeScannerBtn { margin-top: 16px; background: #e74c3c; width: auto; padding: 12px 36px; }
-        .barcode-result { font-size: 0.7rem; margin-top: 2px; }
-        .barcode-ean { color: #2e7d32; }
-        .barcode-code128 { color: #e65100; }
+        #closeScannerBtn { margin-top: 16px; background: #e74c3c; width: auto; padding: 12px 36px; font-size: 1rem; cursor: pointer; }
+        #closeScannerBtn:hover { background: #c0392b; }
+        .install-banner { display: none; background: #1e5a8a; color: white; text-align: center; padding: 10px 16px; border-radius: 16px; margin-bottom: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .install-banner.show { display: block; animation: fadeInUp 0.4s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-<div id="appRoot"><div class="loading-spinner">Загрузка приложения...</div></div>
+<div id="appRoot"><div class="loading-spinner">Загрузка...</div></div>
+
+<div id="scannerOverlay">
+    <div id="scannerView"></div>
+    <div class="scanner-hint">📷 Наведите камеру на штрихкод</div>
+    <button id="closeScannerBtn">✕ Закрыть</button>
+</div>
 
 <script>
-    // ========== FIREBASE ==========
+    // ============ PWA Service Worker ============
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'gqbox-v2';
+            const ASSETS = [
+                './',
+                'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
+                'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js',
+                'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js'
+            ];
+            self.addEventListener('install', event => {
+                event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS).catch(() => {})));
+                self.skipWaiting();
+            });
+            self.addEventListener('activate', event => {
+                event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
+                self.clients.claim();
+            });
+            self.addEventListener('fetch', event => {
+                if (event.request.method !== 'GET') return;
+                event.respondWith(
+                    caches.match(event.request).then(cached => {
+                        const fetched = fetch(event.request).then(response => {
+                            if (response && response.status === 200) {
+                                const clone = response.clone();
+                                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                            }
+                            return response;
+                        }).catch(() => cached);
+                        return cached || fetched;
+                    })
+                );
+            });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).then(() => console.log('SW registered')).catch(() => console.log('SW registration skipped'));
+        
+        // Показываем баннер установки
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window._deferredPrompt = e;
+            const banner = document.getElementById('installBanner');
+            if (banner) {
+                banner.classList.add('show');
+                banner.onclick = async () => {
+                    banner.classList.remove('show');
+                    e.prompt();
+                    const result = await e.userChoice;
+                    console.log('PWA install:', result.outcome);
+                    window._deferredPrompt = null;
+                };
+            }
+        });
+    }
+    
+    // ============ Звуковой сигнал ============
+    function playBeep(frequency = 800, duration = 0.12, type = 'sine') {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = frequency;
+            gain.gain.value = 0.3;
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch(e) { /* Игнорируем ошибки звука */ }
+    }
+    
+    function playSuccessSound() {
+        playBeep(880, 0.1, 'sine');
+        setTimeout(() => playBeep(1100, 0.15, 'sine'), 100);
+    }
+    
+    function playScanSound() {
+        playBeep(660, 0.08, 'square');
+    }
+    
+    // ============ Экспорт в Excel ============
+    function exportToExcel(records, filename = 'export') {
+        const header = 'ИП\tМаркетплейс\tСклад\tАртикул\tКоличество\tСумма (₽)\tДата\n';
+        const rows = records.map(r => {
+            const date = r.dateStr ? r.dateStr.split(',')[0] : '—';
+            return `${r.ip || '—'}\t${r.marketplace || '—'}\t${(r.locationDisplay || '—').replace(/\t/g, ' ')}\t${r.article || '—'}\t${r.quantity}\t${(r.earned || 0).toFixed(2)}\t${date}`;
+        }).join('\n');
+        
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}_${getTodayStr()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // ============ Firebase ============
     const firebaseConfig = {
         apiKey: "AIzaSyAWmeGhe0wFrqULYqvnCX4WY9EhuPFEjHs",
         authDomain: "packing23-11afd.firebaseapp.com",
         projectId: "packing23-11afd",
         storageBucket: "packing23-11afd.firebasestorage.app",
         messagingSenderId: "786002108142",
-        appId: "1:786002108142:web:213b1f60bd6ec5f9429dff",
-        measurementId: "G-KJSR3NESZM"
+        appId: "1:786002108142:web:213b1f60bd6ec5f9429dff"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     db.enablePersistence().catch(()=>{});
-</script>
-
-<script>
+    
     const WB_CITIES = ["Казань","Краснодар","Невинномысск","Екатеринбург","Шушары","Челябинск","Великий Камень","Тула","Коледино","Электросталь","Волгоград","Владимир","Рязань","Воронеж","Новосибирск","Сарапул","Котовск","Чехов 1","Чехов 2","Обухово"];
     const OZON_STORES = { direct: ["Хоругвино","Софьино","Пушкино 2","Пушкино 1","Ватутинки","Петровское","Гривно","Домодедово","Жуковский","Ногинск (прям.)"], crossdock: ["Радумля","Ногинск"] };
     const ALL_OZON_STORES = [...OZON_STORES.direct, ...OZON_STORES.crossdock];
     const IP_LIST = ["КАА","КЮА","БМС","ДЕВ"];
     function getTodayStr() { return new Date().toISOString().slice(0,10); }
     
-    // ========== БАЗА ШТРИХКОДОВ (полная версия) ==========
-    const BARCODE_DB = {
-        // EAN13
-        '4673769270258': 'V19004-ST1', '2048611227247': '10025-2/01', '2037318436311': 'калич2',
-        '2051237285430': '10026/06', '4673769270494': 'D98005/28-W', '2041404394300': 'V10009/02',
-        '4673769270579': 'D98005/01-W', '2042197553509': 'D98005/01-W', '4673769270241': 'V10011-2/02',
-        '4673769270517': 'D98005/24-W', '2041960619107': 'D98005/24-W', '4673769271521': 'D19003-1.2/02',
-        '2037226824309': '20001-3/01', '2037746352276': 'V19019', '4673769272498': '10030-3/01',
-        '2037697959517': 'V19003-2/02', '4673769270210': 'V10011-PR/02', '2039086662558': 'V10011-3/02',
-        '4673769270784': 'D19016/01', '2038570684021': 'V10002E-2.1/02', '2037594480503': 'V10002E/01',
-        '2037594522623': 'V10002E-2/01', '2039017186887': '20011-2/02', '2037720441293': '157282791',
-        '2037697803117': 'V19004-ST1',
-        // Code128
-        'OZN2031212969': '11019-2/01', 'OZN3181658516': 'Z19024-2.1/02', 'OZN2859613852': 'K13005',
-        'OZN2859768951': 'V13004', 'OZN2859641939': 'K13002', 'OZN3181577729': 'Z19024-1.2/02',
-    };
-    
-    // ========== СКАНЕР ==========
     let html5QrCode = null;
     
-    function findBarcode(barcode) {
+    async function findBarcode(barcode) {
         const clean = barcode.trim();
-        if (BARCODE_DB[clean]) return BARCODE_DB[clean];
-        for (const [key, val] of Object.entries(BARCODE_DB)) {
-            if (clean.includes(key) || key.includes(clean)) return val;
-        }
-        return clean; // Возвращаем как есть если не найдено
+        try { const s = await db.collection('barcodes').where('barcode','==',clean).limit(1).get(); if(!s.empty) return s.docs[0].data().article; } catch(e){}
+        return clean;
     }
     
     function startScanner() {
-        document.getElementById('scannerOverlay').classList.add('active');
-        document.getElementById('scannerView').innerHTML = '';
-        if (html5QrCode) { html5QrCode.stop().catch(()=>{}); html5QrCode = null; }
-        html5QrCode = new Html5Qrcode("scannerView");
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 280, height: 180 } },
-            (decodedText) => {
-                if (navigator.vibrate) navigator.vibrate(50);
-                const article = findBarcode(decodedText.trim());
-                document.getElementById('articleInput').value = article;
-                stopScanner();
-            },
-            () => {}
-        ).catch(() => { stopScanner(); });
-        document.getElementById('scanBtn').classList.add('scanning');
-        document.getElementById('scanBtn').textContent = '⏹';
+        const overlay = document.getElementById('scannerOverlay');
+        const view = document.getElementById('scannerView');
+        if (!overlay || !view) return;
+        if (!navigator.mediaDevices?.getUserMedia) { alert('Камера не поддерживается'); return; }
+        overlay.classList.add('active'); view.innerHTML = '';
+        if(html5QrCode){ html5QrCode.stop().then(()=>{ html5QrCode=null; initNewScanner(); }).catch(()=>{ html5QrCode=null; initNewScanner(); }); }
+        else { initNewScanner(); }
+        function initNewScanner() {
+            try {
+                html5QrCode = new Html5Qrcode("scannerView");
+                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 280, height: 180 } },
+                    async (decodedText) => {
+                        // 1. Звуковой сигнал при сканировании
+                        playScanSound();
+                        
+                        if(navigator.vibrate) navigator.vibrate(50);
+                        const articleInput = document.getElementById('articleInput');
+                        if (articleInput) {
+                            articleInput.value = await findBarcode(decodedText.trim());
+                            
+                            // 2. Автофокус на поле количества после сканирования
+                            const qtyInput = document.getElementById('qtyInput');
+                            if (qtyInput) {
+                                qtyInput.focus();
+                                qtyInput.select();
+                            }
+                        }
+                        stopScanner();
+                    }, ()=>{}
+                ).then(()=>{
+                    const scanBtn = document.getElementById('scanBtn');
+                    if(scanBtn){ scanBtn.classList.add('scanning'); scanBtn.textContent = '⏹'; scanBtn.title = 'Остановить сканер'; }
+                }).catch(err=>{ alert('Ошибка камеры. Проверьте HTTPS и разрешения.'); stopScanner(); });
+            } catch(e) { alert('Не удалось инициализировать сканер'); stopScanner(); }
+        }
     }
     
     function stopScanner() {
-        if (html5QrCode) { html5QrCode.stop().catch(()=>{}); html5QrCode = null; }
-        document.getElementById('scannerOverlay').classList.remove('active');
-        document.getElementById('scanBtn').classList.remove('scanning');
-        document.getElementById('scanBtn').textContent = '📷';
+        if(html5QrCode){ html5QrCode.stop().catch(()=>{}).finally(()=>{ html5QrCode=null; }); }
+        const overlay = document.getElementById('scannerOverlay'); if(overlay) overlay.classList.remove('active');
+        const scanBtn = document.getElementById('scanBtn'); if(scanBtn){ scanBtn.classList.remove('scanning'); scanBtn.textContent='📷'; scanBtn.title='Сканировать штрихкод'; }
+        const view = document.getElementById('scannerView'); if(view) view.innerHTML='';
     }
     
-    // ========== ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений) ==========
     async function createInitialEmployees() {
         await db.collection('employees').add({ login: 'safonova', password: 'admin0111', name: 'Сафонова Е.', role: 'admin' });
         await db.collection('employees').add({ login: 'sazonov', password: 'admin123', name: 'Sazonov', role: 'admin' });
         await new Promise(r => setTimeout(r, 1500));
     }
+    
     async function getEmployees() {
         const s = await db.collection('employees').orderBy('name').get();
         let e = s.docs.map(d=>({id:d.id,...d.data()}));
-        if(e.length===0){ await createInitialEmployees(); const s2=await db.collection('employees').orderBy('name').get(); e=s2.docs.map(d=>({id:d.id,...d.data()})); }
+        if(!e.length){ await createInitialEmployees(); const s2 = await db.collection('employees').orderBy('name').get(); e = s2.docs.map(d=>({id:d.id,...d.data()})); }
         return e;
     }
+    
     async function loginUser(l,p){
-        const a=await db.collection('employees').get(); if(a.empty)await createInitialEmployees();
-        const s=await db.collection('employees').where('login','==',l).where('password','==',p).get();
-        return s.empty?null:{id:s.docs[0].id,...s.docs[0].data()};
+        const a = await db.collection('employees').get(); if(a.empty) await createInitialEmployees();
+        const s = await db.collection('employees').where('login','==',l).where('password','==',p).get();
+        return s.empty ? null : { id: s.docs[0].id, ...s.docs[0].data() };
     }
+    
     async function registerUser(l,p,n,r){
-        if(!l||!p||!n||!r)return{success:false,error:'Заполните все поля'};
-        const s=await db.collection('employees').where('login','==',l).get();
-        if(!s.empty)return{success:false,error:'Логин уже существует'};
-        await db.collection('employees').add({login:l.trim(),password:p,name:n.trim(),role:r});
-        return{success:true};
+        if(!l||!p||!n||!r) return { success: false, error: 'Заполните все поля' };
+        const s = await db.collection('employees').where('login','==',l).get();
+        if(!s.empty) return { success: false, error: 'Логин уже существует' };
+        await db.collection('employees').add({ login: l.trim(), password: p, name: n.trim(), role: r });
+        return { success: true };
     }
+    
     async function deleteUser(uid){
-        const d=await db.collection('employees').doc(uid).get();
-        if(!d.exists||d.data().role==='admin')return false;
-        const b=db.batch();
+        const d = await db.collection('employees').doc(uid).get();
+        if(!d.exists || d.data().role === 'admin') return false;
+        const b = db.batch();
         (await db.collection('pack_records').where('userId','==',uid).get()).docs.forEach(x=>b.delete(x.ref));
         (await db.collection('user_locations').where('userId','==',uid).get()).docs.forEach(x=>b.delete(x.ref));
+        (await db.collection('user_ip_settings').where('userId','==',uid).get()).docs.forEach(x=>b.delete(x.ref));
         b.delete(db.collection('employees').doc(uid)); await b.commit(); return true;
     }
-    async function getUserSavedLocation(uid){
-        const s=await db.collection('user_locations').where('userId','==',uid).get();
-        return s.empty?null:s.docs[0].data();
-    }
+    
+    async function getUserSavedLocation(uid){ const s = await db.collection('user_locations').where('userId','==',uid).get(); return s.empty ? null : s.docs[0].data(); }
+    
     async function saveUserLocation(uid,mp,ld,lr){
-        const s=await db.collection('user_locations').where('userId','==',uid).get();
-        const d={userId:uid,marketplace:mp,locationDisplay:ld,locationRaw:lr,timestamp:Date.now()};
-        if(s.empty)await db.collection('user_locations').add(d); else await db.collection('user_locations').doc(s.docs[0].id).update(d);
+        const s = await db.collection('user_locations').where('userId','==',uid).get();
+        const d = { userId:uid, marketplace:mp, locationDisplay:ld, locationRaw:lr, timestamp:Date.now() };
+        if(s.empty) await db.collection('user_locations').add(d); else await db.collection('user_locations').doc(s.docs[0].id).update(d);
     }
+    
+    async function getUserSavedIP(uid){ const s = await db.collection('user_ip_settings').where('userId','==',uid).get(); return s.empty ? '' : (s.docs[0].data().ip || ''); }
+    
+    async function saveUserIP(uid, ip){
+        const s = await db.collection('user_ip_settings').where('userId','==',uid).get();
+        const d = { userId:uid, ip:ip, timestamp:Date.now() };
+        if(s.empty) await db.collection('user_ip_settings').add(d); else await db.collection('user_ip_settings').doc(s.docs[0].id).update(d);
+    }
+    
     async function addRecord(article,qty,uid,uname,mp,ld,lr,ip){
-        if(!article||!mp||!ld)return{success:false,error:'Заполните все поля'};
-        const q=parseInt(qty); if(isNaN(q)||q<=0)return{success:false,error:'Количество > 0'};
-        const today=getTodayStr();
-        const tr=await db.collection('pack_records').where('userId','==',uid).where('dateOnly','==',today).get();
-        const at=tr.docs.reduce((s,d)=>s+d.data().quantity,0);
-        let earned=0,rem=q,cq=at;
-        const tiers=[{limit:1000,rate:2.5},{limit:2000,rate:2.75},{limit:3000,rate:3.0},{limit:Infinity,rate:3.25}];
-        for(const t of tiers){if(rem<=0)break;if(cq>=t.limit)continue;const av=t.limit-cq;const take=Math.min(rem,av);earned+=take*t.rate;rem-=take;cq+=take;}
-        await db.collection('pack_records').add({userId:uid,userName:uname,article:article.trim().toUpperCase(),quantity:q,earned,marketplace:mp,locationDisplay:ld,locationRaw:lr||ld,ip:ip||'',timestamp:firebase.firestore.FieldValue.serverTimestamp(),dateStr:new Date().toLocaleString(),dateOnly:today});
-        return{success:true,earned};
+        if(!article||!mp||!ld) return { success: false, error: 'Заполните все поля' };
+        const q = parseInt(qty); if(isNaN(q)||q<=0) return { success: false, error: 'Количество > 0' };
+        const today = getTodayStr();
+        const tr = await db.collection('pack_records').where('userId','==',uid).where('dateOnly','==',today).get();
+        const at = tr.docs.reduce((s,d)=>s+d.data().quantity,0);
+        let earned=0, rem=q, cq=at;
+        const tiers = [{limit:1000,rate:2.5},{limit:2000,rate:2.75},{limit:3000,rate:3.0},{limit:Infinity,rate:3.25}];
+        for(const t of tiers){ if(rem<=0)break; if(cq>=t.limit)continue; const av=t.limit-cq; const take=Math.min(rem,av); earned+=take*t.rate; rem-=take; cq+=take; }
+        await db.collection('pack_records').add({ userId:uid, userName:uname, article:article.trim().toUpperCase(), quantity:q, earned, marketplace:mp, locationDisplay:ld, locationRaw:lr||ld, ip:ip||'', timestamp:firebase.firestore.FieldValue.serverTimestamp(), dateStr:new Date().toLocaleString(), dateOnly:today });
+        return { success: true, earned };
     }
-    async function getUserRecords(uid){const s=await db.collection('pack_records').where('userId','==',uid).orderBy('timestamp','desc').get();return s.docs.map(d=>({id:d.id,...d.data()}));}
-    async function getUserDayRecords(uid,date){const s=await db.collection('pack_records').where('userId','==',uid).where('dateOnly','==',date).orderBy('timestamp','desc').get();return s.docs.map(d=>({id:d.id,...d.data()}));}
+    
+    async function getUserRecords(uid){ const s = await db.collection('pack_records').where('userId','==',uid).orderBy('timestamp','desc').get(); return s.docs.map(d=>({id:d.id,...d.data()})); }
+    
     async function getUserPeriodStats(uid,period){
-        const records=await getUserRecords(uid); const now=new Date(); let start=new Date();
-        if(period==='day')start.setHours(0,0,0,0);
-        else if(period==='week'){const day=now.getDay();start.setDate(now.getDate()-(day===0?6:day-1));start.setHours(0,0,0,0);}
-        else if(period==='month')start=new Date(now.getFullYear(),now.getMonth(),1);
-        const f=records.filter(r=>{if(!r.timestamp)return false;const ts=r.timestamp.toDate?r.timestamp.toDate():new Date(r.timestamp);return ts>=start;});
-        return{totalQty:f.reduce((s,r)=>s+r.quantity,0),totalEarned:f.reduce((s,r)=>s+(r.earned||0),0)};
+        const records = await getUserRecords(uid); const now = new Date(); let start = new Date();
+        if(period==='day') start.setHours(0,0,0,0);
+        else if(period==='week'){ const day=now.getDay(); start.setDate(now.getDate()-(day===0?6:day-1)); start.setHours(0,0,0,0); }
+        else if(period==='month') start = new Date(now.getFullYear(),now.getMonth(),1);
+        const f = records.filter(r=>{ if(!r.timestamp) return false; const ts = r.timestamp.toDate?r.timestamp.toDate():new Date(r.timestamp); return ts>=start; });
+        return { totalQty: f.reduce((s,r)=>s+r.quantity,0), totalEarned: f.reduce((s,r)=>s+(r.earned||0),0), records: f };
     }
-    async function getYesterdayRecords(){const y=new Date();y.setDate(y.getDate()-1);const ds=y.toISOString().slice(0,10);const s=await db.collection('pack_records').where('dateOnly','==',ds).get();return{records:s.docs.map(d=>({id:d.id,...d.data()})),date:ds};}
-    async function deleteRecord(rid){await db.collection('pack_records').doc(rid).delete();}
+    
+    // ============ Сравнение с прошлой сменой ============
+    async function getYesterdayUserStats(uid) {
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        const ds = y.toISOString().slice(0,10);
+        const s = await db.collection('pack_records').where('userId','==',uid).where('dateOnly','==',ds).get();
+        const records = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        return {
+            date: ds,
+            totalQty: records.reduce((s, r) => s + r.quantity, 0),
+            totalEarned: records.reduce((s, r) => s + (r.earned || 0), 0)
+        };
+    }
+    
+    function renderComparison(yesterdayStats, todayStats) {
+        if (yesterdayStats.totalQty === 0) {
+            return `<div class="comparison-card"><span class="comp-label">📊 Вчера данных нет</span><span class="comp-value">Начинаем сегодня!</span></div>`;
+        }
+        const qtyDiff = todayStats.totalQty - yesterdayStats.totalQty;
+        const earnedDiff = todayStats.totalEarned - yesterdayStats.totalEarned;
+        
+        let qtyClass = 'comp-neutral', qtySign = '';
+        let earnedClass = 'comp-neutral', earnedSign = '';
+        
+        if (qtyDiff > 0) { qtyClass = 'comp-up'; qtySign = '+'; }
+        else if (qtyDiff < 0) { qtyClass = 'comp-down'; }
+        
+        if (earnedDiff > 0) { earnedClass = 'comp-up'; earnedSign = '+'; }
+        else if (earnedDiff < 0) { earnedClass = 'comp-down'; }
+        
+        const qtyPercent = yesterdayStats.totalQty > 0 ? ((qtyDiff / yesterdayStats.totalQty) * 100).toFixed(0) : '∞';
+        const earnedPercent = yesterdayStats.totalEarned > 0 ? ((earnedDiff / yesterdayStats.totalEarned) * 100).toFixed(0) : '∞';
+        
+        return `<div class="comparison-card">
+            <div><span class="comp-label">📦 К прошлой смене:</span> <span class="comp-value ${qtyClass}">${qtySign}${qtyDiff} шт. (${qtySign}${qtyPercent}%)</span></div>
+            <div><span class="comp-label">💰 По деньгам:</span> <span class="comp-value ${earnedClass}">${earnedSign}${earnedDiff.toFixed(2)} ₽ (${earnedSign}${earnedPercent}%)</span></div>
+        </div>`;
+    }
+    
+    async function getYesterdayRecords(){ const y=new Date(); y.setDate(y.getDate()-1); const ds=y.toISOString().slice(0,10); const s=await db.collection('pack_records').where('dateOnly','==',ds).get(); return { records: s.docs.map(d=>({id:d.id,...d.data()})), date:ds }; }
+    async function deleteRecord(rid){ await db.collection('pack_records').doc(rid).delete(); }
     
     const SESSION_KEY="gqbox_session";
-    function saveSession(u){localStorage.setItem(SESSION_KEY,JSON.stringify(u));}
-    function getSession(){const r=localStorage.getItem(SESSION_KEY);return r?JSON.parse(r):null;}
-    function clearSession(){localStorage.removeItem(SESSION_KEY);}
-    function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);}
-    function isCrossdockStore(s){return OZON_STORES.crossdock.includes(s);}
+    function saveSession(u){ localStorage.setItem(SESSION_KEY,JSON.stringify(u)); }
+    function getSession(){ const r=localStorage.getItem(SESSION_KEY); return r?JSON.parse(r):null; }
+    function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+    function escapeHtml(s){ if(!s)return''; return s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    function isCrossdockStore(s){ return OZON_STORES.crossdock.includes(s); }
     
     function showLocationModal(uid,uname,onSave){
-        const h=`<div id="locationModalOverlay"><div><h3 style="margin-bottom:20px;">📍 Выбор склада / города</h3><div class="input-field" style="margin-bottom:16px;"><label>🛍️ Маркетплейс</label><select id="mm"><option value="WB">Wildberries (WB)</option><option value="OZON">OZON</option></select></div><div id="mc"></div><div style="display:flex;gap:12px;margin-top:24px;"><button id="ms" style="flex:1;">✅ Сохранить</button><button id="mcl" style="flex:1;background:#b0bed0;">Отмена</button></div></div></div>`;
+        const existing = document.getElementById('locationModalOverlay'); if (existing) existing.remove();
+        const h=`<div id="locationModalOverlay"><div><h3 style="margin-bottom:20px;">📍 Выбор склада</h3><div class="input-field"><label>Маркетплейс</label><select id="mm"><option value="WB">WB</option><option value="OZON">OZON</option></select></div><div id="mc" style="margin-top:12px;"></div><div style="display:flex;gap:12px;margin-top:20px;"><button id="ms" style="flex:1;">✅ Сохранить</button><button id="mcl" style="flex:1;background:#b0bed0;">Отмена</button></div></div></div>`;
         document.body.insertAdjacentHTML('beforeend',h);
-        const upd=()=>{const mp=document.getElementById('mm').value,c=document.getElementById('mc');
-            if(mp==='WB'){c.innerHTML=`<div class="input-field"><label>📍 Город (склад WB)</label><select id="ws"><option value="">-- Выберите --</option>${WB_CITIES.map(x=>`<option value="${x}">${x}</option>`).join('')}</select><input type="text" id="wm" placeholder="Или введите вручную" style="margin-top:8px;"></div>`;const s=document.getElementById('ws'),m=document.getElementById('wm');s.onchange=()=>{if(s.value)m.value=s.value;};m.oninput=()=>{if(m.value)s.value='';};}
-            else{c.innerHTML=`<div class="input-field"><label>🏭 Склад OZON</label><select id="os"><option value="">-- Выберите --</option>${ALL_OZON_STORES.map(x=>`<option value="${x}">${x}</option>`).join('')}</select><div id="otb" style="margin-top:8px;display:none;"><label>📦 Город назначения</label><select id="ots"><option value="">-- Выберите --</option><option>Екатеринбург</option><option>Челябинск</option><option>Тюмень</option><option>Казань</option><option>Новосибирск</option></select><input type="text" id="otm" placeholder="Или введите вручную" style="margin-top:8px;"></div></div>`;const ws=document.getElementById('os'),tb=document.getElementById('otb');const u=()=>{tb.style.display=(ws.value&&isCrossdockStore(ws.value))?'block':'none';};ws.onchange=u;u();}};
+        const upd=()=>{const mp=document.getElementById('mm').value,c=document.getElementById('mc');if(mp==='WB'){c.innerHTML=`<div class="input-field"><label>Город WB</label><select id="ws"><option value="">-- Выберите --</option>${WB_CITIES.map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="wm" placeholder="Или введите" style="margin-top:6px;"></div>`;const s=document.getElementById('ws'),m=document.getElementById('wm');s.onchange=()=>{if(s.value)m.value=s.value;};m.oninput=()=>{if(m.value)s.value='';};}else{c.innerHTML=`<div class="input-field"><label>Склад OZON</label><select id="os"><option value="">-- Выберите --</option>${ALL_OZON_STORES.map(x=>`<option>${x}</option>`).join('')}</select><div id="otb" style="margin-top:8px;display:none;"><label>Город назначения</label><select id="ots"><option value="">-- Выберите --</option><option>Екатеринбург</option><option>Челябинск</option><option>Тюмень</option><option>Казань</option><option>Новосибирск</option></select><input type="text" id="otm" placeholder="Или введите" style="margin-top:6px;"></div></div>`;const ws=document.getElementById('os'),tb=document.getElementById('otb');const u=()=>{tb.style.display=(ws.value&&isCrossdockStore(ws.value))?'block':'none';};ws.onchange=u;u();}};
         document.getElementById('mm').addEventListener('change',upd);upd();
         document.getElementById('ms').onclick=async()=>{const mp=document.getElementById('mm').value;let ld='',lr='';if(mp==='WB'){ld=document.getElementById('ws')?.value||document.getElementById('wm')?.value||'';if(!ld){alert('Укажите город');return;}lr=ld;}else{const w=document.getElementById('os')?.value;if(!w){alert('Выберите склад');return;}lr=w;if(isCrossdockStore(w)){const ct=document.getElementById('ots')?.value||document.getElementById('otm')?.value;if(!ct){alert('Укажите город');return;}ld=`${w} (${ct})`;}else ld=w;}await saveUserLocation(uid,mp,ld,lr);document.getElementById('locationModalOverlay')?.remove();onSave();};
         document.getElementById('mcl').onclick=()=>document.getElementById('locationModalOverlay')?.remove();
     }
     
+    function showIPModal(uid, currentIP, onSave){
+        const existing = document.getElementById('ipModalOverlay'); if (existing) existing.remove();
+        const h=`<div id="ipModalOverlay"><div><h3 style="margin-bottom:20px;">👤 Выбор ИП</h3><div class="input-field"><label>ИП</label><select id="ipSelectModal"><option value="">-- Без ИП --</option>${IP_LIST.map(ip=>`<option value="${ip}" ${ip===currentIP?'selected':''}>${ip}</option>`).join('')}</select></div><div style="display:flex;gap:12px;margin-top:20px;"><button id="ipSaveBtn" style="flex:1;">✅ Сохранить</button><button id="ipCancelBtn" style="flex:1;background:#b0bed0;">Отмена</button></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend',h);
+        document.getElementById('ipSaveBtn').onclick=async()=>{ const ip=document.getElementById('ipSelectModal').value; await saveUserIP(uid,ip); document.getElementById('ipModalOverlay')?.remove(); onSave(ip); };
+        document.getElementById('ipCancelBtn').onclick=()=>document.getElementById('ipModalOverlay')?.remove();
+    }
+    
     function renderLogin(){
         return `<div class="app-container"><div class="glass-card" style="max-width:500px;margin:0 auto;">
             <div class="logo-container"><div class="logo-oval"><span class="logo-text">GQ box</span></div></div>
-            <div style="margin-bottom:20px;"><h3 style="text-align:center;">Вход</h3></div>
-            <div class="input-field" style="margin-bottom:12px;"><label>👤 Логин</label><input id="loginUser" placeholder="Логин"></div>
-            <div class="input-field" style="margin-bottom:12px;"><label>🔒 Пароль</label><input type="password" id="loginPass" placeholder="Пароль"></div>
-            <button id="doLogin" style="width:100%;margin-bottom:12px;">Войти</button>
+            <div id="installBanner" class="install-banner">📲 Нажмите, чтобы установить приложение</div>
+            <h3 style="text-align:center;margin-bottom:16px;">Вход</h3>
+            <div class="input-field" style="margin-bottom:10px;"><label>Логин</label><input id="loginUser" placeholder="Логин"></div>
+            <div class="input-field" style="margin-bottom:10px;"><label>Пароль</label><input type="password" id="loginPass" placeholder="Пароль"></div>
+            <button id="doLogin" style="margin-bottom:12px;">Войти</button>
             <div id="loginError" class="error-msg" style="display:none;"></div>
-            <hr style="margin:20px 0;">
-            <div><h3 style="text-align:center;font-size:1rem;">📝 Нет аккаунта? Зарегистрируйтесь</h3></div>
-            <div class="input-field" style="margin-top:12px;"><label>👤 Логин</label><input id="regLogin" placeholder="Придумайте логин"></div>
-            <div class="input-field" style="margin-top:8px;"><label>🔒 Пароль</label><input type="password" id="regPass" placeholder="Придумайте пароль"></div>
-            <div class="input-field" style="margin-top:8px;"><label>📛 Ваше имя</label><input id="regName" placeholder="Как вас называть?"></div>
-            <div style="margin-top:12px;"><label style="margin-bottom:8px;">👤 Роль</label><div class="role-selector"><div class="role-option active" data-role="packer" id="rolePacker">📦 Упаковщица</div><div class="role-option" data-role="operator" id="roleOperator">🏭 Оператор склада</div></div></div>
-            <button id="doRegister" style="width:100%;margin-top:8px;background:#4a7c59;">📝 Зарегистрироваться</button>
-            <div id="regError" class="error-msg" style="display:none;margin-top:12px;"></div>
+            <hr style="margin:16px 0;">
+            <h3 style="text-align:center;font-size:1rem;">Регистрация</h3>
+            <div class="input-field" style="margin-top:10px;"><label>Логин</label><input id="regLogin"></div>
+            <div class="input-field" style="margin-top:6px;"><label>Пароль</label><input type="password" id="regPass"></div>
+            <div class="input-field" style="margin-top:6px;"><label>Имя</label><input id="regName"></div>
+            <div style="margin-top:10px;"><label>Роль</label><div class="role-selector"><div class="role-option active" data-role="packer" id="rolePacker">📦 Упаковщица</div><div class="role-option" data-role="operator" id="roleOperator">🏭 Оператор</div></div></div>
+            <button id="doRegister" style="margin-top:8px;background:#4a7c59;">Зарегистрироваться</button>
+            <div id="regError" class="error-msg" style="display:none;margin-top:10px;"></div>
         </div></div>`;
     }
     
     async function renderUserPanel(user){
         const isOp=user.role==='operator';
-        const stats=await getUserRecords(user.id); const todayStats=stats.filter(r=>r.dateOnly===getTodayStr());
-        const todayQty=todayStats.reduce((s,r)=>s+r.quantity,0); const savedLoc=await getUserSavedLocation(user.id);
-        const dayStats=await getUserPeriodStats(user.id,'day'); let rate=2.5;
+        const stats=await getUserRecords(user.id);
+        const todayStats=stats.filter(r=>r.dateOnly===getTodayStr());
+        const todayQty=todayStats.reduce((s,r)=>s+r.quantity,0);
+        const todayEarned=todayStats.reduce((s,r)=>s+(r.earned||0),0);
+        const savedLoc=await getUserSavedLocation(user.id);
+        const savedIP=await getUserSavedIP(user.id);
+        const dayStats=await getUserPeriodStats(user.id,'day');
+        let rate=2.5;
         if(todayQty>=3001)rate=3.25; else if(todayQty>=2001)rate=3.0; else if(todayQty>=1001)rate=2.75;
+        
+        // Сравнение с прошлой сменой
+        const yesterdayStats = await getYesterdayUserStats(user.id);
+        const comparisonHtml = renderComparison(yesterdayStats, { totalQty: todayQty, totalEarned: todayEarned });
+        
         const yd=await getYesterdayRecords();const rm=new Map();
         yd.records.forEach(r=>{if(!rm.has(r.userId))rm.set(r.userId,{name:r.userName,totalQty:0,totalSum:0});const s=rm.get(r.userId);s.totalQty+=r.quantity;s.totalSum+=r.earned||0;});
         const rl=Array.from(rm.values());const bq=[...rl].sort((a,b)=>b.totalQty-a.totalQty);const be=[...rl].sort((a,b)=>b.totalSum-a.totalSum);
         const locHtml=savedLoc?`<div class="current-location-card"><div><div style="font-size:0.7rem;">Текущий склад</div><div class="current-location-value">${escapeHtml(savedLoc.marketplace)} — ${escapeHtml(savedLoc.locationDisplay)}</div></div><button id="changeLocationBtn" class="change-location-btn">✏️</button></div>`:`<div class="current-location-card" style="background:#fff3e0;border-left-color:#e67e22;"><div><div style="font-size:0.7rem;">⚠️ Склад не выбран</div><div class="current-location-value">Нажмите "Выбрать"</div></div><button id="changeLocationBtn" class="change-location-btn">📍 Выбрать</button></div>`;
-        return `<div class="app-container"><div class="glass-card dashboard"><div class="header-dash"><div class="user-info"><div class="user-greeting">👋 ${escapeHtml(user.name)}</div><div class="role-badge ${isOp?'operator':''}">${isOp?'Оператор':'Упаковщица'}</div></div><div class="rate-center"><div class="rate-label">Ставка за сегодня</div><div class="rate-value">${rate} ₽/шт</div></div><div class="header-actions"><button id="logoutBtn" class="logout-btn">Выйти</button></div></div>
-        <div class="form-panel"><div class="form-title">📦 Добавить упаковку</div>${locHtml}
+        const ipHtml=`<div class="current-ip-card"><div><div style="font-size:0.7rem;">Текущий ИП</div><div class="current-ip-value">${savedIP? savedIP:'Не выбран'}</div></div><button id="changeIPBtn" class="change-ip-btn">✏️ Сменить ИП</button></div>`;
+        return `<div class="app-container"><div class="glass-card dashboard"><div class="header-dash"><div class="user-info"><div class="user-greeting">👋 ${escapeHtml(user.name)}</div><div class="role-badge ${isOp?'operator':''}">${isOp?'Оператор':'Упаковщица'}</div></div><div class="rate-center"><div class="rate-label">Ставка</div><div class="rate-value">${rate} ₽/шт</div><div class="rate-earned">💰 Сегодня: ${todayEarned.toFixed(2)} ₽</div></div><div class="header-actions"><button id="exportBtn" class="export-btn" type="button" title="Экспорт в Excel">📥</button><button id="logoutBtn" class="logout-btn" type="button">🚪</button></div></div>
+        ${comparisonHtml}
+        <div class="form-panel"><div class="form-title">📦 Добавить упаковку</div>${locHtml}${ipHtml}
         <div class="input-group">
-            <div class="input-field"><label>🏷️ Артикул</label><div class="article-row"><input type="text" id="articleInput" placeholder="Отсканируйте или введите"><button id="scanBtn" class="scan-btn">📷</button></div></div>
-            <div class="input-field"><label>🔢 Количество</label><input type="number" id="qtyInput" min="1" value="1"></div>
-            <div class="input-field"><label>👤 ИП</label><select id="ipSelect"><option value="">-- Выберите --</option>${IP_LIST.map(ip=>`<option value="${ip}">${ip}</option>`).join('')}</select></div>
-            <button id="addPackBtn">➕ Добавить</button>
+            <div class="input-field"><label>🏷️ Артикул</label><div class="article-row"><input type="text" id="articleInput" placeholder="Отсканируйте или введите" autocomplete="off"><button id="scanBtn" class="scan-btn" type="button" title="Сканировать штрихкод">📷</button></div></div>
+            <div class="input-field"><label>🔢 Количество</label><input type="number" id="qtyInput" min="1" placeholder="Введите кол-во"></div>
+            <button id="addPackBtn" type="button">➕ Добавить</button>
         </div><div id="msgPanel"></div></div>
-        <div class="stats-period-buttons"><button class="period-btn active" data-period="day">📅 День</button><button class="period-btn" data-period="week">📆 Неделя</button><button class="period-btn" data-period="month">📅 Месяц</button></div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;"><button class="period-btn active" data-period="day">День</button><button class="period-btn" data-period="week">Неделя</button><button class="period-btn" data-period="month">Месяц</button></div>
         <div class="stats-cards"><div class="stat-card"><div class="value" id="statQty">${dayStats.totalQty}</div><div class="label">Упаковано, шт</div></div><div class="stat-card"><div class="value" id="statEarned">${dayStats.totalEarned.toFixed(2)}</div><div class="label">Заработано, руб</div></div></div>
         <div class="rating-container"><div class="rating-title">🏆 Рейтинг за вчера (${yd.date})</div>${!yd.records.length?'<div>Нет данных</div>':`<div class="rating-grid"><div class="rating-card"><h4>📊 По количеству</h4><ul class="rating-list">${bq.map((it,i)=>`<li><span class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i+1}. ${escapeHtml(it.name)}</span> <strong>${it.totalQty} шт.</strong></li>`).join('')}</ul></div><div class="rating-card"><h4>💰 По сумме</h4><ul class="rating-list">${be.map((it,i)=>`<li><span class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i+1}. ${escapeHtml(it.name)}</span> <strong>${it.totalSum.toFixed(2)} руб.</strong></li>`).join('')}</ul></div></div>`}</div>
-        <div class="history-section"><strong>📋 Моя история</strong>${stats.length===0?'<div style="padding:20px;text-align:center;">Нет записей</div>':`<div style="overflow-x:auto;"><table><thead><tr><th>ИП</th><th>МП</th><th>Склад</th><th>Артикул</th><th>Кол-во</th><th>₽</th><th>Дата</th><th></th></tr></thead><tbody>${stats.map(r=>`<tr><td>${r.ip?`<span class="ip-badge ip-${r.ip}">${r.ip}</span>`:'—'}</td><td><span class="marketplace-badge ${r.marketplace==='WB'?'badge-wb':'badge-ozon'}">${r.marketplace}</span></td><td>${escapeHtml(r.locationDisplay||'—')}</td><td><strong>${escapeHtml(r.article)}</strong></td><td>${r.quantity}</td><td>${(r.earned||0).toFixed(2)}</td><td style="font-size:0.7rem;">${r.dateStr?r.dateStr.split(',')[0]:'—'}</td><td><span class="delete-icon" data-id="${r.id}">🗑️</span></td></tr>`).join('')}</tbody></table></div>`}</div></div></div>`;
+        <div class="history-section"><strong>📋 Моя история</strong>${stats.length===0?'<div style="padding:20px;">Нет записей</div>':`<div style="overflow-x:auto;"><table><thead><tr><th>ИП</th><th>МП</th><th>Склад</th><th>Артикул</th><th>Кол-во</th><th>₽</th><th>Дата</th></tr></thead><tbody>${stats.map(r=>`<tr><td>${r.ip?`<span class="ip-badge ip-${r.ip}">${r.ip}</span>`:'—'}</td><td><span class="marketplace-badge ${r.marketplace==='WB'?'badge-wb':'badge-ozon'}">${r.marketplace}</span></td><td>${escapeHtml(r.locationDisplay||'—')}</td><td><strong>${escapeHtml(r.article)}</strong></td><td>${r.quantity}</td><td>${(r.earned||0).toFixed(2)}</td><td style="font-size:0.7rem;">${r.dateStr?r.dateStr.split(',')[0]:'—'}</td></tr>`).join('')}</tbody></table></div>`}</div></div></div>`;
     }
     
     async function renderAdminPanel(user){
@@ -344,13 +520,12 @@
         const allUsers=[...packers,...operators];
         const uniqueMP=[...new Set(records.map(r=>r.marketplace).filter(Boolean))];
         const uniqueCities=[...new Set(records.map(r=>r.locationDisplay).filter(Boolean))];
-        return `<div class="app-container"><div class="glass-card dashboard"><div class="header-dash"><div><div class="user-greeting">📋 Админ: ${escapeHtml(user.name)}</div><div class="role-badge admin-badge">Управление</div></div><div class="header-actions"><button id="logoutBtn" class="logout-btn">Выйти</button></div></div><div class="summary-card"><span>👥 Упаковщиц: ${packers.length}</span><span>🏭 Операторов: ${operators.length}</span><span>📦 Всего: ${ps.reduce((s,p)=>s+p.totalQuantity,0)} шт.</span><span>💰 Всего: ${ps.reduce((s,p)=>s+p.totalEarned,0).toFixed(2)} руб.</span></div><div class="rating-container"><div class="rating-title">🏆 Рейтинг за вчера (${yd.date})</div>${!yd.records.length?'<div>Нет данных</div>':`<div class="rating-grid"><div class="rating-card"><h4>📊 По количеству</h4><ul class="rating-list">${bq.map((it,i)=>`<li><span class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i+1}. ${escapeHtml(it.name)}</span> ${it.totalQty} шт.</li>`).join('')}</ul></div><div class="rating-card"><h4>💰 По сумме</h4><ul class="rating-list">${be.map((it,i)=>`<li><span class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i+1}. ${escapeHtml(it.name)}</span> ${it.totalSum.toFixed(2)} руб.</li>`).join('')}</ul></div></div>`}</div><div class="history-section"><strong>🔍 Расширенный фильтр</strong><div class="filter-bar"><div class="input-field"><label>👤 Сотрудник</label><select id="filterEmployeeSelect"><option value="">Все</option>${allUsers.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (${p.role==='operator'?'Оператор':'Упаковщица'})</option>`).join('')}</select></div><div class="input-field"><label>📅 Дата</label><input type="date" id="filterDateInput" value="${today}"></div><div class="input-field"><label>🛍️ МП</label><select id="filterMP"><option value="">Все</option>${uniqueMP.map(mp=>`<option value="${mp}">${mp}</option>`).join('')}</select></div><div class="input-field"><label>📍 Город/Склад</label><select id="filterCity"><option value="">Все</option>${uniqueCities.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div><div class="input-field"><label>🏷️ Артикул</label><input type="text" id="filterArticle" placeholder="Артикул"></div><button id="applyFilterBtn">🔍 Показать</button></div><div id="filterResultContainer"><div style="padding:20px;text-align:center;">Выберите параметры фильтра</div></div></div><div class="history-section"><strong>👥 Управление пользователями</strong>
+        return `<div class="app-container"><div class="glass-card dashboard"><div class="header-dash"><div><div class="user-greeting">📋 Админ: ${escapeHtml(user.name)}</div><div class="role-badge admin-badge">Управление</div></div><div class="header-actions"><button id="adminExportBtn" class="export-btn" type="button" title="Экспорт в Excel">📥</button><button id="logoutBtn" class="logout-btn" type="button">🚪</button></div></div><div class="summary-card"><span>👥 Упаковщиц: ${packers.length}</span><span>🏭 Операторов: ${operators.length}</span><span>📦 Всего: ${ps.reduce((s,p)=>s+p.totalQuantity,0)} шт.</span><span>💰 Всего: ${ps.reduce((s,p)=>s+p.totalEarned,0).toFixed(2)} руб.</span></div><div class="rating-container"><div class="rating-title">🏆 Рейтинг за вчера (${yd.date})</div>${!yd.records.length?'<div>Нет данных</div>':`<div class="rating-grid"><div class="rating-card"><h4>📊 По количеству</h4><ul class="rating-list">${bq.map((it,i)=>`<li><span class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i+1}. ${escapeHtml(it.name)}</span> ${it.totalQty} шт.</li>`).join('')}</ul></div><div class="rating-card"><h4>💰 По сумме</h4><ul class="rating-list">${be.map((it,i)=>`<li><span class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i+1}. ${escapeHtml(it.name)}</span> ${it.totalSum.toFixed(2)} руб.</li>`).join('')}</ul></div></div>`}</div><div class="history-section"><strong>🔍 Расширенный фильтр</strong><div class="filter-bar"><div class="input-field"><label>👤 Сотрудник</label><select id="filterEmployeeSelect"><option value="">Все</option>${allUsers.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (${p.role==='operator'?'Оператор':'Упаковщица'})</option>`).join('')}</select></div><div class="input-field"><label>📅 Дата</label><input type="date" id="filterDateInput" value="${today}"></div><div class="input-field"><label>🛍️ МП</label><select id="filterMP"><option value="">Все</option>${uniqueMP.map(mp=>`<option value="${mp}">${mp}</option>`).join('')}</select></div><div class="input-field"><label>📍 Город/Склад</label><select id="filterCity"><option value="">Все</option>${uniqueCities.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div><div class="input-field"><label>🏷️ Артикул</label><input type="text" id="filterArticle" placeholder="Артикул"></div><button id="applyFilterBtn" type="button">🔍 Показать</button></div><div id="filterResultContainer"><div style="padding:20px;text-align:center;">Выберите параметры фильтра</div></div></div><div class="history-section"><strong>👥 Управление пользователями</strong>
             <div style="overflow-x:auto;"><table><thead><tr><th>Имя</th><th>Логин</th><th>Роль</th><th></th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
             <div id="usersPagination" style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap;"></div>
         </div></div></div>`;
     }
     
-    // Пагинация пользователей
     let currentUserPage=1; const USERS_PER_PAGE=5; let allEmployeesData=[];
     async function loadUsersData(){const emps=await getEmployees();allEmployeesData=emps.map(e=>({id:e.id,login:e.login,name:e.name,role:e.role}));currentUserPage=1;renderUsersPage();}
     function renderUsersPage(){
@@ -359,10 +534,10 @@
         const totalPages=Math.ceil(allEmployeesData.length/USERS_PER_PAGE);
         if(currentUserPage>totalPages)currentUserPage=Math.max(1,totalPages);
         const start=(currentUserPage-1)*USERS_PER_PAGE,pageUsers=allEmployeesData.slice(start,start+USERS_PER_PAGE);
-        tbody.innerHTML=pageUsers.map(e=>`<tr><td>${escapeHtml(e.name)}</td><td>${escapeHtml(e.login)}</td><td>${e.role==='admin'?'👑 Админ':e.role==='operator'?'🏭 Оператор':'📦 Упаковщица'}</td><td>${e.role!=='admin'?`<button class="delete-user-btn" data-id="${e.id}">🗑️</button>`:'—'}</td></tr>`).join('');
+        tbody.innerHTML=pageUsers.map(e=>`<tr><td>${escapeHtml(e.name)}</td><td>${escapeHtml(e.login)}</td><td>${e.role==='admin'?'👑 Админ':e.role==='operator'?'🏭 Оператор':'📦 Упаковщица'}</td><td>${e.role!=='admin'?`<button class="delete-user-btn" data-id="${e.id}" type="button">🗑️</button>`:'—'}</td></tr>`).join('');
         tbody.querySelectorAll(".delete-user-btn").forEach(b=>{b.onclick=async()=>{if(b.dataset.id&&confirm("Удалить пользователя?")){await deleteUser(b.dataset.id);await loadUsersData();}};});
         let pHtml='';
-        if(totalPages>1){pHtml=`<button class="page-btn" data-upage="1" ${currentUserPage===1?'disabled':''}>««</button><button class="page-btn" data-upage="${currentUserPage-1}" ${currentUserPage===1?'disabled':''}>«</button><span style="font-size:0.8rem;padding:0 8px;">Стр. ${currentUserPage} из ${totalPages}</span><button class="page-btn" data-upage="${currentUserPage+1}" ${currentUserPage===totalPages?'disabled':''}>»</button><button class="page-btn" data-upage="${totalPages}" ${currentUserPage===totalPages?'disabled':''}>»»</button>`;}
+        if(totalPages>1){pHtml=`<button class="page-btn" data-upage="1" ${currentUserPage===1?'disabled':''} type="button">««</button><button class="page-btn" data-upage="${currentUserPage-1}" ${currentUserPage===1?'disabled':''} type="button">«</button><span style="font-size:0.8rem;padding:0 8px;">Стр. ${currentUserPage} из ${totalPages}</span><button class="page-btn" data-upage="${currentUserPage+1}" ${currentUserPage===totalPages?'disabled':''} type="button">»</button><button class="page-btn" data-upage="${totalPages}" ${currentUserPage===totalPages?'disabled':''} type="button">»»</button>`;}
         pagDiv.innerHTML=pHtml;
         pagDiv.querySelectorAll(".page-btn:not([disabled])").forEach(b=>{b.onclick=()=>{const page=parseInt(b.dataset.upage);if(page>=1&&page<=totalPages&&page!==currentUserPage){currentUserPage=page;renderUsersPage();}};});
     }
@@ -370,8 +545,14 @@
     async function renderApp(){
         const root=document.getElementById("appRoot");if(!root)return;
         const session=getSession();
-        if(!session){root.innerHTML=renderLogin();attachLoginEvents();}
-        else{root.innerHTML='<div class="loading-spinner">Загрузка...</div>';try{if(session.role==="admin"){root.innerHTML=await renderAdminPanel(session);attachAdminEvents();loadUsersData();}else{root.innerHTML=await renderUserPanel(session);attachUserEvents();}}catch(e){root.innerHTML=`<div class="glass-card" style="max-width:500px;margin:0 auto;text-align:center;"><h3>Ошибка</h3><button onclick="clearSession();renderApp();">Назад</button></div>`;}}
+        if(!session){root.innerHTML=renderLogin();attachLoginEvents();
+            // Показываем баннер установки при наличии
+            setTimeout(() => {
+                const banner = document.getElementById('installBanner');
+                if (banner && window._deferredPrompt) banner.classList.add('show');
+            }, 1000);
+        }
+        else{root.innerHTML='<div class="loading-spinner">Загрузка...</div>';try{if(session.role==="admin"){root.innerHTML=await renderAdminPanel(session);attachAdminEvents();loadUsersData();}else{root.innerHTML=await renderUserPanel(session);attachUserEvents();}}catch(e){console.error(e);root.innerHTML=`<div class="glass-card" style="max-width:500px;margin:0 auto;text-align:center;"><h3>Ошибка</h3><p>${e.message}</p><button onclick="clearSession();renderApp();">Назад</button></div>`;}}
     }
     
     function attachLoginEvents(){
@@ -384,47 +565,107 @@
         document.getElementById("doRegister").onclick=async()=>{const rl=document.getElementById("regLogin").value.trim(),rp=document.getElementById("regPass").value.trim(),rn=document.getElementById("regName").value.trim(),re=document.getElementById("regError");const res=await registerUser(rl,rp,rn,sr);re.style.display="block";re.className=res.success?"success-msg":"error-msg";re.innerText=res.success?"✅ Успешно! Войдите.":"❌ "+res.error;if(res.success){document.getElementById("regLogin").value="";document.getElementById("regPass").value="";document.getElementById("regName").value="";}setTimeout(()=>{re.style.display="none";},3000);};
     }
     
-    function attachUserEvents(){const s=getSession();if(!s)return;
-        document.getElementById("logoutBtn")?.addEventListener("click",()=>{stopScanner();clearSession();renderApp();});
-        document.getElementById("changeLocationBtn")?.addEventListener("click",()=>{showLocationModal(s.id,s.name,()=>renderApp());});
-        document.getElementById('scanBtn')?.addEventListener('click',()=>{if(document.getElementById('scanBtn').classList.contains('scanning'))stopScanner();else startScanner();});
-        document.getElementById('closeScannerBtn')?.addEventListener('click',stopScanner);
-        document.querySelectorAll(".period-btn").forEach(b=>{b.onclick=async()=>{document.querySelectorAll(".period-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");const st=await getUserPeriodStats(s.id,b.dataset.period);document.getElementById("statQty").textContent=st.totalQty;document.getElementById("statEarned").textContent=st.totalEarned.toFixed(2);};});
-        document.querySelectorAll(".delete-icon").forEach(el=>{el.onclick=async(e)=>{e.stopPropagation();if(el.dataset.id&&confirm("Удалить?")){await deleteRecord(el.dataset.id);renderApp();}};});
-        const da=async()=>{const art=document.getElementById("articleInput")?.value||"",qty=document.getElementById("qtyInput")?.value||"1",ip=document.getElementById("ipSelect")?.value||"",msg=document.getElementById("msgPanel");const saved=await getUserSavedLocation(s.id);if(!saved){msg.innerHTML='<div class="error-msg" style="display:block;">❌ Выберите склад</div>';setTimeout(()=>msg.innerHTML="",2500);return;}const r=await addRecord(art,qty,s.id,s.name,saved.marketplace,saved.locationDisplay,saved.locationRaw,ip);msg.innerHTML=r.success?`<div class="success-msg" style="display:block;">✅ ${ip?ip+' | ':''}${saved.marketplace} | ${art.toUpperCase()} x ${qty} шт. | +${r.earned.toFixed(2)} руб.</div>`:`<div class="error-msg" style="display:block;">❌ ${r.error}</div>`;if(r.success){document.getElementById("articleInput").value="";document.getElementById("qtyInput").value="1";setTimeout(()=>renderApp(),200);}setTimeout(()=>{if(msg)msg.innerHTML="";},2500);};
-        document.getElementById("addPackBtn").onclick=da;
-        [document.getElementById("articleInput"),document.getElementById("qtyInput")].forEach(i=>i?.addEventListener("keypress",e=>{if(e.key==="Enter")da();}));
+    function attachUserEvents(){
+        const s=getSession();if(!s)return;
+        
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) { logoutBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); stopScanner(); clearSession(); renderApp(); }; }
+        
+        const changeLocationBtn = document.getElementById("changeLocationBtn");
+        if (changeLocationBtn) { changeLocationBtn.onclick = function() { showLocationModal(s.id, s.name, () => renderApp()); }; }
+        
+        const changeIPBtn = document.getElementById("changeIPBtn");
+        if (changeIPBtn) { changeIPBtn.onclick = async function() { const currentIP = await getUserSavedIP(s.id); showIPModal(s.id, currentIP, () => renderApp()); }; }
+        
+        const scanBtn = document.getElementById('scanBtn');
+        if (scanBtn) { scanBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); if (scanBtn.classList.contains('scanning')) stopScanner(); else startScanner(); }; }
+        
+        const closeScannerBtn = document.getElementById('closeScannerBtn');
+        if (closeScannerBtn) { closeScannerBtn.onclick = function(e) { e.preventDefault(); stopScanner(); }; }
+        
+        // 8. Экспорт в Excel для упаковщиц
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.onclick = async function() {
+                const records = await getUserRecords(s.id);
+                exportToExcel(records, `Упаковка_${s.name.replace(/\s/g,'_')}`);
+            };
+        }
+        
+        document.querySelectorAll(".period-btn").forEach(b=>{ b.onclick = async function() { document.querySelectorAll(".period-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); const st = await getUserPeriodStats(s.id, b.dataset.period); const statQty = document.getElementById("statQty"); const statEarned = document.getElementById("statEarned"); if (statQty) statQty.textContent = st.totalQty; if (statEarned) statEarned.textContent = st.totalEarned.toFixed(2); }; });
+        
+        const addPackBtn = document.getElementById("addPackBtn");
+        if (addPackBtn) {
+            addPackBtn.onclick = async function() {
+                const art = document.getElementById("articleInput")?.value || "";
+                const qty = document.getElementById("qtyInput")?.value || "";
+                const msg = document.getElementById("msgPanel");
+                const saved = await getUserSavedLocation(s.id);
+                const savedIP = await getUserSavedIP(s.id);
+                if (!saved) { if (msg) msg.innerHTML = '<div class="error-msg" style="display:block;">❌ Выберите склад</div>'; setTimeout(() => { if (msg) msg.innerHTML = ""; }, 2500); return; }
+                const r = await addRecord(art, qty, s.id, s.name, saved.marketplace, saved.locationDisplay, saved.locationRaw, savedIP);
+                if (msg) { msg.innerHTML = r.success ? `<div class="success-msg" style="display:block;">✅ ${savedIP? savedIP+' | ':''}${saved.marketplace} | ${art.toUpperCase()} x ${qty} шт. | +${r.earned.toFixed(2)} руб.</div>` : `<div class="error-msg" style="display:block;">❌ ${r.error}</div>`; }
+                if (r.success) {
+                    // Звук успешного добавления
+                    playSuccessSound();
+                    document.getElementById("articleInput").value = "";
+                    document.getElementById("qtyInput").value = "";
+                    setTimeout(() => renderApp(), 200);
+                }
+                setTimeout(() => { if (msg) msg.innerHTML = ""; }, 2500);
+            };
+        }
+        
+        const articleInput = document.getElementById("articleInput");
+        const qtyInput = document.getElementById("qtyInput");
+        if (articleInput) { articleInput.addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); if (qtyInput) qtyInput.focus(); } }); }
+        if (qtyInput) { qtyInput.addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); if (addPackBtn) addPackBtn.click(); } }); }
     }
     
     function attachAdminEvents(){
-        document.getElementById("logoutBtn")?.addEventListener("click",()=>{clearSession();renderApp();});
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) { logoutBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); stopScanner(); clearSession(); renderApp(); }; }
+        
+        // 8. Экспорт в Excel для админа
+        const adminExportBtn = document.getElementById('adminExportBtn');
+        if (adminExportBtn) {
+            adminExportBtn.onclick = async function() {
+                const all = await db.collection('pack_records').orderBy('timestamp','desc').limit(2000).get();
+                const records = all.docs.map(d => ({ id: d.id, ...d.data() }));
+                exportToExcel(records, 'Все_записи');
+            };
+        }
+        
         let currentPage=1,allFilteredRecords=[];const PER_PAGE=25;
-        document.getElementById("applyFilterBtn").onclick=async()=>{currentPage=1;await loadFilteredData();};
+        const applyFilterBtn = document.getElementById("applyFilterBtn");
+        if (applyFilterBtn) { applyFilterBtn.onclick = async function() { currentPage = 1; await loadFilteredData(); }; }
+        
         async function loadFilteredData(){
             const eid=document.getElementById("filterEmployeeSelect")?.value,date=document.getElementById("filterDateInput")?.value,mp=document.getElementById("filterMP")?.value,city=document.getElementById("filterCity")?.value,article=document.getElementById("filterArticle")?.value.trim().toUpperCase(),container=document.getElementById("filterResultContainer");
-            let query=db.collection('pack_records');if(eid)query=query.where('userId','==',eid);if(date)query=query.where('dateOnly','==',date);if(mp&&date)query=query.where('marketplace','==',mp);if(city&&date)query=query.where('locationDisplay','==',city);
+            let query=db.collection('pack_records');if(eid) query=query.where('userId','==',eid);if(date) query=query.where('dateOnly','==',date);if(mp&&date) query=query.where('marketplace','==',mp);if(city&&date) query=query.where('locationDisplay','==',city);
             container.innerHTML='<div style="text-align:center;padding:20px;">Загрузка...</div>';
             let snap;try{snap=await query.orderBy('timestamp','desc').limit(500).get();}catch(e){snap=await query.limit(500).get();}
             if(snap.empty){container.innerHTML='<div style="text-align:center;padding:20px;">📭 Ничего не найдено</div>';return;}
-            let records=snap.docs.map(d=>({id:d.id,...d.data()}));
-            if(mp&&!date)records=records.filter(r=>r.marketplace===mp);if(city&&!date)records=records.filter(r=>r.locationDisplay===city);if(article)records=records.filter(r=>r.article&&r.article.includes(article));
+            let records=snap.docs.map(d=>({id:d.id,...d.data()}));if(mp&&!date) records=records.filter(r=>r.marketplace===mp);if(city&&!date) records=records.filter(r=>r.locationDisplay===city);if(article) records=records.filter(r=>r.article&&r.article.includes(article));
             records.sort((a,b)=>{const ta=a.timestamp?.toDate?a.timestamp.toDate():new Date(a.timestamp||0);const tb=b.timestamp?.toDate?b.timestamp.toDate():new Date(b.timestamp||0);return tb-ta;});
             if(records.length===0){container.innerHTML='<div style="text-align:center;padding:20px;">📭 Ничего не найдено</div>';return;}
             allFilteredRecords=records;renderPage(container);
         }
         function renderPage(container){
-            const totalPages=Math.ceil(allFilteredRecords.length/PER_PAGE);if(currentPage>totalPages)currentPage=totalPages;if(currentPage<1)currentPage=1;
-            const start=(currentPage-1)*PER_PAGE,pageRecords=allFilteredRecords.slice(start,start+PER_PAGE);
-            const tq=allFilteredRecords.reduce((s,r)=>s+r.quantity,0),te=allFilteredRecords.reduce((s,r)=>s+(r.earned||0),0);
-            let pHtml='';
-            if(totalPages>1){pHtml=`<div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap;"><button class="page-btn" data-page="1" ${currentPage===1?'disabled':''}>««</button><button class="page-btn" data-page="${currentPage-1}" ${currentPage===1?'disabled':''}>«</button><span style="font-size:0.8rem;padding:0 8px;">Стр. ${currentPage} из ${totalPages}</span><button class="page-btn" data-page="${currentPage+1}" ${currentPage===totalPages?'disabled':''}>»</button><button class="page-btn" data-page="${totalPages}" ${currentPage===totalPages?'disabled':''}>»»</button></div>`;}
-            container.innerHTML=`<div class="summary-card"><span>📦 <strong>${tq} шт.</strong></span><span>💰 <strong>${te.toFixed(2)} руб.</strong></span><span>📋 Всего записей: ${allFilteredRecords.length}</span><span>👥 Сотрудников: ${new Set(allFilteredRecords.map(r=>r.userId)).size}</span>${totalPages>1?`<span>📄 Стр. ${currentPage}/${totalPages}</span>`:''}</div><div style="overflow-x:auto;"><table><thead><tr><th>ИП</th><th>МП</th><th>Склад</th><th>Артикул</th><th>Кол-во</th><th>₽</th><th>Сотрудник</th><th></th></tr></thead><tbody>${pageRecords.map(r=>`<tr><td>${r.ip?`<span class="ip-badge ip-${r.ip}">${r.ip}</span>`:'—'}</td><td><span class="marketplace-badge ${r.marketplace==='WB'?'badge-wb':'badge-ozon'}">${r.marketplace}</span></td><td>${escapeHtml(r.locationDisplay||'—')}</td><td><strong>${escapeHtml(r.article)}</strong></td><td>${r.quantity}</td><td>${(r.earned||0).toFixed(2)}</td><td>${escapeHtml(r.userName)}</td><td><button class="adminDelBtn" data-id="${r.id}">🗑️</button></td></tr>`).join('')}</tbody></table></div>${pHtml}`;
-            container.querySelectorAll(".adminDelBtn").forEach(b=>{b.onclick=async()=>{if(b.dataset.id&&confirm("Удалить?")){await deleteRecord(b.dataset.id);allFilteredRecords=allFilteredRecords.filter(r=>r.id!==b.dataset.id);const tp=Math.ceil(allFilteredRecords.length/PER_PAGE);if(currentPage>tp)currentPage=Math.max(1,tp);renderPage(container);}};});
-            container.querySelectorAll(".page-btn:not([disabled])").forEach(b=>{b.onclick=()=>{const page=parseInt(b.dataset.page);if(page>=1&&page<=totalPages&&page!==currentPage){currentPage=page;renderPage(container);}};});
+            const totalPages=Math.ceil(allFilteredRecords.length/PER_PAGE);if(currentPage>totalPages) currentPage=totalPages;if(currentPage<1) currentPage=1;
+            const start=(currentPage-1)*PER_PAGE,pageRecords=allFilteredRecords.slice(start,start+PER_PAGE),tq=allFilteredRecords.reduce((s,r)=>s+r.quantity,0),te=allFilteredRecords.reduce((s,r)=>s+(r.earned||0),0);
+            let pHtml='';if(totalPages>1){pHtml=`<div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px;"><button class="page-btn" data-page="1" ${currentPage===1?'disabled':''} type="button">««</button><button class="page-btn" data-page="${currentPage-1}" ${currentPage===1?'disabled':''} type="button">«</button><span style="font-size:0.8rem;padding:0 8px;">Стр. ${currentPage} из ${totalPages}</span><button class="page-btn" data-page="${currentPage+1}" ${currentPage===totalPages?'disabled':''} type="button">»</button><button class="page-btn" data-page="${totalPages}" ${currentPage===totalPages?'disabled':''} type="button">»»</button></div>`;}
+            container.innerHTML=`<div class="summary-card"><span>📦 <strong>${tq} шт.</strong></span><span>💰 <strong>${te.toFixed(2)} руб.</strong></span><span>📋 Всего: ${allFilteredRecords.length}</span><span>👥 Сотрудников: ${new Set(allFilteredRecords.map(r=>r.userId)).size}</span>${totalPages>1?`<span>📄 Стр. ${currentPage}/${totalPages}</span>`:''}<button id="exportFilteredBtn" class="page-btn" style="margin-left:auto;" type="button">📥 Экспорт</button></div><div style="overflow-x:auto;"><table><thead><tr><th>ИП</th><th>МП</th><th>Склад</th><th>Артикул</th><th>Кол-во</th><th>₽</th><th>Сотрудник</th><th></th></tr></thead><tbody>${pageRecords.map(r=>`<tr><td>${r.ip?`<span class="ip-badge ip-${r.ip}">${r.ip}</span>`:'—'}</td><td><span class="marketplace-badge ${r.marketplace==='WB'?'badge-wb':'badge-ozon'}">${r.marketplace}</span></td><td>${escapeHtml(r.locationDisplay||'—')}</td><td><strong>${escapeHtml(r.article)}</strong></td><td>${r.quantity}</td><td>${(r.earned||0).toFixed(2)}</td><td>${escapeHtml(r.userName)}</td><td><button class="adminDelBtn" data-id="${r.id}" type="button">🗑️</button></td></tr>`).join('')}</tbody></table></div>${pHtml}`;
+            container.querySelectorAll(".adminDelBtn").forEach(b=>{b.onclick=async function(){if(b.dataset.id&&confirm("Удалить запись?")){await deleteRecord(b.dataset.id);allFilteredRecords=allFilteredRecords.filter(r=>r.id!==b.dataset.id);const tp=Math.ceil(allFilteredRecords.length/PER_PAGE);if(currentPage>tp) currentPage=Math.max(1,tp);renderPage(container);}};});
+            container.querySelectorAll(".page-btn:not([disabled])").forEach(b=>{b.onclick=function(){const page=parseInt(b.dataset.page);if(page>=1&&page<=totalPages&&page!==currentPage){currentPage=page;renderPage(container);}};});
+            const exportFilteredBtn = container.querySelector('#exportFilteredBtn');
+            if (exportFilteredBtn) { exportFilteredBtn.onclick = () => exportToExcel(allFilteredRecords, 'Отфильтрованные_записи'); }
         }
     }
     
-    window.addEventListener("DOMContentLoaded",()=>renderApp());
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') stopScanner(); });
+    window.addEventListener("DOMContentLoaded", () => { console.log('App initializing...'); renderApp(); });
+    window.addEventListener('beforeunload', () => { stopScanner(); });
 </script>
 </body>
 </html>
