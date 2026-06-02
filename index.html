@@ -38,60 +38,40 @@
             max-width: 420px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
-        /* Auth screen */
-        .screen { display: none; flex-direction: column; gap: 20px; }
+        .screen { display: none; flex-direction: column; gap: 16px; }
         .screen.active { display: flex; }
 
-        .icon-lock {
-            font-size: 42px;
-            text-align: center;
-            opacity: 0.5;
-            margin-bottom: 8px;
-        }
+        /* Auth */
+        .icon-lock { font-size: 42px; text-align: center; opacity: 0.5; margin-bottom: 8px; }
+        h1 { font-size: 20px; font-weight: 500; letter-spacing: -0.3px; text-align: center; }
+        .subtitle { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
 
-        h1 {
-            font-size: 20px;
-            font-weight: 500;
-            letter-spacing: -0.3px;
-            text-align: center;
-            color: var(--text);
-        }
-
-        .subtitle {
-            font-size: 13px;
-            color: var(--text2);
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        input {
+        input, select {
             background: var(--surface);
             border: 1px solid transparent;
             color: var(--text);
-            padding: 14px 16px;
+            padding: 12px 14px;
             border-radius: var(--radius-sm);
-            font-size: 16px;
+            font-size: 15px;
             font-family: var(--font);
             outline: none;
             transition: all 0.2s;
             width: 100%;
         }
-        input:focus {
-            border-color: var(--accent-dim);
-            background: var(--surface2);
-        }
+        input:focus, select:focus { border-color: var(--accent-dim); background: var(--surface2); }
         input::placeholder { color: #555; }
+        select { appearance: none; cursor: pointer; }
 
         button {
             background: var(--surface);
             color: var(--text);
             border: 1px solid #2a2a2a;
-            padding: 14px 20px;
+            padding: 12px 18px;
             border-radius: var(--radius-sm);
-            font-size: 15px;
+            font-size: 14px;
             font-family: var(--font);
             font-weight: 500;
             cursor: pointer;
@@ -100,75 +80,84 @@
             width: 100%;
         }
         button:active { transform: scale(0.98); }
-        button.primary {
-            background: var(--accent);
-            color: #0d0d0d;
-            border: none;
-            font-weight: 600;
-        }
+        button.primary { background: var(--accent); color: #0d0d0d; border: none; font-weight: 600; }
         button.primary:active { opacity: 0.85; }
-        button.ghost {
-            background: transparent;
-            border: 1px solid #2a2a2a;
-            font-size: 13px;
-            padding: 10px 16px;
+        button.ghost { background: transparent; border: 1px solid #2a2a2a; font-size: 12px; padding: 8px 14px; }
+        button.danger { background: transparent; border: 1px solid #4a2020; color: #c97a7a; font-size: 12px; padding: 8px 14px; }
+
+        .error-msg { font-size: 12px; color: #c97a7a; text-align: center; min-height: 16px; }
+
+        /* Navigation */
+        .nav-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
-        button.danger {
-            background: transparent;
-            border: 1px solid #4a2020;
-            color: #c97a7a;
-            font-size: 13px;
-            padding: 10px 16px;
+        .nav-row select { flex: 1; }
+        .nav-btn-sm {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--surface); border: 1px solid #2a2a2a;
+            color: var(--text); font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0; flex-shrink: 0;
         }
 
-        .error-msg {
-            font-size: 12px;
-            color: #c97a7a;
+        /* Week days grid */
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
             text-align: center;
-            min-height: 16px;
-            transition: opacity 0.3s;
+        }
+        .day-cell {
+            padding: 8px 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            font-size: 13px;
+            color: var(--text2);
+        }
+        .day-cell .day-num { font-weight: 500; font-size: 14px; color: var(--text); }
+        .day-cell.today { background: var(--surface2); }
+        .day-cell.today .day-num { color: var(--accent); font-weight: 600; }
+        .day-cell .dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent);
+            margin: 3px auto 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .day-cell.has-events .dot { opacity: 1; }
+        .day-cell:active { background: var(--surface2); }
+
+        .day-labels {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: -8px;
         }
 
-        /* Main screen */
-        .header {
+        /* Events */
+        .events-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .week-nav {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .events-count {
+            font-size: 12px;
+            color: var(--text2);
         }
-        .week-label {
-            font-size: 18px;
-            font-weight: 500;
-            min-width: 110px;
-            text-align: center;
-            letter-spacing: -0.3px;
-        }
-        .nav-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--surface);
-            border: 1px solid #2a2a2a;
-            color: var(--text);
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            transition: all 0.2s;
-        }
-        .nav-btn:active { background: var(--surface2); }
-
         .events-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-height: 50vh;
+            gap: 6px;
+            max-height: 40vh;
             overflow-y: auto;
             padding-right: 4px;
         }
@@ -179,109 +168,51 @@
             background: var(--surface);
             border: 1px solid #222;
             border-radius: var(--radius-sm);
-            padding: 14px 16px;
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            transition: all 0.2s;
+            gap: 2px;
             position: relative;
         }
-        .event-card:active { border-color: #333; }
-        .event-date {
-            font-size: 11px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 500;
-        }
-        .event-title {
-            font-size: 15px;
-            font-weight: 500;
-        }
-        .event-desc {
-            font-size: 13px;
-            color: var(--text2);
-            line-height: 1.4;
-        }
+        .event-date { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+        .event-title { font-size: 14px; font-weight: 500; }
+        .event-desc { font-size: 12px; color: var(--text2); line-height: 1.4; }
         .event-delete {
-            position: absolute;
-            top: 10px;
-            right: 12px;
-            background: none;
-            border: none;
-            color: #555;
-            font-size: 16px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
+            position: absolute; top: 8px; right: 10px;
+            background: none; border: none; color: #555;
+            font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 6px;
         }
         .event-delete:active { color: #c97a7a; background: var(--danger); }
 
-        .empty-state {
-            text-align: center;
-            color: #444;
-            padding: 40px 20px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
+        .empty-state { text-align: center; color: #444; padding: 30px 20px; font-size: 14px; line-height: 1.6; }
         .empty-state .emoji { font-size: 36px; margin-bottom: 8px; }
 
-        /* Bottom actions */
-        .bottom-actions {
-            display: flex;
-            gap: 8px;
-        }
+        /* Bottom */
+        .bottom-actions { display: flex; gap: 8px; }
 
         /* Modal */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 100;
-            align-items: flex-end;
-            justify-content: center;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); z-index: 100;
+            align-items: flex-end; justify-content: center;
         }
         .modal-overlay.active { display: flex; }
         .modal {
-            background: var(--surface);
-            width: 100%;
-            max-width: 420px;
+            background: var(--surface); width: 100%; max-width: 420px;
             border-radius: var(--radius) var(--radius) 0 0;
-            padding: 24px 20px 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
+            padding: 24px 20px 32px; display: flex; flex-direction: column; gap: 12px;
             animation: slideUp 0.25s ease;
         }
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        .modal h2 {
-            font-size: 17px;
-            font-weight: 500;
-        }
-        .modal-row {
-            display: flex;
-            gap: 8px;
-        }
-        .modal-row input { flex: 1; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal h2 { font-size: 17px; font-weight: 500; }
+        .modal-row { display: flex; gap: 8px; }
+        .modal-row button { flex: 1; }
 
         .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--surface2);
-            color: var(--text);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            z-index: 200;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--surface2); color: var(--text);
+            padding: 10px 20px; border-radius: 20px; font-size: 13px;
+            z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
         .toast.show { opacity: 1; }
     </style>
@@ -289,7 +220,7 @@
 <body>
 
 <div class="app">
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN -->
     <div class="screen active" id="screen-auth">
         <div class="icon-lock">✦</div>
         <h1>Хроника</h1>
@@ -300,24 +231,35 @@
         <button class="ghost" id="btn-reset" style="display:none;">Сбросить все данные</button>
     </div>
 
-    <!-- MAIN SCREEN -->
+    <!-- MAIN -->
     <div class="screen" id="screen-main">
-        <div class="header">
-            <div class="week-nav">
-                <button class="nav-btn" id="btn-prev">‹</button>
-                <span class="week-label" id="week-label">2025 · W01</span>
-                <button class="nav-btn" id="btn-next">›</button>
-            </div>
-            <button class="nav-btn" id="btn-today" style="font-size:13px;width:auto;border-radius:20px;padding:6px 14px;">Сегодня</button>
+        <!-- Month/Year selector -->
+        <div class="nav-row">
+            <button class="nav-btn-sm" id="btn-prev-month">‹</button>
+            <select id="month-select"></select>
+            <select id="year-select"></select>
+            <button class="nav-btn-sm" id="btn-next-month">›</button>
+            <button class="ghost" id="btn-today" style="width:auto;flex-shrink:0;">Сегодня</button>
         </div>
 
+        <!-- Day labels -->
+        <div class="day-labels">
+            <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+
+        <!-- Week days grid -->
+        <div class="week-days" id="week-days"></div>
+
+        <!-- Events -->
+        <div class="events-header">
+            <span style="font-weight:500;" id="week-range-label">06.01 — 12.01</span>
+            <span class="events-count" id="events-count">0 событий</span>
+        </div>
         <div class="events-list" id="events-container">
-            <div class="empty-state">
-                <div class="emoji">📝</div>
-                Событий пока нет<br>Добавьте первое
-            </div>
+            <div class="empty-state"><div class="emoji">📝</div>Событий пока нет</div>
         </div>
 
+        <!-- Actions -->
         <div class="bottom-actions">
             <button class="primary" id="btn-add">+ Событие</button>
             <button class="ghost" id="btn-logout" style="width:auto;">Выйти</button>
@@ -325,16 +267,16 @@
     </div>
 </div>
 
-<!-- ADD EVENT MODAL -->
+<!-- ADD MODAL -->
 <div class="modal-overlay" id="modal-add">
     <div class="modal">
         <h2>Новое событие</h2>
-        <input type="date" id="event-date" placeholder="Дата">
+        <input type="date" id="event-date">
         <input type="text" id="event-title" placeholder="Заголовок">
-        <input type="text" id="event-desc" placeholder="Описание (необязательно)">
+        <input type="text" id="event-desc" placeholder="Описание">
         <div class="modal-row">
-            <button class="ghost" id="btn-cancel" style="flex:1;">Отмена</button>
-            <button class="primary" id="btn-save" style="flex:1;">Сохранить</button>
+            <button class="ghost" id="btn-cancel">Отмена</button>
+            <button class="primary" id="btn-save">Сохранить</button>
         </div>
     </div>
 </div>
@@ -343,112 +285,79 @@
 
 <script>
     (function() {
-        // ─── CONSTANTS ────────────────────────────
         const STORAGE_KEY = 'chronicle_data';
         const SALT = 'chronicle_salt_v1';
 
-        // ─── DOM ──────────────────────────────────
-        const screenAuth = document.getElementById('screen-auth');
-        const screenMain = document.getElementById('screen-main');
-        const passwordInput = document.getElementById('password-input');
-        const authError = document.getElementById('auth-error');
-        const btnUnlock = document.getElementById('btn-unlock');
-        const btnReset = document.getElementById('btn-reset');
-        const btnLogout = document.getElementById('btn-logout');
-        const weekLabel = document.getElementById('week-label');
-        const eventsContainer = document.getElementById('events-container');
-        const btnPrev = document.getElementById('btn-prev');
-        const btnNext = document.getElementById('btn-next');
-        const btnToday = document.getElementById('btn-today');
-        const btnAdd = document.getElementById('btn-add');
-        const modalAdd = document.getElementById('modal-add');
-        const eventDate = document.getElementById('event-date');
-        const eventTitle = document.getElementById('event-title');
-        const eventDesc = document.getElementById('event-desc');
-        const btnSave = document.getElementById('btn-save');
-        const btnCancel = document.getElementById('btn-cancel');
-        const toast = document.getElementById('toast');
+        const $ = (id) => document.getElementById(id);
+        const screenAuth = $('screen-auth');
+        const screenMain = $('screen-main');
+        const passwordInput = $('password-input');
+        const authError = $('auth-error');
+        const btnReset = $('btn-reset');
+        const monthSelect = $('month-select');
+        const yearSelect = $('year-select');
+        const weekDays = $('week-days');
+        const weekRangeLabel = $('week-range-label');
+        const eventsCount = $('events-count');
+        const eventsContainer = $('events-container');
+        const modalAdd = $('modal-add');
+        const eventDate = $('event-date');
+        const eventTitle = $('event-title');
+        const eventDesc = $('event-desc');
+        const toast = $('toast');
 
-        // ─── STATE ────────────────────────────────
-        let masterPassword = null;
         let derivedKey = null;
         let currentMonday = getMonday(new Date());
-        let events = {}; // { '2025-01-06': [{ id, title, desc, date }] }
+        let events = {};
 
-        // ─── CRYPTO (Web Crypto API) ──────────────
+        // ─── Crypto ────────────────────────────
         async function deriveKey(password) {
             const enc = new TextEncoder();
             const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
             const salt = enc.encode(SALT);
             return crypto.subtle.deriveKey(
                 { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt', 'decrypt']
+                keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
             );
         }
 
         async function encryptData(key, plaintext) {
             const iv = crypto.getRandomValues(new Uint8Array(12));
             const enc = new TextEncoder();
-            const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
-            const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-            combined.set(iv);
-            combined.set(new Uint8Array(ciphertext), iv.length);
+            const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+            const combined = new Uint8Array(iv.length + ct.byteLength);
+            combined.set(iv); combined.set(new Uint8Array(ct), iv.length);
             return btoa(String.fromCharCode(...combined));
         }
 
-        async function decryptData(key, encryptedBase64) {
-            const combined = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+        async function decryptData(key, b64) {
+            const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
             const iv = combined.slice(0, 12);
-            const ciphertext = combined.slice(12);
-            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-            return new TextDecoder().decode(decrypted);
+            const ct = combined.slice(12);
+            const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+            return new TextDecoder().decode(dec);
         }
 
-        // ─── STORAGE ──────────────────────────────
-        function getEncryptedPayload() {
-            return localStorage.getItem(STORAGE_KEY);
-        }
-
-        function setEncryptedPayload(payload) {
-            localStorage.setItem(STORAGE_KEY, payload);
-        }
-
-        function clearStorage() {
-            localStorage.removeItem(STORAGE_KEY);
-        }
+        function getPayload() { return localStorage.getItem(STORAGE_KEY); }
+        function setPayload(p) { localStorage.setItem(STORAGE_KEY, p); }
+        function clearPayload() { localStorage.removeItem(STORAGE_KEY); }
 
         async function loadEvents() {
-            const payload = getEncryptedPayload();
-            if (!payload) {
-                events = {};
-                return;
-            }
-            try {
-                const json = await decryptData(derivedKey, payload);
-                events = JSON.parse(json);
-            } catch (e) {
-                events = {};
-                showToast('Ошибка расшифровки данных');
-            }
+            const p = getPayload();
+            if (!p) { events = {}; return; }
+            try { events = JSON.parse(await decryptData(derivedKey, p)); }
+            catch (e) { events = {}; }
         }
 
         async function saveEvents() {
-            const json = JSON.stringify(events);
-            const encrypted = await encryptData(derivedKey, json);
-            setEncryptedPayload(encrypted);
+            setPayload(await encryptData(derivedKey, JSON.stringify(events)));
         }
 
-        // ─── HELPERS ──────────────────────────────
+        // ─── Helpers ────────────────────────────
         function getMonday(date) {
-            const d = new Date(date);
-            d.setHours(0,0,0,0);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            d.setDate(diff);
-            return d;
+            const d = new Date(date); d.setHours(0,0,0,0);
+            const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            d.setDate(diff); return d;
         }
 
         function getWeekNumber(date) {
@@ -460,119 +369,149 @@
         }
 
         function formatDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
         }
 
-        function formatDateDisplay(dateStr) {
-            const parts = dateStr.split('-');
-            return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
-
-        function getWeekKey(monday) {
-            const year = monday.getFullYear();
-            const week = getWeekNumber(monday);
-            return `${year}-W${String(week).padStart(2, '0')}`;
-        }
-
-        function getWeekDates(monday) {
-            const dates = [];
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(monday);
-                d.setDate(d.getDate() + i);
-                dates.push(formatDate(d));
-            }
-            return dates;
+        function formatDM(date) {
+            return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}`;
         }
 
         function showToast(msg) {
-            toast.textContent = msg;
-            toast.classList.add('show');
+            toast.textContent = msg; toast.classList.add('show');
             clearTimeout(toast._timeout);
             toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // ─── RENDER ───────────────────────────────
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str; return div.innerHTML;
+        }
+
+        // ─── Render ─────────────────────────────
+        function getWeekDates() {
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(currentMonday);
+                d.setDate(d.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        }
+
+        function renderAll() {
+            renderNavSelects();
+            renderWeekGrid();
+            renderEvents();
+        }
+
+        function renderNavSelects() {
+            const year = currentMonday.getFullYear();
+            const month = currentMonday.getMonth();
+            // Years: 2024 to current+1
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let y = 2024; y <= currentYear + 1; y++) {
+                const opt = document.createElement('option');
+                opt.value = y; opt.textContent = y;
+                if (y === year) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+            const months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            monthSelect.innerHTML = '';
+            months.forEach((m, i) => {
+                const opt = document.createElement('option');
+                opt.value = i; opt.textContent = m;
+                if (i === month) opt.selected = true;
+                monthSelect.appendChild(opt);
+            });
+        }
+
+        function renderWeekGrid() {
+            const dates = getWeekDates();
+            const today = formatDate(new Date());
+            weekDays.innerHTML = dates.map(d => {
+                const ds = formatDate(d);
+                const hasEvents = events[ds] && events[ds].length > 0;
+                const isToday = ds === today;
+                return `
+                    <div class="day-cell${isToday ? ' today' : ''}${hasEvents ? ' has-events' : ''}"
+                         data-date="${ds}">
+                        <div class="day-num">${d.getDate()}</div>
+                        <div class="dot"></div>
+                    </div>`;
+            }).join('');
+
+            // Week range label
+            const first = dates[0], last = dates[6];
+            weekRangeLabel.textContent = `${formatDM(first)} — ${formatDM(last)}, ${first.getFullYear()}`;
+
+            // Click on day
+            weekDays.querySelectorAll('.day-cell').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    const ds = cell.dataset.date;
+                    const parts = ds.split('-');
+                    const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+                    currentMonday = getMonday(d);
+                    renderAll();
+                });
+            });
+        }
+
         function renderEvents() {
-            const weekDates = getWeekDates(currentMonday);
-            const weekEvents = [];
-            weekDates.forEach(dateStr => {
-                if (events[dateStr]) {
-                    events[dateStr].forEach(ev => weekEvents.push({ ...ev, date: dateStr }));
-                }
+            const dates = getWeekDates();
+            let weekEvents = [];
+            dates.forEach(d => {
+                const ds = formatDate(d);
+                if (events[ds]) weekEvents.push(...events[ds].map(ev => ({ ...ev, date: ds })));
             });
             weekEvents.sort((a, b) => a.date.localeCompare(b.date));
+            eventsCount.textContent = `${weekEvents.length} событий`;
 
             if (weekEvents.length === 0) {
-                eventsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="emoji">📝</div>
-                        Событий пока нет<br>Добавьте первое
-                    </div>`;
+                eventsContainer.innerHTML = `<div class="empty-state"><div class="emoji">📝</div>Событий пока нет</div>`;
             } else {
                 eventsContainer.innerHTML = weekEvents.map(ev => `
                     <div class="event-card">
-                        <span class="event-date">${formatDateDisplay(ev.date)}</span>
+                        <span class="event-date">${formatDM(new Date(ev.date))}</span>
                         <span class="event-title">${escapeHtml(ev.title)}</span>
                         ${ev.desc ? `<span class="event-desc">${escapeHtml(ev.desc)}</span>` : ''}
                         <button class="event-delete" data-id="${ev.id}" data-date="${ev.date}">×</button>
-                    </div>
-                `).join('');
+                    </div>`).join('');
             }
 
-            weekLabel.textContent = getWeekKey(currentMonday);
-
-            // Attach delete handlers
             document.querySelectorAll('.event-delete').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    const id = btn.dataset.id;
-                    const date = btn.dataset.date;
+                    const id = btn.dataset.id, date = btn.dataset.date;
                     events[date] = events[date].filter(ev => ev.id !== id);
                     if (events[date].length === 0) delete events[date];
                     await saveEvents();
-                    renderEvents();
+                    renderAll();
                     showToast('Удалено');
                 });
             });
         }
 
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        // ─── NAVIGATION ────────────────────────────
-        function goToWeek(offset) {
-            currentMonday.setDate(currentMonday.getDate() + offset * 7);
-            renderEvents();
+        // ─── Navigation ─────────────────────────
+        function goToMonth(year, month) {
+            const d = new Date(year, month, 1);
+            currentMonday = getMonday(d);
+            // Если первое число попадает на середину недели — всё равно показываем эту неделю
+            renderAll();
         }
 
         function goToToday() {
             currentMonday = getMonday(new Date());
-            renderEvents();
+            renderAll();
         }
 
-        // ─── AUTH ──────────────────────────────────
+        // ─── Auth ───────────────────────────────
         async function attemptLogin(password) {
             try {
                 const key = await deriveKey(password);
-                // Check if there's existing data
-                const payload = getEncryptedPayload();
-                if (payload) {
-                    try {
-                        await decryptData(key, payload);
-                    } catch (e) {
-                        authError.textContent = 'Неверный пароль';
-                        return false;
-                    }
-                }
-                // Success
+                const p = getPayload();
+                if (p) { try { await decryptData(key, p); } catch { authError.textContent = 'Неверный пароль'; return false; } }
                 derivedKey = key;
-                masterPassword = password;
                 await loadEvents();
                 screenAuth.classList.remove('active');
                 screenMain.classList.add('active');
@@ -580,15 +519,11 @@
                 passwordInput.value = '';
                 authError.textContent = '';
                 return true;
-            } catch (e) {
-                authError.textContent = 'Ошибка. Попробуйте снова.';
-                return false;
-            }
+            } catch { authError.textContent = 'Ошибка'; return false; }
         }
 
         async function setupFirstTime(password) {
             derivedKey = await deriveKey(password);
-            masterPassword = password;
             events = {};
             await saveEvents();
             screenAuth.classList.remove('active');
@@ -600,98 +535,67 @@
         }
 
         function logout() {
-            masterPassword = null;
-            derivedKey = null;
-            events = {};
+            derivedKey = null; events = {};
             screenMain.classList.remove('active');
             screenAuth.classList.add('active');
             passwordInput.focus();
             btnReset.style.display = 'none';
         }
 
-        // ─── EVENT LISTENERS ──────────────────────
-        btnUnlock.addEventListener('click', async () => {
-            const password = passwordInput.value.trim();
-            if (!password) {
-                authError.textContent = 'Введите пароль';
-                return;
-            }
-            const payload = getEncryptedPayload();
-            if (!payload) {
-                // First time setup
-                await setupFirstTime(password);
-            } else {
-                const success = await attemptLogin(password);
-                if (!success) return;
-            }
+        // ─── Event Listeners ────────────────────
+        $('btn-unlock').addEventListener('click', async () => {
+            const pw = passwordInput.value.trim();
+            if (!pw) { authError.textContent = 'Введите пароль'; return; }
+            if (!getPayload()) await setupFirstTime(pw);
+            else { if (!await attemptLogin(pw)) return; }
             btnReset.style.display = 'none';
         });
-
-        passwordInput.addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter') btnUnlock.click();
-        });
-
+        passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-unlock').click(); });
         btnReset.addEventListener('click', () => {
-            if (confirm('Удалить ВСЕ данные безвозвратно?')) {
-                clearStorage();
-                logout();
-                showToast('Данные удалены');
-            }
+            if (confirm('Удалить ВСЕ данные безвозвратно?')) { clearPayload(); logout(); showToast('Данные удалены'); }
         });
+        $('btn-logout').addEventListener('click', logout);
 
-        btnLogout.addEventListener('click', logout);
+        monthSelect.addEventListener('change', () => goToMonth(parseInt(yearSelect.value), parseInt(monthSelect.value)));
+        yearSelect.addEventListener('change', () => goToMonth(parseInt(yearSelect.value), parseInt(monthSelect.value)));
+        $('btn-prev-month').addEventListener('click', () => {
+            let m = parseInt(monthSelect.value), y = parseInt(yearSelect.value);
+            if (m === 0) { m = 11; y--; } else m--;
+            monthSelect.value = m; yearSelect.value = y;
+            goToMonth(y, m);
+        });
+        $('btn-next-month').addEventListener('click', () => {
+            let m = parseInt(monthSelect.value), y = parseInt(yearSelect.value);
+            if (m === 11) { m = 0; y++; } else m++;
+            monthSelect.value = m; yearSelect.value = y;
+            goToMonth(y, m);
+        });
+        $('btn-today').addEventListener('click', goToToday);
 
-        btnPrev.addEventListener('click', () => goToWeek(-1));
-        btnNext.addEventListener('click', () => goToWeek(1));
-        btnToday.addEventListener('click', goToToday);
-
-        btnAdd.addEventListener('click', () => {
+        $('btn-add').addEventListener('click', () => {
             eventDate.value = formatDate(new Date());
-            eventTitle.value = '';
-            eventDesc.value = '';
-            modalAdd.classList.add('active');
-            eventTitle.focus();
+            eventTitle.value = ''; eventDesc.value = '';
+            modalAdd.classList.add('active'); eventTitle.focus();
         });
-
-        btnCancel.addEventListener('click', () => {
-            modalAdd.classList.remove('active');
-        });
-
-        modalAdd.addEventListener('click', (e) => {
-            if (e.target === modalAdd) modalAdd.classList.remove('active');
-        });
-
-        btnSave.addEventListener('click', async () => {
-            const date = eventDate.value;
-            const title = eventTitle.value.trim();
-            const desc = eventDesc.value.trim();
-            if (!date || !title) {
-                showToast('Дата и заголовок обязательны');
-                return;
-            }
+        $('btn-cancel').addEventListener('click', () => modalAdd.classList.remove('active'));
+        modalAdd.addEventListener('click', e => { if (e.target === modalAdd) modalAdd.classList.remove('active'); });
+        $('btn-save').addEventListener('click', async () => {
+            const date = eventDate.value, title = eventTitle.value.trim(), desc = eventDesc.value.trim();
+            if (!date || !title) { showToast('Дата и заголовок обязательны'); return; }
             if (!events[date]) events[date] = [];
             events[date].push({
                 id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-                title,
-                desc,
-                date
+                title, desc, date
             });
             await saveEvents();
             modalAdd.classList.remove('active');
-            renderEvents();
+            renderAll();
             showToast('Добавлено ✓');
         });
 
-        // ─── INIT ──────────────────────────────────
+        // Init
         passwordInput.focus();
-
-        const payload = getEncryptedPayload();
-        if (payload) {
-            btnReset.style.display = 'block';
-        } else {
-            btnReset.style.display = 'none';
-            authError.textContent = '';
-        }
+        if (getPayload()) btnReset.style.display = 'block';
     })();
 </script>
 </body>
