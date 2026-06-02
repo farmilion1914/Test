@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>—</title>
     <style>
         :root {
@@ -14,8 +14,8 @@
             --accent: #c9a96e;
             --accent-dim: #4a3f2f;
             --danger: #5c2a2a;
-            --radius: 14px;
-            --radius-sm: 10px;
+            --radius: 16px;
+            --radius-sm: 12px;
             --font: 'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif;
         }
 
@@ -28,9 +28,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px;
+            padding: 20px;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            -webkit-user-select: none;
         }
 
         .app {
@@ -38,54 +39,60 @@
             max-width: 420px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
         }
 
-        .screen { display: none; flex-direction: column; gap: 16px; }
+        .screen { display: none; flex-direction: column; gap: 20px; }
         .screen.active { display: flex; }
 
         /* Auth */
-        .icon-lock { font-size: 42px; text-align: center; opacity: 0.5; margin-bottom: 8px; }
-        h1 { font-size: 20px; font-weight: 500; letter-spacing: -0.3px; text-align: center; }
-        .subtitle { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
+        .icon-lock { font-size: 48px; text-align: center; opacity: 0.4; margin-bottom: 4px; }
+        h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.3px; text-align: center; }
+        .subtitle { font-size: 14px; color: var(--text2); text-align: center; line-height: 1.5; }
 
-        input, select {
+        input, select, textarea {
             background: var(--surface);
             border: 1px solid transparent;
             color: var(--text);
-            padding: 12px 14px;
+            padding: 16px 16px;
             border-radius: var(--radius-sm);
-            font-size: 15px;
+            font-size: 16px;
             font-family: var(--font);
             outline: none;
             transition: all 0.2s;
             width: 100%;
+            -webkit-appearance: none;
         }
-        input:focus, select:focus { border-color: var(--accent-dim); background: var(--surface2); }
-        input::placeholder { color: #555; }
-        select { appearance: none; cursor: pointer; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent-dim); background: var(--surface2); }
+        input::placeholder, textarea::placeholder { color: #555; }
+        select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L2 4h8z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+        textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
 
         button {
             background: var(--surface);
             color: var(--text);
             border: 1px solid #2a2a2a;
-            padding: 12px 18px;
+            padding: 16px 20px;
             border-radius: var(--radius-sm);
-            font-size: 14px;
+            font-size: 16px;
             font-family: var(--font);
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             letter-spacing: -0.2px;
             width: 100%;
+            -webkit-tap-highlight-color: transparent;
         }
-        button:active { transform: scale(0.98); }
+        button:active { transform: scale(0.98); background: var(--surface2); }
         button.primary { background: var(--accent); color: #0d0d0d; border: none; font-weight: 600; }
         button.primary:active { opacity: 0.85; }
-        button.ghost { background: transparent; border: 1px solid #2a2a2a; font-size: 12px; padding: 8px 14px; }
-        button.danger { background: transparent; border: 1px solid #4a2020; color: #c97a7a; font-size: 12px; padding: 8px 14px; }
+        button.ghost { background: transparent; border: 1px solid #2a2a2a; font-size: 14px; padding: 12px 16px; }
+        button.danger { background: transparent; border: 1px solid #4a2020; color: #c97a7a; font-size: 14px; padding: 12px 16px; }
+        button.small { font-size: 13px; padding: 10px 14px; width: auto; }
 
-        .error-msg { font-size: 12px; color: #c97a7a; text-align: center; min-height: 16px; }
+        .error-msg { font-size: 13px; color: #c97a7a; text-align: center; min-height: 18px; }
+
+        .divider { border: none; border-top: 1px solid #222; margin: 4px 0; }
 
         /* Navigation */
         .nav-row {
@@ -93,16 +100,28 @@
             gap: 8px;
             align-items: center;
         }
-        .nav-row select { flex: 1; }
+        .nav-row select { flex: 1; padding: 14px 16px; }
         .nav-btn-sm {
-            width: 32px; height: 32px; border-radius: 50%;
+            width: 38px; height: 38px; border-radius: 50%;
             background: var(--surface); border: 1px solid #2a2a2a;
-            color: var(--text); font-size: 16px; cursor: pointer;
+            color: var(--text); font-size: 18px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            padding: 0; flex-shrink: 0;
+            padding: 0; flex-shrink: 0; font-size: 20px;
         }
+        .nav-btn-sm:active { background: var(--surface2); }
 
         /* Week days grid */
+        .day-labels {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+            font-size: 11px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: -12px;
+        }
         .week-days {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -110,38 +129,27 @@
             text-align: center;
         }
         .day-cell {
-            padding: 8px 4px;
-            border-radius: 8px;
+            padding: 10px 4px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.15s;
             position: relative;
             font-size: 13px;
             color: var(--text2);
+            -webkit-tap-highlight-color: transparent;
         }
-        .day-cell .day-num { font-weight: 500; font-size: 14px; color: var(--text); }
+        .day-cell .day-num { font-weight: 500; font-size: 15px; color: var(--text); }
         .day-cell.today { background: var(--surface2); }
         .day-cell.today .day-num { color: var(--accent); font-weight: 600; }
         .day-cell .dot {
             width: 5px; height: 5px; border-radius: 50%;
             background: var(--accent);
-            margin: 3px auto 0;
+            margin: 4px auto 0;
             opacity: 0;
             transition: opacity 0.2s;
         }
         .day-cell.has-events .dot { opacity: 1; }
         .day-cell:active { background: var(--surface2); }
-
-        .day-labels {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-            font-size: 10px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: -8px;
-        }
 
         /* Events */
         .events-header {
@@ -149,17 +157,16 @@
             justify-content: space-between;
             align-items: center;
         }
-        .events-count {
-            font-size: 12px;
-            color: var(--text2);
-        }
+        .week-range-label { font-weight: 500; font-size: 15px; }
+        .events-count { font-size: 13px; color: var(--text2); }
         .events-list {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            max-height: 40vh;
+            max-height: 35vh;
             overflow-y: auto;
             padding-right: 4px;
+            -webkit-overflow-scrolling: touch;
         }
         .events-list::-webkit-scrollbar { width: 3px; }
         .events-list::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
@@ -168,53 +175,64 @@
             background: var(--surface);
             border: 1px solid #222;
             border-radius: var(--radius-sm);
-            padding: 12px 14px;
+            padding: 14px 16px;
             display: flex;
             flex-direction: column;
             gap: 2px;
             position: relative;
         }
+        .event-card:active { border-color: #333; }
         .event-date { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
-        .event-title { font-size: 14px; font-weight: 500; }
-        .event-desc { font-size: 12px; color: var(--text2); line-height: 1.4; }
+        .event-title { font-size: 15px; font-weight: 500; }
+        .event-desc { font-size: 13px; color: var(--text2); line-height: 1.4; }
         .event-delete {
-            position: absolute; top: 8px; right: 10px;
+            position: absolute; top: 10px; right: 12px;
             background: none; border: none; color: #555;
-            font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 6px;
+            font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 8px;
+            -webkit-tap-highlight-color: transparent;
         }
         .event-delete:active { color: #c97a7a; background: var(--danger); }
 
-        .empty-state { text-align: center; color: #444; padding: 30px 20px; font-size: 14px; line-height: 1.6; }
-        .empty-state .emoji { font-size: 36px; margin-bottom: 8px; }
+        .empty-state { text-align: center; color: #444; padding: 36px 20px; font-size: 15px; line-height: 1.6; }
+        .empty-state .emoji { font-size: 40px; margin-bottom: 8px; }
 
         /* Bottom */
         .bottom-actions { display: flex; gap: 8px; }
+        .bottom-actions button:first-child { flex: 1; }
 
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.75); z-index: 100;
+            background: rgba(0,0,0,0.8); z-index: 100;
             align-items: flex-end; justify-content: center;
         }
         .modal-overlay.active { display: flex; }
         .modal {
             background: var(--surface); width: 100%; max-width: 420px;
-            border-radius: var(--radius) var(--radius) 0 0;
-            padding: 24px 20px 32px; display: flex; flex-direction: column; gap: 12px;
+            border-radius: 20px 20px 0 0;
+            padding: 28px 20px 36px; display: flex; flex-direction: column; gap: 14px;
             animation: slideUp 0.25s ease;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal h2 { font-size: 17px; font-weight: 500; }
+        .modal h2 { font-size: 18px; font-weight: 500; }
         .modal-row { display: flex; gap: 8px; }
         .modal-row button { flex: 1; }
 
         .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
             background: var(--surface2); color: var(--text);
-            padding: 10px 20px; border-radius: 20px; font-size: 13px;
+            padding: 12px 24px; border-radius: 24px; font-size: 14px;
             z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
         .toast.show { opacity: 1; }
+
+        /* Import hint */
+        .import-hint {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -225,10 +243,17 @@
         <div class="icon-lock">✦</div>
         <h1>Хроника</h1>
         <p class="subtitle">Личный календарь событий.<br>Введите пароль для входа.</p>
-        <input type="password" id="password-input" placeholder="Пароль" autocomplete="off">
+        <input type="password" id="password-input" placeholder="Пароль" autocomplete="off" enterkeyhint="done">
         <button class="primary" id="btn-unlock">Войти</button>
         <p class="error-msg" id="auth-error"></p>
         <button class="ghost" id="btn-reset" style="display:none;">Сбросить все данные</button>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- КНОПКА ИМПОРТА — можно удалить после использования -->
+        <!-- ═══════════════════════════════════════ -->
+        <hr class="divider">
+        <button class="ghost small" id="btn-show-import" style="width:100%;">Импорт из текста</button>
+        <!-- ═══════════════════════════════════════ -->
     </div>
 
     <!-- MAIN -->
@@ -239,7 +264,7 @@
             <select id="month-select"></select>
             <select id="year-select"></select>
             <button class="nav-btn-sm" id="btn-next-month">›</button>
-            <button class="ghost" id="btn-today" style="width:auto;flex-shrink:0;">Сегодня</button>
+            <button class="ghost small" id="btn-today">Сегодня</button>
         </div>
 
         <!-- Day labels -->
@@ -252,7 +277,7 @@
 
         <!-- Events -->
         <div class="events-header">
-            <span style="font-weight:500;" id="week-range-label">06.01 — 12.01</span>
+            <span class="week-range-label" id="week-range-label">06.01 — 12.01</span>
             <span class="events-count" id="events-count">0 событий</span>
         </div>
         <div class="events-list" id="events-container">
@@ -272,11 +297,24 @@
     <div class="modal">
         <h2>Новое событие</h2>
         <input type="date" id="event-date">
-        <input type="text" id="event-title" placeholder="Заголовок">
-        <input type="text" id="event-desc" placeholder="Описание">
+        <input type="text" id="event-title" placeholder="Заголовок" enterkeyhint="next">
+        <input type="text" id="event-desc" placeholder="Описание (заполнится автоматически)" enterkeyhint="done">
         <div class="modal-row">
             <button class="ghost" id="btn-cancel">Отмена</button>
             <button class="primary" id="btn-save">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="modal-import">
+    <div class="modal">
+        <h2>Импорт событий</h2>
+        <p class="import-hint">Вставьте текст с событиями в формате:<br>«Понедельник - описание» по неделям</p>
+        <textarea id="import-text" placeholder="2025&#10;&#10;Февраль&#10;03.02.-09.02&#10;Понедельник - пришел Влад&#10;Вторник - ресторан с Ромой&#10;..."></textarea>
+        <div class="modal-row">
+            <button class="ghost" id="btn-import-cancel">Отмена</button>
+            <button class="primary" id="btn-import-run">Импортировать</button>
         </div>
     </div>
 </div>
@@ -304,6 +342,8 @@
         const eventDate = $('event-date');
         const eventTitle = $('event-title');
         const eventDesc = $('event-desc');
+        const modalImport = $('modal-import');
+        const importText = $('import-text');
         const toast = $('toast');
 
         let derivedKey = null;
@@ -360,14 +400,6 @@
             d.setDate(diff); return d;
         }
 
-        function getWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
-
         function formatDate(date) {
             return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
         }
@@ -379,12 +411,23 @@
         function showToast(msg) {
             toast.textContent = msg; toast.classList.add('show');
             clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2200);
         }
 
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str; return div.innerHTML;
+        }
+
+        // ─── Auto-detect home day ──────────────
+        function isHomeDay(title) {
+            const t = title.toLowerCase().trim();
+            // Точные совпадения
+            if (['дом', 'дома', 'домой', 'спал', 'спала', 'сплю', 'отдыхал', 'отдыхала'].includes(t)) return true;
+            // Содержит ключевые слова
+            if (/^дом[а\s]?$/.test(t)) return true;
+            if (/^спал/.test(t)) return true;
+            return false;
         }
 
         // ─── Render ─────────────────────────────
@@ -407,7 +450,6 @@
         function renderNavSelects() {
             const year = currentMonday.getFullYear();
             const month = currentMonday.getMonth();
-            // Years: 2024 to current+1
             const currentYear = new Date().getFullYear();
             yearSelect.innerHTML = '';
             for (let y = 2024; y <= currentYear + 1; y++) {
@@ -441,11 +483,9 @@
                     </div>`;
             }).join('');
 
-            // Week range label
             const first = dates[0], last = dates[6];
             weekRangeLabel.textContent = `${formatDM(first)} — ${formatDM(last)}, ${first.getFullYear()}`;
 
-            // Click on day
             weekDays.querySelectorAll('.day-cell').forEach(cell => {
                 cell.addEventListener('click', () => {
                     const ds = cell.dataset.date;
@@ -472,7 +512,7 @@
             } else {
                 eventsContainer.innerHTML = weekEvents.map(ev => `
                     <div class="event-card">
-                        <span class="event-date">${formatDM(new Date(ev.date))}</span>
+                        <span class="event-date">${formatDM(new Date(ev.date + 'T00:00:00'))}</span>
                         <span class="event-title">${escapeHtml(ev.title)}</span>
                         ${ev.desc ? `<span class="event-desc">${escapeHtml(ev.desc)}</span>` : ''}
                         <button class="event-delete" data-id="${ev.id}" data-date="${ev.date}">×</button>
@@ -496,13 +536,105 @@
         function goToMonth(year, month) {
             const d = new Date(year, month, 1);
             currentMonday = getMonday(d);
-            // Если первое число попадает на середину недели — всё равно показываем эту неделю
             renderAll();
         }
 
         function goToToday() {
             currentMonday = getMonday(new Date());
             renderAll();
+        }
+
+        // ─── Import parser ─────────────────────
+        function parseImportText(text) {
+            const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Восскресенье'];
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
+            let currentYear = 2025;
+            let currentMonth = 1;
+            let weekDates = [];
+            let entries = [];
+
+            const lines = text.trim().split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line) continue;
+
+                if (/^\d{4}$/.test(line)) {
+                    currentYear = parseInt(line);
+                    continue;
+                }
+
+                let monthFound = false;
+                for (let m = 0; m < monthNames.length; m++) {
+                    if (line.toLowerCase().startsWith(monthNames[m].toLowerCase())) {
+                        currentMonth = m + 1;
+                        monthFound = true;
+                        break;
+                    }
+                }
+                if (monthFound) continue;
+
+                let rangeMatch = line.match(/(\d{1,2})\.(\d{1,2})\.?\s*-?\s*(\d{1,2})\.(\d{1,2})/);
+                if (rangeMatch) {
+                    let startDay = parseInt(rangeMatch[1]);
+                    let startMonth = parseInt(rangeMatch[2]);
+                    let endDay = parseInt(rangeMatch[3]);
+                    let endMonth = parseInt(rangeMatch[4]);
+
+                    if (startMonth !== currentMonth && startMonth >= 1 && startMonth <= 12) {
+                        currentMonth = startMonth;
+                    }
+
+                    let startYear = currentYear;
+                    let endYear = currentYear;
+                    if (endMonth < startMonth) endYear = currentYear + 1;
+                    if (startMonth === 12 && endMonth === 1) endYear = currentYear + 1;
+
+                    let currentWeekStart = new Date(startYear, startMonth - 1, startDay);
+                    let weekEnd = new Date(endYear, endMonth - 1, endDay);
+
+                    weekDates = [];
+                    let d = new Date(currentWeekStart);
+                    while (d <= weekEnd) {
+                        weekDates.push(new Date(d));
+                        d.setDate(d.getDate() + 1);
+                    }
+                    continue;
+                }
+
+                for (let dayIdx = 0; dayIdx < dayNames.length; dayIdx++) {
+                    let dayName = dayNames[dayIdx];
+                    let cleanDayName = dayName.replace('-', '');
+                    if (line.toLowerCase().startsWith(dayName.toLowerCase()) ||
+                        line.toLowerCase().startsWith(cleanDayName.toLowerCase() + ' ')) {
+
+                        let content = line.substring(dayName.length).trim();
+                        if (content.startsWith('-')) content = content.substring(1).trim();
+
+                        let normalizedIdx = dayIdx;
+                        if (dayIdx === 7) normalizedIdx = 6;
+
+                        if (weekDates.length > normalizedIdx) {
+                            let eventDate = weekDates[normalizedIdx];
+                            let dateStr = eventDate.getFullYear() + '-' +
+                                String(eventDate.getMonth() + 1).padStart(2, '0') + '-' +
+                                String(eventDate.getDate()).padStart(2, '0');
+
+                            if (content) {
+                                entries.push({
+                                    date: dateStr,
+                                    title: content,
+                                    desc: isHomeDay(content) ? 'Провёл день дома' : ''
+                                });
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return entries;
         }
 
         // ─── Auth ───────────────────────────────
@@ -572,6 +704,7 @@
         });
         $('btn-today').addEventListener('click', goToToday);
 
+        // Add event
         $('btn-add').addEventListener('click', () => {
             eventDate.value = formatDate(new Date());
             eventTitle.value = ''; eventDesc.value = '';
@@ -579,6 +712,19 @@
         });
         $('btn-cancel').addEventListener('click', () => modalAdd.classList.remove('active'));
         modalAdd.addEventListener('click', e => { if (e.target === modalAdd) modalAdd.classList.remove('active'); });
+
+        // Auto-fill description on title input
+        eventTitle.addEventListener('input', () => {
+            const title = eventTitle.value.trim();
+            if (isHomeDay(title)) {
+                eventDesc.value = 'Провёл день дома';
+                eventDesc.style.color = 'var(--accent)';
+            } else {
+                if (eventDesc.value === 'Провёл день дома') eventDesc.value = '';
+                eventDesc.style.color = 'var(--text)';
+            }
+        });
+
         $('btn-save').addEventListener('click', async () => {
             const date = eventDate.value, title = eventTitle.value.trim(), desc = eventDesc.value.trim();
             if (!date || !title) { showToast('Дата и заголовок обязательны'); return; }
@@ -589,8 +735,46 @@
             });
             await saveEvents();
             modalAdd.classList.remove('active');
+            eventDesc.style.color = 'var(--text)';
             renderAll();
             showToast('Добавлено ✓');
+        });
+
+        // Import modal
+        $('btn-show-import').addEventListener('click', () => {
+            if (!derivedKey) { showToast('Сначала войдите в календарь'); return; }
+            importText.value = '';
+            modalImport.classList.add('active');
+        });
+        $('btn-import-cancel').addEventListener('click', () => modalImport.classList.remove('active'));
+        modalImport.addEventListener('click', e => { if (e.target === modalImport) modalImport.classList.remove('active'); });
+
+        $('btn-import-run').addEventListener('click', async () => {
+            const text = importText.value.trim();
+            if (!text) { showToast('Вставьте текст с событиями'); return; }
+
+            const entries = parseImportText(text);
+            if (entries.length === 0) { showToast('Ничего не найдено. Проверьте формат.'); return; }
+
+            let addedCount = 0;
+            for (let entry of entries) {
+                if (!events[entry.date]) events[entry.date] = [];
+                let exists = events[entry.date].some(ev => ev.title === entry.title);
+                if (!exists) {
+                    events[entry.date].push({
+                        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '_' + Math.random().toString(36).slice(2, 4),
+                        title: entry.title,
+                        desc: entry.desc,
+                        date: entry.date
+                    });
+                    addedCount++;
+                }
+            }
+
+            await saveEvents();
+            modalImport.classList.remove('active');
+            renderAll();
+            showToast(`Импортировано: ${addedCount} событий`);
         });
 
         // Init
