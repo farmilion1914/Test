@@ -88,6 +88,10 @@
             letter-spacing: -0.2px;
             width: 100%;
             -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         button:active { transform: scale(0.98); background: var(--surface2); }
         button.primary { background: var(--accent); color: #0d0d0d; border: none; font-weight: 600; }
@@ -108,6 +112,13 @@
             line-height: 1;
         }
 
+        /* SVG иконка внутри кнопок */
+        button .btn-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
         .error-msg { font-size: 13px; color: #c97a7a; text-align: center; min-height: 18px; }
 
         /* Navigation */
@@ -122,11 +133,11 @@
             flex-shrink: 0;
         }
         select#month-select {
-            width: 125px;
+            width: 130px;
             flex: none;
         }
         select#year-select {
-            width: 80px;
+            width: 75px;
             flex: none;
         }
 
@@ -256,6 +267,8 @@
             border-radius: 20px 20px 0 0;
             padding: 28px 20px 36px; display: flex; flex-direction: column; gap: 14px;
             animation: slideUp 0.25s ease;
+            max-height: 85vh;
+            overflow-y: auto;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .modal h2 { font-size: 18px; font-weight: 500; }
@@ -291,6 +304,89 @@
             border-radius: var(--radius-sm);
         }
 
+        /* Summary tabs */
+        .summary-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        .summary-tabs button {
+            flex: 1;
+            font-size: 14px;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #2a2a2a;
+            background: transparent;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .summary-tabs button.active {
+            background: var(--accent);
+            color: #0d0d0d;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Summary content */
+        .summary-block {
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .summary-block::-webkit-scrollbar { width: 3px; }
+        .summary-block::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        .summary-month-group {
+            margin-bottom: 16px;
+        }
+        .summary-month-group:last-child { margin-bottom: 0; }
+        .summary-month-title {
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #222;
+        }
+        .summary-day {
+            margin-bottom: 8px;
+        }
+        .summary-day-date {
+            font-size: 12px;
+            color: var(--text2);
+            margin-bottom: 3px;
+        }
+        .summary-day-events {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .summary-event {
+            font-size: 14px;
+            color: var(--text);
+            padding: 6px 10px;
+            background: var(--surface);
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+        .summary-event-desc {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+
+        .summary-empty {
+            text-align: center;
+            color: #555;
+            padding: 30px;
+            font-size: 14px;
+        }
+
         .toast {
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
             background: var(--surface2); color: var(--text);
@@ -298,13 +394,6 @@
             z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
         .toast.show { opacity: 1; }
-
-        .import-hint {
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-            line-height: 1.5;
-        }
     </style>
 </head>
 <body>
@@ -329,7 +418,6 @@
             <select id="month-select"></select>
             <select id="year-select"></select>
             <button class="icon-only" id="btn-next-month">›</button>
-            <button class="ghost small" id="btn-today" style="flex-shrink:0;margin-left:auto;">Сегодня</button>
         </div>
 
         <!-- Week navigation -->
@@ -363,7 +451,12 @@
         </div>
         
         <hr class="divider">
-        <button class="ghost small" id="btn-show-import" style="width:100%;">Импорт из текста</button>
+        <button class="ghost" id="btn-show-summary" style="width:100%;">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            Сводка
+        </button>
     </div>
 </div>
 
@@ -409,16 +502,16 @@
     </div>
 </div>
 
-<!-- IMPORT MODAL -->
-<div class="modal-overlay" id="modal-import">
+<!-- SUMMARY MODAL -->
+<div class="modal-overlay" id="modal-summary">
     <div class="modal">
-        <h2>Импорт событий</h2>
-        <p class="import-hint">Вставьте текст с событиями в формате:<br>«Понедельник - описание» по неделям</p>
-        <textarea id="import-text" placeholder="2025&#10;&#10;Февраль&#10;03.02.-09.02&#10;Понедельник - пришел Влад&#10;Вторник - ресторан с Ромой&#10;..."></textarea>
-        <div class="modal-row">
-            <button class="ghost" id="btn-import-cancel">Отмена</button>
-            <button class="primary" id="btn-import-run">Импортировать</button>
+        <h2>Сводка</h2>
+        <div class="summary-tabs">
+            <button id="tab-month" class="active">За месяц</button>
+            <button id="tab-year">За год</button>
         </div>
+        <div class="summary-block" id="summary-content"></div>
+        <button class="ghost" id="btn-close-summary">Закрыть</button>
     </div>
 </div>
 
@@ -452,17 +545,20 @@
         const detailDesc = $('detail-desc');
         const modalEditDesc = $('modal-edit-desc');
         const editDescInput = $('edit-desc-input');
-        const modalImport = $('modal-import');
-        const importText = $('import-text');
+        const modalSummary = $('modal-summary');
+        const summaryContent = $('summary-content');
+        const tabMonth = $('tab-month');
+        const tabYear = $('tab-year');
         const toast = $('toast');
 
         let derivedKey = null;
         let currentMonday = getMonday(new Date());
-        let selectedDate = formatDate(new Date()); // Выбранный день
-        let selectedEventId = null; // ID выбранного события для деталей
-        let selectedEventDate = null; // Дата выбранного события
+        let selectedDate = formatDate(new Date());
+        let selectedEventId = null;
+        let selectedEventDate = null;
         let events = {};
         let suppressSelectEvents = false;
+        let summaryTab = 'month';
 
         // ─── Crypto ────────────────────────────
         async function deriveKey(password) {
@@ -613,7 +709,6 @@
             weekDays.querySelectorAll('.day-cell').forEach(cell => {
                 cell.addEventListener('click', () => {
                     selectedDate = cell.dataset.date;
-                    // Не меняем currentMonday, остаёмся на той же неделе
                     renderAll();
                 });
             });
@@ -634,7 +729,6 @@
                     </div>`).join('');
             }
 
-            // Клик по карточке — открыть детали
             document.querySelectorAll('.event-card').forEach(card => {
                 card.addEventListener('click', () => {
                     selectedEventId = card.dataset.id;
@@ -648,6 +742,68 @@
                     }
                 });
             });
+        }
+
+        // ─── Summary ────────────────────────────
+        function renderSummary() {
+            const selectedYear = parseInt(yearSelect.value);
+            const selectedMonth = parseInt(monthSelect.value);
+            
+            let filteredDates;
+            
+            if (summaryTab === 'month') {
+                filteredDates = Object.keys(events).filter(ds => {
+                    const parts = ds.split('-');
+                    return parseInt(parts[0]) === selectedYear && parseInt(parts[1]) === selectedMonth + 1;
+                }).sort();
+            } else {
+                filteredDates = Object.keys(events).filter(ds => {
+                    const parts = ds.split('-');
+                    return parseInt(parts[0]) === selectedYear;
+                }).sort();
+            }
+
+            if (filteredDates.length === 0) {
+                summaryContent.innerHTML = `<div class="summary-empty">Событий не найдено</div>`;
+                return;
+            }
+
+            const grouped = {};
+            const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            
+            filteredDates.forEach(ds => {
+                const parts = ds.split('-');
+                const monthKey = `${parts[0]}-${parts[1]}`;
+                if (!grouped[monthKey]) grouped[monthKey] = [];
+                grouped[monthKey].push(ds);
+            });
+
+            let html = '';
+            
+            Object.keys(grouped).sort().forEach(monthKey => {
+                const [y, m] = monthKey.split('-');
+                html += `<div class="summary-month-group">`;
+                html += `<div class="summary-month-title">${monthNames[parseInt(m)-1]} ${y}</div>`;
+                
+                grouped[monthKey].forEach(ds => {
+                    const dayEvents = events[ds];
+                    html += `<div class="summary-day">`;
+                    html += `<div class="summary-day-date">${formatDMFull(ds)}</div>`;
+                    html += `<div class="summary-day-events">`;
+                    dayEvents.forEach(ev => {
+                        html += `<div class="summary-event">${escapeHtml(ev.title)}`;
+                        if (ev.desc) {
+                            html += `<div class="summary-event-desc">${escapeHtml(ev.desc)}</div>`;
+                        }
+                        html += `</div>`;
+                    });
+                    html += `</div></div>`;
+                });
+                
+                html += `</div>`;
+            });
+
+            summaryContent.innerHTML = html;
         }
 
         // ─── Navigation ─────────────────────────
@@ -664,99 +820,6 @@
             currentMonday = getMonday(new Date());
             selectedDate = formatDate(new Date());
             renderAll();
-        }
-
-        // ─── Import parser ─────────────────────
-        function parseImportText(text) {
-            const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Восскресенье'];
-            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-
-            let currentYear = 2025;
-            let currentMonth = 1;
-            let weekDates = [];
-            let entries = [];
-
-            const lines = text.trim().split('\n');
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line) continue;
-
-                if (/^\d{4}$/.test(line)) {
-                    currentYear = parseInt(line);
-                    continue;
-                }
-
-                let monthFound = false;
-                for (let m = 0; m < monthNames.length; m++) {
-                    if (line.toLowerCase().startsWith(monthNames[m].toLowerCase())) {
-                        currentMonth = m + 1;
-                        monthFound = true;
-                        break;
-                    }
-                }
-                if (monthFound) continue;
-
-                let rangeMatch = line.match(/(\d{1,2})\.(\d{1,2})\.?\s*-?\s*(\d{1,2})\.(\d{1,2})/);
-                if (rangeMatch) {
-                    let startDay = parseInt(rangeMatch[1]);
-                    let startMonth = parseInt(rangeMatch[2]);
-                    let endDay = parseInt(rangeMatch[3]);
-                    let endMonth = parseInt(rangeMatch[4]);
-
-                    if (startMonth !== currentMonth && startMonth >= 1 && startMonth <= 12) {
-                        currentMonth = startMonth;
-                    }
-
-                    let startYear = currentYear;
-                    let endYear = currentYear;
-                    if (endMonth < startMonth) endYear = currentYear + 1;
-                    if (startMonth === 12 && endMonth === 1) endYear = currentYear + 1;
-
-                    let currentWeekStart = new Date(startYear, startMonth - 1, startDay);
-                    let weekEnd = new Date(endYear, endMonth - 1, endDay);
-
-                    weekDates = [];
-                    let d = new Date(currentWeekStart);
-                    while (d <= weekEnd) {
-                        weekDates.push(new Date(d));
-                        d.setDate(d.getDate() + 1);
-                    }
-                    continue;
-                }
-
-                for (let dayIdx = 0; dayIdx < dayNames.length; dayIdx++) {
-                    let dayName = dayNames[dayIdx];
-                    let cleanDayName = dayName.replace('-', '');
-                    if (line.toLowerCase().startsWith(dayName.toLowerCase()) ||
-                        line.toLowerCase().startsWith(cleanDayName.toLowerCase() + ' ')) {
-
-                        let content = line.substring(dayName.length).trim();
-                        if (content.startsWith('-')) content = content.substring(1).trim();
-
-                        let normalizedIdx = dayIdx;
-                        if (dayIdx === 7) normalizedIdx = 6;
-
-                        if (weekDates.length > normalizedIdx) {
-                            let eventDate = weekDates[normalizedIdx];
-                            let dateStr = eventDate.getFullYear() + '-' +
-                                String(eventDate.getMonth() + 1).padStart(2, '0') + '-' +
-                                String(eventDate.getDate()).padStart(2, '0');
-
-                            if (content) {
-                                entries.push({
-                                    date: dateStr,
-                                    title: content,
-                                    desc: isHomeDay(content) ? 'Провёл день дома' : ''
-                                });
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-
-            return entries;
         }
 
         // ─── Auth ───────────────────────────────
@@ -828,10 +891,8 @@
             renderAll();
         });
 
-        // Недельная навигация
         $('btn-prev-week').addEventListener('click', () => {
             currentMonday.setDate(currentMonday.getDate() - 7);
-            // Сохраняем выбранный день недели
             const oldDate = new Date(selectedDate + 'T00:00:00');
             oldDate.setDate(oldDate.getDate() - 7);
             selectedDate = formatDate(oldDate);
@@ -844,8 +905,6 @@
             selectedDate = formatDate(oldDate);
             renderAll();
         });
-
-        $('btn-today').addEventListener('click', goToToday);
 
         // Add event
         $('btn-add').addEventListener('click', () => {
@@ -878,7 +937,6 @@
             await saveEvents();
             modalAdd.classList.remove('active');
             eventDesc.style.color = 'var(--text)';
-            // Если добавили на выбранную дату — обновить
             if (date === selectedDate) renderAll();
             else {
                 selectedDate = date;
@@ -932,40 +990,30 @@
             showToast('Описание обновлено');
         });
 
-        // Import modal
-        $('btn-show-import').addEventListener('click', () => {
-            importText.value = '';
-            modalImport.classList.add('active');
+        // Summary modal
+        $('btn-show-summary').addEventListener('click', () => {
+            summaryTab = 'month';
+            tabMonth.classList.add('active');
+            tabYear.classList.remove('active');
+            renderSummary();
+            modalSummary.classList.add('active');
         });
-        $('btn-import-cancel').addEventListener('click', () => modalImport.classList.remove('active'));
-        modalImport.addEventListener('click', e => { if (e.target === modalImport) modalImport.classList.remove('active'); });
 
-        $('btn-import-run').addEventListener('click', async () => {
-            const text = importText.value.trim();
-            if (!text) { showToast('Вставьте текст с событиями'); return; }
+        $('btn-close-summary').addEventListener('click', () => modalSummary.classList.remove('active'));
+        modalSummary.addEventListener('click', e => { if (e.target === modalSummary) modalSummary.classList.remove('active'); });
 
-            const entries = parseImportText(text);
-            if (entries.length === 0) { showToast('Ничего не найдено. Проверьте формат.'); return; }
+        tabMonth.addEventListener('click', () => {
+            summaryTab = 'month';
+            tabMonth.classList.add('active');
+            tabYear.classList.remove('active');
+            renderSummary();
+        });
 
-            let addedCount = 0;
-            for (let entry of entries) {
-                if (!events[entry.date]) events[entry.date] = [];
-                let exists = events[entry.date].some(ev => ev.title === entry.title);
-                if (!exists) {
-                    events[entry.date].push({
-                        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '_' + Math.random().toString(36).slice(2, 4),
-                        title: entry.title,
-                        desc: entry.desc,
-                        date: entry.date
-                    });
-                    addedCount++;
-                }
-            }
-
-            await saveEvents();
-            modalImport.classList.remove('active');
-            renderAll();
-            showToast(`Импортировано: ${addedCount} событий`);
+        tabYear.addEventListener('click', () => {
+            summaryTab = 'year';
+            tabYear.classList.add('active');
+            tabMonth.classList.remove('active');
+            renderSummary();
         });
 
         // Init
