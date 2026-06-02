@@ -54,7 +54,7 @@
             background: var(--surface);
             border: 1px solid transparent;
             color: var(--text);
-            padding: 16px 16px;
+            padding: 16px;
             border-radius: var(--radius-sm);
             font-size: 16px;
             font-family: var(--font);
@@ -65,7 +65,14 @@
         }
         input:focus, select:focus, textarea:focus { border-color: var(--accent-dim); background: var(--surface2); }
         input::placeholder, textarea::placeholder { color: #555; }
-        select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L2 4h8z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+        select { 
+            appearance: none; 
+            cursor: pointer; 
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E"); 
+            background-repeat: no-repeat; 
+            background-position: right 12px center; 
+            padding-right: 36px; 
+        }
         textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
 
         button {
@@ -89,10 +96,20 @@
         button.ghost { background: transparent; border: 1px solid #2a2a2a; font-size: 14px; padding: 12px 16px; }
         button.danger { background: transparent; border: 1px solid #4a2020; color: #c97a7a; font-size: 14px; padding: 12px 16px; }
         button.small { font-size: 13px; padding: 10px 14px; width: auto; }
+        button.icon-only {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
 
         .error-msg { font-size: 13px; color: #c97a7a; text-align: center; min-height: 18px; }
-
-        .divider { border: none; border-top: 1px solid #222; margin: 4px 0; }
 
         /* Navigation */
         .nav-row {
@@ -100,15 +117,12 @@
             gap: 8px;
             align-items: center;
         }
-        .nav-row select { flex: 1; padding: 14px 16px; }
-        .nav-btn-sm {
-            width: 38px; height: 38px; border-radius: 50%;
-            background: var(--surface); border: 1px solid #2a2a2a;
-            color: var(--text); font-size: 18px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            padding: 0; flex-shrink: 0; font-size: 20px;
+        .nav-row select { 
+            flex: 1; 
+            padding: 12px 36px 12px 14px;
+            font-size: 15px;
+            min-width: 0;
         }
-        .nav-btn-sm:active { background: var(--surface2); }
 
         /* Week days grid */
         .day-labels {
@@ -197,8 +211,19 @@
         .empty-state .emoji { font-size: 40px; margin-bottom: 8px; }
 
         /* Bottom */
-        .bottom-actions { display: flex; gap: 8px; }
-        .bottom-actions button:first-child { flex: 1; }
+        .bottom-actions { 
+            display: flex; 
+            gap: 8px; 
+            flex-wrap: wrap;
+        }
+        .bottom-actions button:first-child { flex: 1; min-width: 0; }
+
+        /* Divider */
+        .divider { 
+            border: none; 
+            border-top: 1px solid #222; 
+            margin: 4px 0; 
+        }
 
         /* Modal */
         .modal-overlay {
@@ -226,7 +251,6 @@
         }
         .toast.show { opacity: 1; }
 
-        /* Import hint */
         .import-hint {
             font-size: 12px;
             color: #666;
@@ -247,24 +271,17 @@
         <button class="primary" id="btn-unlock">Войти</button>
         <p class="error-msg" id="auth-error"></p>
         <button class="ghost" id="btn-reset" style="display:none;">Сбросить все данные</button>
-
-        <!-- ═══════════════════════════════════════ -->
-        <!-- КНОПКА ИМПОРТА — можно удалить после использования -->
-        <!-- ═══════════════════════════════════════ -->
-        <hr class="divider">
-        <button class="ghost small" id="btn-show-import" style="width:100%;">Импорт из текста</button>
-        <!-- ═══════════════════════════════════════ -->
     </div>
 
     <!-- MAIN -->
     <div class="screen" id="screen-main">
         <!-- Month/Year selector -->
         <div class="nav-row">
-            <button class="nav-btn-sm" id="btn-prev-month">‹</button>
+            <button class="icon-only" id="btn-prev-month">‹</button>
             <select id="month-select"></select>
             <select id="year-select"></select>
-            <button class="nav-btn-sm" id="btn-next-month">›</button>
-            <button class="ghost small" id="btn-today">Сегодня</button>
+            <button class="icon-only" id="btn-next-month">›</button>
+            <button class="ghost small" id="btn-today" style="flex-shrink:0;">Сегодня</button>
         </div>
 
         <!-- Day labels -->
@@ -289,6 +306,13 @@
             <button class="primary" id="btn-add">+ Событие</button>
             <button class="ghost" id="btn-logout" style="width:auto;">Выйти</button>
         </div>
+        
+        <!-- ═══════════════════════════════════════ -->
+        <!-- КНОПКА ИМПОРТА — можно удалить после использования -->
+        <!-- ═══════════════════════════════════════ -->
+        <hr class="divider">
+        <button class="ghost small" id="btn-show-import" style="width:100%;">Импорт из текста</button>
+        <!-- ═══════════════════════════════════════ -->
     </div>
 </div>
 
@@ -349,6 +373,7 @@
         let derivedKey = null;
         let currentMonday = getMonday(new Date());
         let events = {};
+        let suppressSelectEvents = false; // Флаг для блокировки циклических вызовов
 
         // ─── Crypto ────────────────────────────
         async function deriveKey(password) {
@@ -422,9 +447,7 @@
         // ─── Auto-detect home day ──────────────
         function isHomeDay(title) {
             const t = title.toLowerCase().trim();
-            // Точные совпадения
             if (['дом', 'дома', 'домой', 'спал', 'спала', 'сплю', 'отдыхал', 'отдыхала'].includes(t)) return true;
-            // Содержит ключевые слова
             if (/^дом[а\s]?$/.test(t)) return true;
             if (/^спал/.test(t)) return true;
             return false;
@@ -451,6 +474,9 @@
             const year = currentMonday.getFullYear();
             const month = currentMonday.getMonth();
             const currentYear = new Date().getFullYear();
+            
+            suppressSelectEvents = true; // Блокируем обработчики change
+            
             yearSelect.innerHTML = '';
             for (let y = 2024; y <= currentYear + 1; y++) {
                 const opt = document.createElement('option');
@@ -466,6 +492,9 @@
                 if (i === month) opt.selected = true;
                 monthSelect.appendChild(opt);
             });
+            
+            // Разблокируем после того как DOM обновится
+            setTimeout(() => { suppressSelectEvents = false; }, 50);
         }
 
         function renderWeekGrid() {
@@ -534,6 +563,10 @@
 
         // ─── Navigation ─────────────────────────
         function goToMonth(year, month) {
+            // Нормализуем месяц
+            if (month < 0) { month = 11; year--; }
+            if (month > 11) { month = 0; year++; }
+            
             const d = new Date(year, month, 1);
             currentMonday = getMonday(d);
             renderAll();
@@ -688,20 +721,26 @@
         });
         $('btn-logout').addEventListener('click', logout);
 
-        monthSelect.addEventListener('change', () => goToMonth(parseInt(yearSelect.value), parseInt(monthSelect.value)));
-        yearSelect.addEventListener('change', () => goToMonth(parseInt(yearSelect.value), parseInt(monthSelect.value)));
+        // Селекты — только если не заблокированы
+        monthSelect.addEventListener('change', () => {
+            if (suppressSelectEvents) return;
+            goToMonth(parseInt(yearSelect.value), parseInt(monthSelect.value));
+        });
+        yearSelect.addEventListener('change', () => {
+            if (suppressSelectEvents) return;
+            goToMonth(parseInt(yearSelect.value), parseInt(monthSelect.value));
+        });
+
+        // Стрелки — напрямую манипулируем currentMonday, без вызова goToMonth
         $('btn-prev-month').addEventListener('click', () => {
-            let m = parseInt(monthSelect.value), y = parseInt(yearSelect.value);
-            if (m === 0) { m = 11; y--; } else m--;
-            monthSelect.value = m; yearSelect.value = y;
-            goToMonth(y, m);
+            currentMonday.setMonth(currentMonday.getMonth() - 1);
+            renderAll();
         });
         $('btn-next-month').addEventListener('click', () => {
-            let m = parseInt(monthSelect.value), y = parseInt(yearSelect.value);
-            if (m === 11) { m = 0; y++; } else m++;
-            monthSelect.value = m; yearSelect.value = y;
-            goToMonth(y, m);
+            currentMonday.setMonth(currentMonday.getMonth() + 1);
+            renderAll();
         });
+
         $('btn-today').addEventListener('click', goToToday);
 
         // Add event
@@ -742,7 +781,6 @@
 
         // Import modal
         $('btn-show-import').addEventListener('click', () => {
-            if (!derivedKey) { showToast('Сначала войдите в календарь'); return; }
             importText.value = '';
             modalImport.classList.add('active');
         });
