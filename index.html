@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogiTrack Pro — управление отгрузками</title>
+    <title>График отгрузок</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -290,7 +290,7 @@
 <body>
 
 <div class="header-bar">
-    <div class="app-title">📦 LogiTrack Pro</div>
+    <div class="app-title">📦 График отгрузок</div>
     <div class="global-actions">
         <span class="sync-status sync-loading" id="syncStatus">🔄 Синхронизация...</span>
         <button class="btn btn-primary btn-sm" id="btnSyncNow">🔄 Обновить</button>
@@ -298,7 +298,7 @@
 </div>
 
 <div class="nav">
-    <button class="nav-btn" data-page="schedule">📊 График отгрузок</button>
+    <button class="nav-btn" data-page="schedule">📊 Сводная</button>
     <button class="nav-btn" data-page="wb">🟣 WB Отгрузки</button>
     <button class="nav-btn" data-page="ozon">🔵 Ozon Отгрузки</button>
     <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
@@ -306,10 +306,10 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ГРАФИК ОТГРУЗОК -->
+<!-- СВОДНАЯ -->
 <div class="page" id="page-schedule">
-    <h1>📊 График отгрузок</h1>
-    <p class="subtitle">Текущая неделя сверху — нажми на неделю чтобы увидеть города</p>
+    <h1>📊 Сводная</h1>
+    <p class="subtitle">Сводная таблица по неделям — нажми на неделю чтобы увидеть города</p>
     <div class="top-bar">
         <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
         <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 Экспорт CSV</button>
@@ -373,7 +373,6 @@
     <h1>🚚 Логистика</h1>
     <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты</p>
     
-    <!-- ПРЕДУПРЕЖДЕНИЕ О МАШИНАХ НА ЗАВТРА -->
     <div class="truck-alert" id="truckAlert" style="display:none;">
         <h3>🚛 На завтра нужно заказать машины:</h3>
         <div id="truckList"></div>
@@ -389,7 +388,6 @@
         <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
     </div>
     
-    <!-- ФОРМА ДОБАВЛЕНИЯ -->
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Дата</label><input type="date" id="logDate"></div>
@@ -481,6 +479,8 @@ const STATUSES = [
     { value: 'ready', label: '✅ Готово, ожидает отправки', class: 'status-ready' }
 ];
 
+const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
+
 // ========== СОСТОЯНИЕ ==========
 let wbShipments = [];
 let ozonShipments = [];
@@ -488,8 +488,6 @@ let logEntries = [];
 let weekCapacities = {};
 let isOnline = false;
 let currentPage = 'schedule';
-
-const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
 
 function updateSyncStatus(status) {
     const el = document.getElementById('syncStatus');
@@ -553,7 +551,6 @@ function saveToLocalStorage() {
     localStorage.setItem('currentPage', currentPage);
 }
 
-// ========== ТОЧЕЧНЫЕ ОПЕРАЦИИ С FIREBASE ==========
 async function addShipmentToFirebase(mp, shipment) {
     if (!isOnline) return;
     try {
@@ -623,7 +620,6 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ========== РЕДАКТИРОВАНИЕ ПОЛЕЙ ЛОГИСТИКИ ==========
 function updateLogSupplier(id, value) {
     const entry = logEntries.find(e => String(e.id) === String(id));
     if (entry) {
@@ -679,7 +675,6 @@ function toggleLogPaid(id) {
     }
 }
 
-// ========== ПРОВЕРКА МАШИН НА ЗАВТРА ==========
 function checkTrucksForTomorrow() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -713,7 +708,6 @@ function checkTrucksForTomorrow() {
     ).join('');
 }
 
-// ========== СОХРАНЕНИЕ ОТГРУЗКИ ==========
 async function saveShipment(mp) {
     const date = document.getElementById('shipDate' + mp).value;
     const city = document.getElementById('shipCity' + mp).value.trim();
@@ -785,7 +779,6 @@ function showRouteInfo() {
     } else { info.classList.remove('show'); }
 }
 
-// ========== ВСПОМОГАТЕЛЬНЫЕ ==========
 function getWeekKey(ds) {
     if (!ds || typeof ds !== 'string') return { key: 'unknown-' + Math.random(), label: 'Без даты' };
     const d = new Date(ds + 'T00:00:00');
@@ -830,7 +823,6 @@ function switchPage(page) {
     }
 }
 
-// ========== ГРАФИК ==========
 let showScheduleImport = false;
 function toggleScheduleImport() {
     showScheduleImport = !showScheduleImport;
@@ -900,7 +892,7 @@ function exportScheduleCSV() {
         const g=grp[k], t=g.wb+g.ozon, cap=weekCapacities[k]||0;
         csv += `${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`;
     });
-    downloadCSV(csv, 'график_отгрузок.csv');
+    downloadCSV(csv, 'сводная.csv');
 }
 
 function getAllShipments() {
@@ -910,7 +902,6 @@ function getAllShipments() {
     return all.filter(s => s.date && typeof s.date === 'string' && !isNaN(new Date(s.date + 'T00:00:00').getTime()));
 }
 
-// ========== ЛОГИСТИКА ==========
 function updateLogCalc() {
     const a = parseFloat(document.getElementById('logAmount').value) || 0;
     const rate = document.getElementById('logNDS').value === '22%' ? 1.22 : 1.07;
@@ -996,7 +987,6 @@ function resetLogFilters() {
     renderLog();
 }
 
-// ========== ОТОБРАЖЕНИЕ ==========
 function renderSchedule() {
     const all = getAllShipments();
     const grp = {};
