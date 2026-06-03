@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogiTrack — учёт логистики</title>
+    <title>LogiTrack Pro — управление отгрузками</title>
     <style>
         :root {
             --bg: #f6f7f9;
@@ -12,36 +12,60 @@
             --sub: #6b7280;
             --border: #e5e7eb;
             --accent: #2563eb;
-            --accent-hover: #1d4ed8;
+            --wb: #6a1b9a;
+            --ozon: #005bff;
             --danger: #ef4444;
-            --paid: #10b981;
-            --unpaid: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
             --radius: 10px;
             --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.5;
             padding: 16px;
-            max-width: 1300px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
-        h1 {
-            font-size: 22px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
-        .subtitle {
-            color: var(--sub);
-            font-size: 13px;
+        .nav {
+            display: flex;
+            gap: 4px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 4px;
             margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
         }
+        .nav-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: var(--sub);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .nav-btn:hover { background: #f3f4f6; }
+        .nav-btn.active { background: var(--accent); color: #fff; }
+        .nav-btn.wb-active { background: var(--wb); color: #fff; }
+        .nav-btn.ozon-active { background: var(--ozon); color: #fff; }
+        .nav-btn.log-active { background: #374151; color: #fff; }
+
+        h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 2px; }
+        .subtitle { color: var(--sub); font-size: 12px; margin-bottom: 12px; }
+
+        .page { display: none; }
+        .page.active { display: block; }
 
         .top-bar {
             display: flex;
@@ -57,51 +81,20 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            white-space: nowrap;
-            letter-spacing: 0.2px;
             transition: all 0.15s;
         }
         .btn-accent { background: var(--accent); color: #fff; }
-        .btn-accent:hover { background: var(--accent-hover); }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
+        .btn-accent:hover { opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         .btn-outline:hover { background: #f3f4f6; }
-        .btn-danger {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 5px 10px;
-            font-size: 12px;
-        }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
         .btn-danger:hover { background: #fef2f2; }
         .btn-sm { padding: 5px 10px; font-size: 11px; }
-
-        /* Кнопки статуса */
-        .btn-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.15s;
-            background: #f3f4f6;
-            color: var(--sub);
-        }
-        .btn-status:hover { border-color: #93a8d8; background: #fff; }
-        .btn-status.paid-active {
-            background: #d1fae5;
-            color: #065f46;
-            border-color: #10b981;
-        }
-        .btn-status.unpaid-active {
-            background: #fef3c7;
-            color: #92400e;
-            border-color: #f59e0b;
-        }
+        .btn-wb { background: var(--wb); color: #fff; }
+        .btn-wb:hover { opacity: 0.9; }
+        .btn-ozon { background: var(--ozon); color: #fff; }
+        .btn-ozon:hover { opacity: 0.9; }
+        .btn-log { background: #374151; color: #fff; }
 
         .form-card {
             background: var(--card);
@@ -121,7 +114,7 @@
             flex-direction: column;
             gap: 3px;
             flex: 1;
-            min-width: 90px;
+            min-width: 80px;
         }
         .field label {
             font-size: 10px;
@@ -139,11 +132,7 @@
             background: #fafafa;
             width: 100%;
         }
-        .field input:focus, .field select:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: #fff;
-        }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--accent); background: #fff; }
         .field-calc {
             background: #f0f4ff;
             border: 1px dashed #93a8d8;
@@ -156,418 +145,696 @@
             text-align: right;
         }
 
-        .import-area {
-            margin-bottom: 14px;
-        }
-        .import-area textarea {
-            width: 100%;
-            height: 70px;
-            font-family: 'SF Mono', 'Cascadia Code', monospace;
-            font-size: 11px;
-            padding: 8px 10px;
-            border: 1px solid var(--border);
+        .route-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
             border-radius: 8px;
-            resize: vertical;
-            background: #fafafa;
+            padding: 10px 14px;
+            margin-top: 8px;
+            font-size: 12px;
+            display: none;
+        }
+        .route-info.show { display: block; }
+        .route-info .route-title { font-weight: 700; color: #166534; margin-bottom: 4px; }
+        .route-info .route-detail { color: #15803d; font-size: 11px; }
+        .route-schedule { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .route-chip { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; }
+
+        .import-area { margin-bottom: 14px; }
+        .import-area textarea {
+            width: 100%; height: 70px;
+            font-family: 'SF Mono', 'Cascadia Code', monospace;
+            font-size: 11px; padding: 8px 10px;
+            border: 1px solid var(--border); border-radius: 8px;
+            resize: vertical; background: #fafafa;
         }
         .import-area textarea:focus { outline: none; border-color: var(--accent); }
 
-        .filters {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .filters select, .filters input {
-            padding: 6px 8px;
-            border: 1px solid var(--border);
-            border-radius: 7px;
-            font-size: 12px;
-            background: #fff;
-        }
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: #f3f4f6;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 500;
-            cursor: pointer;
-            user-select: none;
-            border: 1px solid transparent;
-        }
-        .chip.active { background: #dbeafe; border-color: var(--accent); color: var(--accent); }
-
         .table-wrap {
-            background: var(--card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow-x: auto;
+            background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+            overflow-x: auto; margin-bottom: 14px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            min-width: 1100px;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
         th {
-            text-align: left;
-            padding: 10px 10px;
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--sub);
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            background: var(--card);
+            text-align: left; padding: 10px 10px; font-size: 9px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--sub);
+            border-bottom: 2px solid var(--border); white-space: nowrap; background: var(--card);
         }
-        td {
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-        }
+        td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
         tr:hover { background: #f9fafb; }
-
-        .badge-nds {
-            background: #e0e7ff;
-            color: #3730a3;
-            padding: 2px 7px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-            display: inline-block;
-        }
         .num { text-align: right; font-variant-numeric: tabular-nums; }
-        .unit-price { color: var(--sub); }
+
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600;
+        }
+        .badge-wb { background: #f3e5f5; color: #6a1b9a; }
+        .badge-ozon { background: #e3f2fd; color: #005bff; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-paid { background: #d1fae5; color: #065f46; cursor: pointer; }
+        .badge-unpaid { background: #fef3c7; color: #92400e; cursor: pointer; }
+        .badge-nds { background: #e0e7ff; color: #3730a3; }
+
+        .btn-status {
+            padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
+            background: #f3f4f6; color: var(--sub);
+        }
+        .btn-status:hover { border-color: #93a8d8; background: #fff; }
+        .btn-status.paid-active { background: #d1fae5; color: #065f46; border-color: #10b981; }
+        .btn-status.unpaid-active { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
 
         .summary {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 14px;
+            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;
         }
         .summary-item {
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 12px 14px;
-            box-shadow: var(--shadow);
-            flex: 1;
-            min-width: 120px;
+            background: var(--card); border-radius: var(--radius); padding: 12px 14px;
+            box-shadow: var(--shadow); flex: 1; min-width: 120px;
         }
-        .summary-item .label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: var(--sub);
-            margin-bottom: 2px;
+        .summary-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--sub); }
+        .summary-item .value { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+        .summary-item .subvalue { font-size: 11px; color: var(--sub); }
+
+        .week-row {
+            background: #f9fafb;
+            border-left: 4px solid var(--accent);
         }
-        .summary-item .value {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
-        .summary-item .subvalue {
-            font-size: 11px;
-            color: var(--sub);
-        }
-        .empty { text-align: center; color: var(--sub); padding: 40px; font-size: 13px; }
-        .month-sep {
+        .week-row-alt {
             background: #f3f4f6;
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--sub);
-            padding: 8px 10px !important;
+            border-left: 4px solid #93a8d8;
         }
+        .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; margin-top: 4px; overflow: hidden; min-width: 60px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+
+        .capacity-cell { text-align: center; }
+        .capacity-input {
+            width: 80px;
+            text-align: center;
+            padding: 5px 8px;
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #fff;
+            transition: all 0.2s;
+        }
+        .capacity-input:focus { outline: none; border-color: var(--accent); border-style: solid; }
+        .capacity-input:hover { border-color: #93a8d8; }
+
+        .empty { text-align: center; color: var(--sub); padding: 40px; font-size: 13px; }
+        .unit-price { color: var(--sub); }
     </style>
 </head>
 <body>
 
-    <h1>🚚 LogiTrack</h1>
-    <p class="subtitle">Учёт логистических отправлений</p>
-
-    <div class="top-bar">
-        <button class="btn btn-outline btn-sm" onclick="toggleImport()">📥 Импорт</button>
-        <button class="btn btn-outline btn-sm" onclick="exportCSV()">📤 Экспорт CSV</button>
-        <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Очистить всё</button>
-        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Строк: <b id="rowCount">0</b></span>
+    <!-- Навигация -->
+    <div class="nav">
+        <button class="nav-btn active" onclick="switchPage('schedule')">📊 График отгрузок</button>
+        <button class="nav-btn" onclick="switchPage('wb')">🟣 WB Отгрузки</button>
+        <button class="nav-btn" onclick="switchPage('ozon')">🔵 Ozon Отгрузки</button>
+        <button class="nav-btn" onclick="switchPage('logistics')">🚚 Логистика</button>
     </div>
 
-    <div class="import-area" id="importBlock" style="display:none;">
-        <textarea id="importText" placeholder="Вставь строки (дата	МП	тип	поставщик	город	кол-во	паллет	сумма	статус	НДС%)"></textarea>
-        <button class="btn btn-accent btn-sm" style="margin-top:6px;" onclick="doImport()">Загрузить строки</button>
-        <span style="font-size:10px;color:var(--sub);margin-left:8px;">Разделитель — табуляция (копируй прямо из Excel/Google Таблиц)</span>
+    <!-- ==================== СТРАНИЦА 1: ГРАФИК ОТГРУЗОК ==================== -->
+    <div class="page active" id="page-schedule">
+        <h1>📊 График отгрузок</h1>
+        <p class="subtitle">Понедельная сводка: количество товара по МП, пропускная способность и загруженность склада</p>
+
+        <div class="top-bar">
+            <button class="btn btn-outline btn-sm" onclick="exportScheduleCSV()">📤 Экспорт CSV</button>
+            <span style="font-size:12px;color:var(--sub);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b></span>
+        </div>
+
+        <div class="summary" id="scheduleSummary"></div>
+        <div class="table-wrap" id="scheduleTable"><div class="empty">Нет данных. Сначала добавьте отгрузки на вкладках WB и Ozon</div></div>
     </div>
 
-    <div class="form-card">
-        <div class="form-row">
-            <div class="field"><label>Дата</label><input type="date" id="fDate"></div>
-            <div class="field"><label>Маркетплейс</label><select id="fMP"><option>Wildberries</option><option>Ozon</option></select></div>
-            <div class="field"><label>Тип</label><select id="fType"><option>FBO</option><option>FBS</option></select></div>
-            <div class="field"><label>Поставщик</label><input type="text" id="fSupplier" placeholder="Большие Амбиции"></div>
-            <div class="field"><label>Город / Склад</label><input type="text" id="fCity" placeholder="Краснодар"></div>
-            <div class="field" style="max-width:80px"><label>Кол-во</label><input type="number" id="fQty" min="1"></div>
-            <div class="field" style="max-width:70px"><label>Паллет</label><input type="number" id="fBoxes" min="1"></div>
-            <div class="field" style="max-width:100px"><label>Сумма, ₽</label><input type="number" id="fAmount" step="0.01"></div>
-            <div class="field" style="max-width:80px"><label>НДС</label><select id="fNDS"><option value="22%">22%</option><option value="7%">7%</option></select></div>
-            <div class="field" style="max-width:115px">
-                <label>Сумма с НДС</label>
-                <div class="field-calc" id="calcFull">0 ₽</div>
+    <!-- ==================== СТРАНИЦА 2: WB ОТГРУЗКИ ==================== -->
+    <div class="page" id="page-wb">
+        <h1>🟣 Wildberries — Отгрузки</h1>
+        <p class="subtitle">Внесение планируемых отгрузок — данные попадают в График отгрузок</p>
+
+        <div class="top-bar">
+            <button class="btn btn-wb btn-sm" onclick="addShipment('Wildberries')">+ Добавить отгрузку</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('wbUpload').click()">📥 Загрузить Excel</button>
+            <input type="file" id="wbUpload" accept=".csv,.xlsx" style="display:none;" onchange="importShipmentExcel(this, 'Wildberries')">
+            <span style="font-size:12px;color:var(--sub);margin-left:auto;">Отгрузок: <b id="wbCount">0</b></span>
+        </div>
+
+        <div class="form-card" id="shipmentFormWb" style="display:none;">
+            <div class="form-row">
+                <div class="field"><label>Дата отгрузки</label><input type="date" id="shipDateWb"></div>
+                <div class="field"><label>Город</label><input type="text" id="shipCityWb" placeholder="Начните вводить город" list="cityList" oninput="showRouteInfo('Wb')"></div>
+                <div class="field" style="max-width:100px"><label>Кол-во</label><input type="number" id="shipQtyWb" min="1"></div>
+                <div class="field" style="justify-content:flex-end">
+                    <button class="btn btn-wb btn-sm" onclick="saveShipment('Wildberries')">Сохранить</button>
+                    <button class="btn btn-outline btn-sm" onclick="cancelShipment('Wildberries')">Отмена</button>
+                </div>
             </div>
-            <div class="field" style="justify-content:flex-end">
-                <button class="btn btn-accent" style="height:34px;" onclick="addEntry()">+ Добавить</button>
+            <div class="route-info" id="routeInfoWb">
+                <div class="route-title" id="routeTitleWb"></div>
+                <div class="route-detail" id="routeDetailWb"></div>
+                <div class="route-schedule" id="routeScheduleWb"></div>
             </div>
         </div>
+
+        <div class="table-wrap" id="wbTable"><div class="empty">Нет отгрузок</div></div>
     </div>
 
-    <div class="filters">
-        <span style="font-size:11px;color:var(--sub);">Фильтр:</span>
-        <input type="month" id="filterMonth" onchange="render()" style="width:130px;">
-        <select id="filterStatus" onchange="render()">
-            <option value="all">Все статусы</option>
-            <option value="paid">Оплачен</option>
-            <option value="unpaid">Не оплачен</option>
-        </select>
-        <select id="filterMP" onchange="render()">
-            <option value="all">Все МП</option>
-            <option>Wildberries</option>
-            <option>Ozon</option>
-        </select>
-        <span class="chip" onclick="resetFilters()">✕ Сброс</span>
+    <!-- ==================== СТРАНИЦА 3: OZON ОТГРУЗКИ ==================== -->
+    <div class="page" id="page-ozon">
+        <h1>🔵 Ozon — Отгрузки</h1>
+        <p class="subtitle">Внесение планируемых отгрузок — доставка день в день</p>
+
+        <div class="top-bar">
+            <button class="btn btn-ozon btn-sm" onclick="addShipment('Ozon')">+ Добавить отгрузку</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('ozonUpload').click()">📥 Загрузить Excel</button>
+            <input type="file" id="ozonUpload" accept=".csv,.xlsx" style="display:none;" onchange="importShipmentExcel(this, 'Ozon')">
+            <span style="font-size:12px;color:var(--sub);margin-left:auto;">Отгрузок: <b id="ozonCount">0</b></span>
+        </div>
+
+        <div class="form-card" id="shipmentFormOzon" style="display:none;">
+            <div class="form-row">
+                <div class="field"><label>Дата отгрузки</label><input type="date" id="shipDateOzon"></div>
+                <div class="field"><label>Город</label><input type="text" id="shipCityOzon" placeholder="Начните вводить город" list="cityList"></div>
+                <div class="field" style="max-width:100px"><label>Кол-во</label><input type="number" id="shipQtyOzon" min="1"></div>
+                <div class="field" style="justify-content:flex-end">
+                    <button class="btn btn-ozon btn-sm" onclick="saveShipment('Ozon')">Сохранить</button>
+                    <button class="btn btn-outline btn-sm" onclick="cancelShipment('Ozon')">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrap" id="ozonTable"><div class="empty">Нет отгрузок</div></div>
     </div>
 
-    <div class="summary" id="summary"></div>
+    <!-- ==================== СТРАНИЦА 4: ЛОГИСТИКА ==================== -->
+    <div class="page" id="page-logistics">
+        <h1>🚚 Логистика</h1>
+        <p class="subtitle">Учёт логистических отправлений с ценами за единицу</p>
 
-    <div class="table-wrap" id="tableContainer"><div class="empty">Нет записей</div></div>
+        <div class="top-bar">
+            <button class="btn btn-outline btn-sm" onclick="toggleLogImport()">📥 Импорт</button>
+            <button class="btn btn-outline btn-sm" onclick="exportLogCSV()">📤 Экспорт CSV</button>
+            <button class="btn btn-danger btn-sm" onclick="clearLogEntries()">🗑 Очистить всё</button>
+            <span style="font-size:12px;color:var(--sub);margin-left:auto;">Строк: <b id="logCount">0</b></span>
+        </div>
+
+        <div class="import-area" id="logImportBlock" style="display:none;">
+            <textarea id="logImportText" placeholder="Вставь строки (дата	МП	тип	поставщик	город	кол-во	паллет	сумма	статус	НДС%)"></textarea>
+            <button class="btn btn-accent btn-sm" style="margin-top:6px;" onclick="doLogImport()">Загрузить строки</button>
+            <span style="font-size:10px;color:var(--sub);margin-left:8px;">Разделитель — табуляция</span>
+        </div>
+
+        <div class="form-card">
+            <div class="form-row">
+                <div class="field"><label>Дата</label><input type="date" id="logDate"></div>
+                <div class="field"><label>Маркетплейс</label><select id="logMP"><option>Wildberries</option><option>Ozon</option></select></div>
+                <div class="field"><label>Тип</label><select id="logType"><option>FBO</option><option>FBS</option></select></div>
+                <div class="field"><label>Поставщик</label><input type="text" id="logSupplier" placeholder="Большие Амбиции"></div>
+                <div class="field"><label>Город / Склад</label><input type="text" id="logCity" placeholder="Краснодар" list="cityList"></div>
+                <div class="field" style="max-width:80px"><label>Кол-во</label><input type="number" id="logQty" min="1"></div>
+                <div class="field" style="max-width:70px"><label>Паллет</label><input type="number" id="logBoxes" min="1"></div>
+                <div class="field" style="max-width:100px"><label>Сумма, ₽</label><input type="number" id="logAmount" step="0.01"></div>
+                <div class="field" style="max-width:80px"><label>НДС</label><select id="logNDS"><option value="22%">22%</option><option value="7%">7%</option></select></div>
+                <div class="field" style="max-width:115px"><label>Сумма с НДС</label><div class="field-calc" id="logCalcFull">0 ₽</div></div>
+                <div class="field" style="justify-content:flex-end">
+                    <button class="btn btn-log btn-sm" style="height:34px;" onclick="addLogEntry()">+ Добавить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <span style="font-size:11px;color:var(--sub);">Фильтр:</span>
+            <input type="month" id="logFilterMonth" onchange="renderLog()" style="width:130px;">
+            <select id="logFilterStatus" onchange="renderLog()">
+                <option value="all">Все статусы</option><option value="paid">Оплачен</option><option value="unpaid">Не оплачен</option>
+            </select>
+            <select id="logFilterMP" onchange="renderLog()">
+                <option value="all">Все МП</option><option>Wildberries</option><option>Ozon</option>
+            </select>
+            <span class="chip" onclick="resetLogFilters()">✕ Сброс</span>
+        </div>
+
+        <div class="summary" id="logSummary"></div>
+        <div class="table-wrap" id="logTable"><div class="empty">Нет записей</div></div>
+    </div>
+
+    <datalist id="cityList"></datalist>
 
     <script>
-        const STORAGE_KEY = 'logitrack_v3';
-        let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        let showImport = false;
+        // ==================== БАЗА РЕЙСОВ (только для WB) ====================
+        const routesDB = {
+            'Казань': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Краснодар': { schedule: 'Пн-Ср, Ср-Пт, Пт-Вс', delivery: '2-3 дня' },
+            'Невинномысск': { schedule: 'Пн-Ср, Ср-Пт, Пт-Вс', delivery: '2-3 дня' },
+            'Екатеринбург': { schedule: 'Ср-Сб, Сб-Вт, Вт-Пт', delivery: '2-3 дня' },
+            'Санкт-Петербург': { schedule: 'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс', delivery: '1-2 дня' },
+            'Челябинск': { schedule: 'Ср-Сб, Сб-Вт', delivery: '2-3 дня' },
+            'Минск': { schedule: 'Пн-Пт — след. день', delivery: '2 дня' },
+            'Тула': { schedule: 'В любой день', delivery: 'день в день' },
+            'Коледино': { schedule: 'В любой день', delivery: 'день в день' },
+            'Электросталь': { schedule: 'В любой день', delivery: 'день в день' },
+            'Волгоград': { schedule: 'Ср-Пт', delivery: '2-3 дня' },
+            'Владимир': { schedule: 'В любой день', delivery: '2 дня' },
+            'Рязань': { schedule: 'В любой день', delivery: 'день в день' },
+            'Воронеж': { schedule: 'Пн-Чт, Ср-Сб, Пт-Пн', delivery: '3-4 дня' },
+            'Новосибирск': { schedule: 'Пн-Сб, Пт-Ср', delivery: '5-6 дней' },
+            'Сарапул': { schedule: 'Пн-Чт', delivery: '4 дня' },
+            'Котовск': { schedule: 'Пн-Пт — след. день', delivery: '2 дня' },
+            'Питер': { schedule: 'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс', delivery: '1-2 дня' },
+            'Шушары': { schedule: 'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс', delivery: '1-2 дня' },
+            'Чехов': { schedule: 'В любой день', delivery: 'день в день' },
+            'Чехов 1': { schedule: 'В любой день', delivery: 'день в день' },
+            'Чехов 2': { schedule: 'В любой день', delivery: 'день в день' },
+            'Хоругвино': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Петровское': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Радумля': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Ногинск': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Фреш': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Пушкино': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Пушкино 1': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Пушкино 2': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Жуковский': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Домодедово': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Софьино': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Гривно': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Ватутинки': { schedule: 'В любой день', delivery: '1-2 дня' },
+            'Великий Камень (Минск)': { schedule: 'Пн-Пт — след. день', delivery: '2 дня' },
+        };
 
-        document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
-
-        function updateCalc() {
-            const amount = parseFloat(document.getElementById('fAmount').value) || 0;
-            const nds = document.getElementById('fNDS').value;
-            const rate = nds === '22%' ? 1.22 : 1.07;
-            const full = Math.round(amount * rate * 100) / 100;
-            document.getElementById('calcFull').textContent = full.toLocaleString('ru-RU') + ' ₽';
+        function initCityList() {
+            document.getElementById('cityList').innerHTML = Object.keys(routesDB).map(c => `<option value="${c}">`).join('');
         }
-        document.getElementById('fAmount').addEventListener('input', updateCalc);
-        document.getElementById('fNDS').addEventListener('change', updateCalc);
 
-        function save() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-            render();
-        }
-
-        function addEntry() {
-            const date = document.getElementById('fDate').value;
-            const marketplace = document.getElementById('fMP').value;
-            const type = document.getElementById('fType').value;
-            const supplier = document.getElementById('fSupplier').value.trim();
-            const city = document.getElementById('fCity').value.trim();
-            const qty = parseInt(document.getElementById('fQty').value) || 0;
-            const boxes = parseInt(document.getElementById('fBoxes').value) || 0;
-            const amount = parseFloat(document.getElementById('fAmount').value) || 0;
-            const nds = document.getElementById('fNDS').value;
-            const rate = nds === '22%' ? 1.22 : 1.07;
-            const amountFull = Math.round(amount * rate * 100) / 100;
-
-            if (!date || !supplier || !city || qty <= 0 || amount <= 0) {
-                alert('Заполните обязательные поля: дата, поставщик, город, количество, сумма');
-                return;
+        window.showRouteInfo = function(mp) {
+            if (mp !== 'Wb') return;
+            const city = document.getElementById('shipCityWb').value.trim();
+            const route = routesDB[city];
+            const info = document.getElementById('routeInfoWb');
+            if (route) {
+                info.classList.add('show');
+                document.getElementById('routeTitleWb').textContent = '🚛 ' + city;
+                document.getElementById('routeDetailWb').textContent = 'Срок доставки: ' + route.delivery;
+                document.getElementById('routeScheduleWb').innerHTML = route.schedule.split(', ').map(s => `<span class="route-chip">${s}</span>`).join('');
+            } else {
+                info.classList.remove('show');
             }
-            entries.push({
-                id: Date.now(),
-                date, marketplace, type, supplier, city, qty, boxes, amount, amountFull,
-                paid: false,
-                nds
+        };
+
+        // ==================== ХРАНИЛИЩЕ ====================
+        const CAPACITY_KEY = 'logitrack_capacity';
+        const WB_SHIP_KEY = 'logitrack_ship_wb';
+        const OZON_SHIP_KEY = 'logitrack_ship_ozon';
+        const LOG_KEY = 'logitrack_log';
+
+        let weekCapacities = JSON.parse(localStorage.getItem(CAPACITY_KEY) || '{}');
+        let wbShipments = JSON.parse(localStorage.getItem(WB_SHIP_KEY) || '[]');
+        let ozonShipments = JSON.parse(localStorage.getItem(OZON_SHIP_KEY) || '[]');
+        let logEntries = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+
+        let editingShipId = null;
+        let showLogImport = false;
+
+        function saveAll() {
+            localStorage.setItem(CAPACITY_KEY, JSON.stringify(weekCapacities));
+            localStorage.setItem(WB_SHIP_KEY, JSON.stringify(wbShipments));
+            localStorage.setItem(OZON_SHIP_KEY, JSON.stringify(ozonShipments));
+            localStorage.setItem(LOG_KEY, JSON.stringify(logEntries));
+            renderAll();
+        }
+        function saveCapacities() {
+            localStorage.setItem(CAPACITY_KEY, JSON.stringify(weekCapacities));
+            renderSchedule();
+        }
+
+        // ==================== НАВИГАЦИЯ ====================
+        window.switchPage = function(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'wb-active', 'ozon-active', 'log-active'));
+            document.getElementById('page-' + page).classList.add('active');
+            const btnMap = { schedule: 0, wb: 1, ozon: 2, logistics: 3 };
+            const classes = ['active', 'wb-active', 'ozon-active', 'log-active'];
+            document.querySelectorAll('.nav-btn')[btnMap[page]].classList.add(classes[btnMap[page]]);
+            if (page === 'logistics') { updateLogCalc(); renderLog(); }
+        };
+
+        // ==================== ПОЛУЧЕНИЕ НОМЕРА НЕДЕЛИ ====================
+        function getWeekKey(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            const day = d.getDay() || 7;
+            const monday = new Date(d);
+            monday.setDate(d.getDate() - day + 1);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const format = (dt) => dt.getDate().toString().padStart(2,'0') + '.' + (dt.getMonth()+1).toString().padStart(2,'0');
+            return {
+                key: monday.toISOString().slice(0,10),
+                label: format(monday) + '-' + format(sunday)
+            };
+        }
+
+        // ==================== ОТГРУЗКИ (WB / OZON) ====================
+        function getShipments(mp) { return mp === 'Wildberries' ? wbShipments : ozonShipments; }
+        function setShipments(mp, arr) { if (mp === 'Wildberries') wbShipments = arr; else ozonShipments = arr; }
+
+        window.addShipment = function(mp) {
+            editingShipId = null;
+            document.getElementById('shipmentForm' + mp).style.display = 'block';
+            document.getElementById('shipDate' + mp).value = new Date().toISOString().slice(0,10);
+            document.getElementById('shipCity' + mp).value = '';
+            document.getElementById('shipQty' + mp).value = '';
+            const info = document.getElementById('routeInfo' + mp);
+            if (info) info.classList.remove('show');
+        };
+        window.cancelShipment = function(mp) {
+            document.getElementById('shipmentForm' + mp).style.display = 'none';
+            editingShipId = null;
+        };
+        window.saveShipment = function(mp) {
+            const date = document.getElementById('shipDate' + mp).value;
+            const city = document.getElementById('shipCity' + mp).value.trim();
+            const qty = parseInt(document.getElementById('shipQty' + mp).value) || 0;
+            if (!date || !city || qty <= 0) return alert('Заполните все поля');
+            const shipments = getShipments(mp);
+            if (mp === 'Wildberries') {
+                const route = routesDB[city] || { schedule: 'Нет данных', delivery: 'Нет данных' };
+                shipments.push({ id: Date.now(), date, city, qty, schedule: route.schedule, delivery: route.delivery });
+            } else {
+                shipments.push({ id: Date.now(), date, city, qty, schedule: 'Ежедневно', delivery: 'день в день' });
+            }
+            setShipments(mp, shipments);
+            saveAll();
+            cancelShipment(mp);
+        };
+        window.deleteShipment = function(mp, id) {
+            if (confirm('Удалить?')) { setShipments(mp, getShipments(mp).filter(s => s.id !== id)); saveAll(); }
+        };
+        window.importShipmentExcel = function(input, mp) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n').filter(l => l.trim());
+                lines.shift();
+                const shipments = getShipments(mp);
+                lines.forEach(line => {
+                    const cols = line.split(/[\t,;]/);
+                    if (cols.length >= 3) {
+                        const city = cols[1].trim();
+                        if (mp === 'Wildberries') {
+                            const route = routesDB[city] || { schedule: 'Нет данных', delivery: 'Нет данных' };
+                            shipments.push({ id: Date.now() + Math.random(), date: cols[0].trim(), city, qty: parseInt(cols[2]) || 0, schedule: route.schedule, delivery: route.delivery });
+                        } else {
+                            shipments.push({ id: Date.now() + Math.random(), date: cols[0].trim(), city, qty: parseInt(cols[2]) || 0, schedule: 'Ежедневно', delivery: 'день в день' });
+                        }
+                    }
+                });
+                setShipments(mp, shipments);
+                saveAll();
+            };
+            reader.readAsText(file);
+        };
+
+        // ==================== ОБНОВЛЕНИЕ ПРОПУСКНОЙ СПОСОБНОСТИ ====================
+        window.updateWeekCapacity = function(weekKey, value) {
+            weekCapacities[weekKey] = parseInt(value) || 0;
+            saveCapacities();
+        };
+
+        window.exportScheduleCSV = function() {
+            const allShipments = [...wbShipments.map(s => ({...s, mp: 'Wildberries'})), ...ozonShipments.map(s => ({...s, mp: 'Ozon'}))];
+            const grouped = {};
+            allShipments.forEach(s => {
+                const wk = getWeekKey(s.date);
+                if (!grouped[wk.key]) grouped[wk.key] = { label: wk.label, wb: 0, ozon: 0 };
+                if (s.mp === 'Wildberries') grouped[wk.key].wb += s.qty;
+                else grouped[wk.key].ozon += s.qty;
             });
-            save();
-            ['fSupplier','fCity','fQty','fBoxes','fAmount'].forEach(id => document.getElementById(id).value = '');
-            updateCalc();
+            let csv = 'Неделя\tWB, шт\tOzon, шт\tВсего\tПроп. способность\tЗагруженность\n';
+            Object.keys(grouped).sort().forEach(key => {
+                const g = grouped[key];
+                const total = g.wb + g.ozon;
+                const cap = weekCapacities[key] || 0;
+                const pct = cap > 0 ? Math.round(total / cap * 100) : 0;
+                csv += `${g.label}\t${g.wb}\t${g.ozon}\t${total}\t${cap}\t${pct}%\n`;
+            });
+            downloadCSV(csv, 'график_отгрузок.csv');
+        };
+
+        // ==================== ЛОГИСТИКА ====================
+        function updateLogCalc() {
+            const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+            const nds = document.getElementById('logNDS').value;
+            const rate = nds === '22%' ? 1.22 : 1.07;
+            document.getElementById('logCalcFull').textContent = (Math.round(amount * rate * 100) / 100).toLocaleString('ru-RU') + ' ₽';
         }
-
-        window.togglePaid = function(id) {
-            const entry = entries.find(e => e.id === id);
-            if (entry) {
-                entry.paid = !entry.paid;
-                save();
-            }
+        window.addLogEntry = function() {
+            const date = document.getElementById('logDate').value;
+            const mp = document.getElementById('logMP').value;
+            const type = document.getElementById('logType').value;
+            const supplier = document.getElementById('logSupplier').value.trim();
+            const city = document.getElementById('logCity').value.trim();
+            const qty = parseInt(document.getElementById('logQty').value) || 0;
+            const boxes = parseInt(document.getElementById('logBoxes').value) || 0;
+            const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+            const nds = document.getElementById('logNDS').value;
+            const rate = nds === '22%' ? 1.22 : 1.07;
+            if (!date || !supplier || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
+            logEntries.push({ id: Date.now(), date, marketplace: mp, type, supplier, city, qty, boxes, amount, amountFull: Math.round(amount * rate * 100) / 100, paid: false, nds });
+            saveAll();
+            ['logSupplier','logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = '');
+            updateLogCalc();
         };
-
-        window.deleteEntry = function(id) {
-            if (confirm('Удалить запись?')) {
-                entries = entries.filter(e => e.id !== id);
-                save();
-            }
-        };
-
-        window.clearAll = function() {
-            if (confirm('Удалить ВСЕ записи безвозвратно?')) {
-                entries = [];
-                save();
-            }
-        };
-
-        window.toggleImport = function() {
-            showImport = !showImport;
-            document.getElementById('importBlock').style.display = showImport ? 'block' : 'none';
-        };
-
-        window.doImport = function() {
-            const text = document.getElementById('importText').value.trim();
-            if (!text) return;
-            const lines = text.split('\n').filter(l => l.trim());
-            let imported = 0;
-            lines.forEach(line => {
+        window.toggleLogPaid = function(id) { const e = logEntries.find(l => l.id === id); if (e) { e.paid = !e.paid; saveAll(); } };
+        window.deleteLogEntry = function(id) { if (confirm('Удалить?')) { logEntries = logEntries.filter(l => l.id !== id); saveAll(); } };
+        window.clearLogEntries = function() { if (confirm('Удалить всё?')) { logEntries = []; saveAll(); } };
+        window.toggleLogImport = function() { showLogImport = !showLogImport; document.getElementById('logImportBlock').style.display = showLogImport ? 'block' : 'none'; };
+        window.doLogImport = function() {
+            const text = document.getElementById('logImportText').value.trim(); if (!text) return;
+            text.split('\n').filter(l => l.trim()).forEach(line => {
                 const cols = line.split('\t');
-                if (cols.length >= 10) {
+                if (cols.length >= 9) {
                     const qty = parseInt(cols[5].replace(/\s/g,'')) || 0;
                     const amount = parseFloat(cols[7].replace(/[₽\s]/g,'').replace(',','.')) || 0;
                     const nds = cols[9] || '22%';
                     const rate = nds === '22%' ? 1.22 : 1.07;
-                    const amountFull = Math.round(amount * rate * 100) / 100;
-                    entries.push({
-                        id: Date.now() + Math.random(),
-                        date: cols[0].split('.').reverse().join('-'),
-                        marketplace: cols[1],
-                        type: cols[2],
-                        supplier: cols[3],
-                        city: cols[4],
-                        qty,
-                        boxes: parseInt(cols[6]) || 0,
-                        amount,
-                        amountFull,
-                        paid: cols[8] === 'Оплачен',
-                        nds
-                    });
-                    imported++;
+                    logEntries.push({ id: Date.now() + Math.random(), date: cols[0].split('.').reverse().join('-'), marketplace: cols[1], type: cols[2], supplier: cols[3], city: cols[4], qty, boxes: parseInt(cols[6]) || 0, amount, amountFull: Math.round(amount * rate * 100) / 100, paid: cols[8] === 'Оплачен', nds });
                 }
             });
-            save();
-            document.getElementById('importText').value = '';
-            document.getElementById('importBlock').style.display = 'none';
-            showImport = false;
-            alert(`Импортировано: ${imported} строк`);
+            saveAll();
+            document.getElementById('logImportText').value = '';
+            document.getElementById('logImportBlock').style.display = 'none'; showLogImport = false;
         };
-
-        window.exportCSV = function() {
-            let csv = 'Дата\tМаркетплейс\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tСумма с НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед с НДС\n';
-            const sorted = [...entries].sort((a,b) => a.date.localeCompare(b.date));
-            sorted.forEach(e => {
+        window.exportLogCSV = function() {
+            let csv = 'Дата\tМП\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tСумма с НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед с НДС\n';
+            [...logEntries].sort((a,b) => a.date.localeCompare(b.date)).forEach(e => {
                 const up = e.qty > 0 ? (e.amount / e.qty) : 0;
                 const upf = e.qty > 0 ? (e.amountFull / e.qty) : 0;
                 csv += `${e.date.split('-').reverse().join('.')}\t${e.marketplace}\t${e.type}\t${e.supplier}\t${e.city}\t${e.qty}\t${e.boxes}\t${e.amount}\t${e.amountFull}\t${e.paid?'Оплачен':'Не оплачен'}\t${e.nds}\t${up.toFixed(2)}\t${upf.toFixed(2)}\n`;
             });
+            downloadCSV(csv, 'логистика.csv');
+        };
+        window.resetLogFilters = function() {
+            document.getElementById('logFilterMonth').value = '';
+            document.getElementById('logFilterStatus').value = 'all';
+            document.getElementById('logFilterMP').value = 'all';
+            renderLog();
+        };
+
+        function downloadCSV(csv, filename) {
             const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'logitrack_export.csv'; a.click();
-        };
-
-        window.resetFilters = function() {
-            document.getElementById('filterMonth').value = '';
-            document.getElementById('filterStatus').value = 'all';
-            document.getElementById('filterMP').value = 'all';
-            render();
-        };
-
-        function formatPrice(n) {
-            return n.toLocaleString('ru-RU') + ' ₽';
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
         }
-
+        function formatPrice(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
         function getMonthName(d) {
-            const months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-            return months[new Date(d).getMonth()];
+            return ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][new Date(d).getMonth()];
         }
 
-        function render() {
-            const filterMonth = document.getElementById('filterMonth').value;
-            const filterStatus = document.getElementById('filterStatus').value;
-            const filterMP = document.getElementById('filterMP').value;
+        // ==================== ОТОБРАЖЕНИЕ ГРАФИКА ====================
+        function renderSchedule() {
+            const allShipments = [
+                ...wbShipments.map(s => ({...s, mp: 'Wildberries'})),
+                ...ozonShipments.map(s => ({...s, mp: 'Ozon'}))
+            ];
 
-            let filtered = [...entries];
-            if (filterMonth) filtered = filtered.filter(e => e.date.startsWith(filterMonth));
-            if (filterStatus === 'paid') filtered = filtered.filter(e => e.paid);
-            if (filterStatus === 'unpaid') filtered = filtered.filter(e => !e.paid);
-            if (filterMP !== 'all') filtered = filtered.filter(e => e.marketplace === filterMP);
+            // Группировка по неделям
+            const grouped = {};
+            allShipments.forEach(s => {
+                const wk = getWeekKey(s.date);
+                if (!grouped[wk.key]) grouped[wk.key] = { label: wk.label, wb: 0, ozon: 0, cities: {} };
+                if (s.mp === 'Wildberries') grouped[wk.key].wb += s.qty;
+                else grouped[wk.key].ozon += s.qty;
+                if (!grouped[wk.key].cities[s.mp]) grouped[wk.key].cities[s.mp] = {};
+                if (!grouped[wk.key].cities[s.mp][s.city]) grouped[wk.key].cities[s.mp][s.city] = 0;
+                grouped[wk.key].cities[s.mp][s.city] += s.qty;
+            });
 
-            const sorted = filtered.sort((a,b) => a.date.localeCompare(b.date));
-            document.getElementById('rowCount').textContent = sorted.length;
+            const weeks = Object.keys(grouped).sort();
+            document.getElementById('scheduleWeekCount').textContent = weeks.length;
 
-            const totalQty = sorted.reduce((s,e) => s + e.qty, 0);
-            const totalAmount = sorted.reduce((s,e) => s + e.amount, 0);
-            const totalAmountFull = sorted.reduce((s,e) => s + e.amountFull, 0);
-            const totalPaid = sorted.filter(e => e.paid).reduce((s,e) => s + e.amountFull, 0);
-            const totalUnpaid = sorted.filter(e => !e.paid).reduce((s,e) => s + e.amountFull, 0);
-            const avgUnit = totalQty > 0 ? (totalAmount / totalQty) : 0;
-            const avgUnitFull = totalQty > 0 ? (totalAmountFull / totalQty) : 0;
-
-            document.getElementById('summary').innerHTML = `
-                <div class="summary-item"><div class="label">Отправок</div><div class="value">${sorted.length}</div></div>
-                <div class="summary-item"><div class="label">Товаров всего</div><div class="value">${totalQty.toLocaleString('ru-RU')}</div></div>
-                <div class="summary-item"><div class="label">Сумма базовая</div><div class="value">${formatPrice(totalAmount)}</div><div class="subvalue">Среднее/ед: ${avgUnit.toFixed(2)} ₽</div></div>
-                <div class="summary-item"><div class="label">Сумма с НДС</div><div class="value">${formatPrice(totalAmountFull)}</div><div class="subvalue">Среднее/ед: ${avgUnitFull.toFixed(2)} ₽</div></div>
-                <div class="summary-item"><div class="label">Оплачено / Не оплачено</div><div class="value" style="font-size:15px"><span style="color:var(--paid)">${formatPrice(totalPaid)}</span> <span style="color:var(--sub)">/</span> <span style="color:var(--unpaid)">${formatPrice(totalUnpaid)}</span></div></div>
-            `;
-
-            if (sorted.length === 0) {
-                document.getElementById('tableContainer').innerHTML = '<div class="empty">Нет записей</div>';
+            if (weeks.length === 0) {
+                document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных. Сначала добавьте отгрузки на вкладках WB и Ozon</div>';
+                document.getElementById('scheduleSummary').innerHTML = '';
                 return;
             }
 
-            let html = `<table><thead><tr>
-                <th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th>
-                <th class="num">Кол-во</th><th class="num">Паллет</th>
-                <th class="num">Сумма</th><th class="num">Сумма с НДС</th>
-                <th class="num">Цена/ед</th><th class="num">Цена/ед с НДС</th>
-                <th>Статус</th><th>НДС</th><th></th>
-            </tr></thead><tbody>`;
+            // Сводка
+            const totalWb = allShipments.filter(s => s.mp === 'Wildberries').reduce((s,x) => s + x.qty, 0);
+            const totalOz = allShipments.filter(s => s.mp === 'Ozon').reduce((s,x) => s + x.qty, 0);
+            const totalAll = totalWb + totalOz;
+            const totalCap = Object.values(weekCapacities).reduce((s,c) => s + (c||0), 0);
+            const avgLoad = totalCap > 0 ? Math.round(totalAll / totalCap * 100) : 0;
 
-            let lastMonth = '';
-            sorted.forEach(e => {
-                const m = getMonthName(e.date + 'T00:00:00');
-                if (m !== lastMonth && !filterMonth) {
-                    lastMonth = m;
-                    html += `<tr><td colspan="14" class="month-sep">📅 ${m} 2026</td></tr>`;
-                }
-                const up = e.qty > 0 ? (e.amount / e.qty) : 0;
-                const upf = e.qty > 0 ? (e.amountFull / e.qty) : 0;
-                html += `<tr>
-                    <td>${e.date.split('-').reverse().join('.')}</td>
-                    <td>${e.marketplace}</td>
-                    <td>${e.type}</td>
-                    <td>${e.supplier}</td>
-                    <td>${e.city}</td>
-                    <td class="num">${e.qty.toLocaleString('ru-RU')}</td>
-                    <td class="num">${e.boxes}</td>
-                    <td class="num">${formatPrice(e.amount)}</td>
-                    <td class="num">${formatPrice(e.amountFull)}</td>
-                    <td class="num unit-price">${up.toFixed(2)} ₽</td>
-                    <td class="num unit-price">${upf.toFixed(2)} ₽</td>
-                    <td>
-                        <button class="btn-status ${e.paid ? 'paid-active' : 'unpaid-active'}" onclick="togglePaid(${e.id})">${e.paid ? 'Оплачен' : 'Не оплачен'}</button>
+            document.getElementById('scheduleSummary').innerHTML = `
+                <div class="summary-item"><div class="label">Всего к отгрузке</div><div class="value">${totalAll.toLocaleString('ru-RU')} шт</div></div>
+                <div class="summary-item"><div class="label">🟣 WB</div><div class="value" style="color:#6a1b9a">${totalWb.toLocaleString('ru-RU')} шт</div></div>
+                <div class="summary-item"><div class="label">🔵 Ozon</div><div class="value" style="color:#005bff">${totalOz.toLocaleString('ru-RU')} шт</div></div>
+                <div class="summary-item"><div class="label">Общая способность</div><div class="value">${totalCap.toLocaleString('ru-RU')} шт/нед</div></div>
+                <div class="summary-item"><div class="label">Средняя загруженность</div><div class="value" style="color:${avgLoad>100?'#ef4444':avgLoad>80?'#f59e0b':'#10b981'}">${avgLoad || '—'}%</div></div>
+            `;
+
+            // Таблица
+            let html = '<table><thead><tr><th>Неделя</th><th class="num">🟣 WB, шт</th><th class="num">🔵 Ozon, шт</th><th class="num">Всего, шт</th><th>Пропускная способность</th><th>Загруженность</th></tr></thead><tbody>';
+
+            weeks.forEach((key, i) => {
+                const g = grouped[key];
+                const total = g.wb + g.ozon;
+                const cap = weekCapacities[key] || 0;
+                const pct = cap > 0 ? Math.round(total / cap * 100) : 0;
+                const barColor = pct > 100 ? 'danger' : pct > 80 ? 'warn' : 'good';
+                const rowClass = i % 2 === 0 ? 'week-row' : 'week-row-alt';
+
+                html += `<tr class="${rowClass}">
+                    <td><b>📅 ${g.label}</b></td>
+                    <td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td>
+                    <td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td>
+                    <td class="num"><b>${total.toLocaleString('ru-RU')}</b></td>
+                    <td class="capacity-cell">
+                        <input class="capacity-input" type="number" value="${cap || ''}" placeholder="0" 
+                               onchange="updateWeekCapacity('${key}', this.value)" title="Введи пропускную способность склада на эту неделю">
                     </td>
-                    <td><span class="badge-nds">${e.nds}</span></td>
-                    <td><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></td>
+                    <td style="min-width:150px;">
+                        <div class="progress-bar"><div class="progress-fill ${barColor}" style="width:${Math.min(pct, 100)}%"></div></div>
+                        <span style="font-size:11px;font-weight:600;color:${pct>100?'#ef4444':'var(--sub)'};">${cap > 0 ? pct + '%' : '—'}</span>
+                        ${pct > 100 ? '<span class="badge badge-danger" style="margin-left:4px;">Перегруз</span>' : ''}
+                        ${pct > 80 && pct <= 100 ? '<span class="badge badge-warning" style="margin-left:4px;">Высокая</span>' : ''}
+                        ${pct <= 80 && cap > 0 ? '<span class="badge badge-success" style="margin-left:4px;">Норма</span>' : ''}
+                    </td>
                 </tr>`;
+
+                // Детали по городам
+                if (Object.keys(g.cities).length > 0) {
+                    html += '<tr style="background:#fafafa;"><td colspan="6" style="padding:4px 10px;font-size:10px;color:var(--sub);">';
+                    Object.keys(g.cities).forEach(mp => {
+                        const badge = mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon';
+                        Object.keys(g.cities[mp]).forEach(city => {
+                            html += `<span class="badge ${badge}" style="margin:2px;">${city}: ${g.cities[mp][city].toLocaleString('ru-RU')} шт</span> `;
+                        });
+                    });
+                    html += '</td></tr>';
+                }
             });
+
             html += '</tbody></table>';
-            document.getElementById('tableContainer').innerHTML = html;
+            document.getElementById('scheduleTable').innerHTML = html;
         }
 
-        document.querySelectorAll('.form-card input').forEach(i => i.addEventListener('keydown', e => { if (e.key==='Enter') addEntry(); }));
-        updateCalc();
-        render();
+        function renderShipments(mp) {
+            const shipments = getShipments(mp);
+            const tId = mp === 'Wildberries' ? 'wbTable' : 'ozonTable';
+            const cId = mp === 'Wildberries' ? 'wbCount' : 'ozonCount';
+            const sorted = [...shipments].sort((a,b) => b.date.localeCompare(a.date));
+            document.getElementById(cId).textContent = sorted.length;
+
+            if (sorted.length === 0) {
+                document.getElementById(tId).innerHTML = '<div class="empty">Нет отгрузок. Нажми «+ Добавить отгрузку» ↑</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Дата</th><th>Город</th><th class="num">Кол-во</th>';
+            if (mp === 'Wildberries') html += '<th>Расписание рейсов</th><th>Срок</th>';
+            else html += '<th>Доставка</th>';
+            html += '<th></th></tr></thead><tbody>';
+
+            sorted.forEach(e => {
+                html += `<tr><td>${e.date}</td><td>${e.city}</td><td class="num">${e.qty.toLocaleString('ru-RU')}</td>`;
+                if (mp === 'Wildberries') {
+                    html += `<td style="font-size:11px;color:var(--sub);">${e.schedule||'—'}</td><td><span class="badge badge-success">${e.delivery||'—'}</span></td>`;
+                } else {
+                    html += `<td><span class="badge badge-info">день в день</span></td>`;
+                }
+                html += `<td><button class="btn btn-danger btn-sm" onclick="deleteShipment('${mp}',${e.id})">✕</button></td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById(tId).innerHTML = html;
+        }
+
+        function renderLog() {
+            const fm = document.getElementById('logFilterMonth').value;
+            const fs = document.getElementById('logFilterStatus').value;
+            const fmp = document.getElementById('logFilterMP').value;
+            let fl = [...logEntries];
+            if (fm) fl = fl.filter(e => e.date.startsWith(fm));
+            if (fs === 'paid') fl = fl.filter(e => e.paid);
+            if (fs === 'unpaid') fl = fl.filter(e => !e.paid);
+            if (fmp !== 'all') fl = fl.filter(e => e.marketplace === fmp);
+
+            const sorted = fl.sort((a,b) => a.date.localeCompare(b.date));
+            document.getElementById('logCount').textContent = sorted.length;
+            const tq = sorted.reduce((s,e) => s + e.qty, 0);
+            const ta = sorted.reduce((s,e) => s + e.amount, 0);
+            const taf = sorted.reduce((s,e) => s + e.amountFull, 0);
+            const tpd = sorted.filter(e => e.paid).reduce((s,e) => s + e.amountFull, 0);
+            const tup = sorted.filter(e => !e.paid).reduce((s,e) => s + e.amountFull, 0);
+
+            document.getElementById('logSummary').innerHTML = `
+                <div class="summary-item"><div class="label">Отправок</div><div class="value">${sorted.length}</div></div>
+                <div class="summary-item"><div class="label">Товаров</div><div class="value">${tq.toLocaleString('ru-RU')}</div></div>
+                <div class="summary-item"><div class="label">Сумма</div><div class="value">${formatPrice(ta)}</div><div class="subvalue">Ср/ед: ${(tq>0?ta/tq:0).toFixed(2)} ₽</div></div>
+                <div class="summary-item"><div class="label">С НДС</div><div class="value">${formatPrice(taf)}</div><div class="subvalue">Ср/ед: ${(tq>0?taf/tq:0).toFixed(2)} ₽</div></div>
+                <div class="summary-item"><div class="label">Оплачено / Не опл.</div><div class="value" style="font-size:15px"><span style="color:#10b981">${formatPrice(tpd)}</span> / <span style="color:#f59e0b">${formatPrice(tup)}</span></div></div>`;
+
+            if (sorted.length === 0) { document.getElementById('logTable').innerHTML = '<div class="empty">Нет записей</div>'; return; }
+
+            let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th class="num">₽/ед</th><th class="num">₽/ед НДС</th><th>Статус</th><th>НДС</th><th></th></tr></thead><tbody>';
+            let lm = '';
+            sorted.forEach(e => {
+                const m = getMonthName(e.date + 'T00:00:00');
+                if (m !== lm && !fm) { lm = m; html += `<tr><td colspan="14" class="month-sep">📅 ${m} 2026</td></tr>`; }
+                const up = e.qty > 0 ? e.amount / e.qty : 0;
+                const upf = e.qty > 0 ? e.amountFull / e.qty : 0;
+                html += `<tr>
+                    <td>${e.date.split('-').reverse().join('.')}</td><td>${e.marketplace}</td><td>${e.type}</td><td>${e.supplier}</td><td>${e.city}</td>
+                    <td class="num">${e.qty.toLocaleString('ru-RU')}</td><td class="num">${e.boxes}</td>
+                    <td class="num">${formatPrice(e.amount)}</td><td class="num">${formatPrice(e.amountFull)}</td>
+                    <td class="num unit-price">${up.toFixed(2)} ₽</td><td class="num unit-price">${upf.toFixed(2)} ₽</td>
+                    <td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid(${e.id})">${e.paid?'Оплачен':'Не оплачен'}</button></td>
+                    <td><span class="badge badge-nds">${e.nds}</span></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry(${e.id})">✕</button></td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('logTable').innerHTML = html;
+        }
+
+        function renderAll() {
+            renderSchedule();
+            renderShipments('Wildberries');
+            renderShipments('Ozon');
+            renderLog();
+        }
+
+        // Инициализация
+        document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
+        document.getElementById('logAmount').addEventListener('input', updateLogCalc);
+        document.getElementById('logNDS').addEventListener('change', updateLogCalc);
+        initCityList();
+        renderAll();
     </script>
 </body>
 </html>
