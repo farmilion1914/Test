@@ -79,6 +79,30 @@
         .btn-danger:hover { background: #fef2f2; }
         .btn-sm { padding: 5px 10px; font-size: 11px; }
 
+        /* Кнопки статуса */
+        .btn-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            background: #f3f4f6;
+            color: var(--sub);
+        }
+        .btn-status:hover { border-color: #93a8d8; background: #fff; }
+        .btn-status.paid-active {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #10b981;
+        }
+        .btn-status.unpaid-active {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
         .form-card {
             background: var(--card);
             border-radius: var(--radius);
@@ -210,39 +234,15 @@
         }
         tr:hover { background: #f9fafb; }
 
-        .toggle-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #f3f4f6;
-            border: 1px solid var(--border);
+        .badge-nds {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 7px;
             border-radius: 20px;
-            padding: 3px 4px;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.2s;
-        }
-        .toggle-status:hover { border-color: #93a8d8; }
-        .toggle-option {
-            padding: 3px 10px;
-            border-radius: 16px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            transition: all 0.15s;
+            display: inline-block;
         }
-        .toggle-option.active-paid {
-            background: #10b981;
-            color: #fff;
-        }
-        .toggle-option.active-unpaid {
-            background: #f59e0b;
-            color: #fff;
-        }
-        .toggle-option:not(.active-paid):not(.active-unpaid) {
-            color: var(--sub);
-        }
-
-        .badge-nds { background: #e0e7ff; color: #3730a3; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; }
         .num { text-align: right; font-variant-numeric: tabular-nums; }
         .unit-price { color: var(--sub); }
 
@@ -364,7 +364,10 @@
         document.getElementById('fAmount').addEventListener('input', updateCalc);
         document.getElementById('fNDS').addEventListener('change', updateCalc);
 
-        function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            render();
+        }
 
         function addEntry() {
             const date = document.getElementById('fDate').value;
@@ -394,34 +397,34 @@
             updateCalc();
         }
 
-        function togglePaid(id) {
+        window.togglePaid = function(id) {
             const entry = entries.find(e => e.id === id);
             if (entry) {
                 entry.paid = !entry.paid;
                 save();
             }
-        }
+        };
 
-        function deleteEntry(id) {
+        window.deleteEntry = function(id) {
             if (confirm('Удалить запись?')) {
                 entries = entries.filter(e => e.id !== id);
                 save();
             }
-        }
+        };
 
-        function clearAll() {
+        window.clearAll = function() {
             if (confirm('Удалить ВСЕ записи безвозвратно?')) {
                 entries = [];
                 save();
             }
-        }
+        };
 
-        function toggleImport() {
+        window.toggleImport = function() {
             showImport = !showImport;
             document.getElementById('importBlock').style.display = showImport ? 'block' : 'none';
-        }
+        };
 
-        function doImport() {
+        window.doImport = function() {
             const text = document.getElementById('importText').value.trim();
             if (!text) return;
             const lines = text.split('\n').filter(l => l.trim());
@@ -456,9 +459,9 @@
             document.getElementById('importBlock').style.display = 'none';
             showImport = false;
             alert(`Импортировано: ${imported} строк`);
-        }
+        };
 
-        function exportCSV() {
+        window.exportCSV = function() {
             let csv = 'Дата\tМаркетплейс\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tСумма с НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед с НДС\n';
             const sorted = [...entries].sort((a,b) => a.date.localeCompare(b.date));
             sorted.forEach(e => {
@@ -469,14 +472,14 @@
             const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = 'logitrack_export.csv'; a.click();
-        }
+        };
 
-        function resetFilters() {
+        window.resetFilters = function() {
             document.getElementById('filterMonth').value = '';
             document.getElementById('filterStatus').value = 'all';
             document.getElementById('filterMP').value = 'all';
             render();
-        }
+        };
 
         function formatPrice(n) {
             return n.toLocaleString('ru-RU') + ' ₽';
@@ -552,10 +555,7 @@
                     <td class="num unit-price">${up.toFixed(2)} ₽</td>
                     <td class="num unit-price">${upf.toFixed(2)} ₽</td>
                     <td>
-                        <div class="toggle-status" onclick="togglePaid(${e.id})" title="Нажми чтобы переключить">
-                            <span class="toggle-option ${e.paid ? 'active-paid' : ''}">Оплачен</span>
-                            <span class="toggle-option ${!e.paid ? 'active-unpaid' : ''}">Не оплачен</span>
-                        </div>
+                        <button class="btn-status ${e.paid ? 'paid-active' : 'unpaid-active'}" onclick="togglePaid(${e.id})">${e.paid ? 'Оплачен' : 'Не оплачен'}</button>
                     </td>
                     <td><span class="badge-nds">${e.nds}</span></td>
                     <td><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></td>
