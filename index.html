@@ -195,7 +195,6 @@
             background: #f3f4f6; font-weight: 700; font-size: 11px;
             text-transform: uppercase; color: var(--sub); padding: 8px 10px !important;
         }
-        .expand-btn { cursor: pointer; color: var(--accent); font-size: 11px; font-weight: 600; background: none; border: none; }
         .items-list { display: none; background: #f9fafb; padding: 8px 12px; font-size: 10px; color: var(--sub); }
         .items-list.show { display: table-row; }
         .toast {
@@ -206,6 +205,10 @@
             transition: all 0.3s;
         }
         .toast.show { opacity: 1; transform: translateY(0); }
+        .field-calc {
+            background: #f0f4ff; border: 1px dashed #93a8d8; border-radius: 7px;
+            padding: 7px 9px; font-size: 13px; font-weight: 600; color: #1d4ed8; text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -230,7 +233,7 @@
 <!-- ГРАФИК ОТГРУЗОК -->
 <div class="page active" id="page-schedule">
     <h1>📊 График отгрузок</h1>
-    <p class="subtitle">Сводка со всех источников — данные в облаке Firebase</p>
+    <p class="subtitle">Сводка из WB и Ozon — данные в облаке Firebase</p>
     <div class="top-bar">
         <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
         <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 Экспорт CSV</button>
@@ -319,7 +322,7 @@
 <!-- ЛОГИСТИКА -->
 <div class="page" id="page-logistics">
     <h1>🚚 Логистика</h1>
-    <p class="subtitle">Данные автоматически попадают в График отгрузок</p>
+    <p class="subtitle">Учёт логистических отправлений (не попадает в график отгрузок)</p>
     <div class="top-bar">
         <button class="btn btn-outline btn-sm" id="btnToggleLogImport">📥 Импорт</button>
         <button class="btn btn-outline btn-sm" id="btnExportLog">📤 Экспорт CSV</button>
@@ -724,11 +727,11 @@ function exportScheduleCSV() {
     downloadCSV(csv, 'график_отгрузок.csv');
 }
 
+// Только WB и Ozon, без логистики
 function getAllShipments() {
     const all = [];
     wbShipments.forEach(s => all.push({...s, marketplace:'Wildberries'}));
     ozonShipments.forEach(s => all.push({...s, marketplace:'Ozon'}));
-    logEntries.forEach(e => all.push({date:e.date, city:e.city, qty:e.qty, marketplace:e.marketplace, source:'Логистика'}));
     return all.filter(s => s.date && typeof s.date === 'string' && !isNaN(new Date(s.date + 'T00:00:00').getTime()));
 }
 
@@ -812,7 +815,7 @@ function renderSchedule() {
     const weeks = Object.keys(grp).sort();
     document.getElementById('scheduleWeekCount').textContent = weeks.filter(k => !k.startsWith('unknown')).length;
     document.getElementById('scheduleTotalRows').textContent = all.length;
-    if (!weeks.length) { document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных</div>'; return; }
+    if (!weeks.length) { document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных</div>'; document.getElementById('scheduleSummary').innerHTML = ''; return; }
     
     const tw = all.filter(s=>s.marketplace==='Wildberries').reduce((s,x)=>s+x.qty,0);
     const to = all.filter(s=>s.marketplace==='Ozon').reduce((s,x)=>s+x.qty,0);
@@ -896,14 +899,25 @@ function renderLog() {
     document.getElementById('logCount').textContent = srt.length;
     if (!srt.length) { document.getElementById('logTable').innerHTML = '<div class="empty">Нет записей</div>'; return; }
     
+    const tq = srt.reduce((s,e)=>s+e.qty,0), ta = srt.reduce((s,e)=>s+e.amount,0), taf = srt.reduce((s,e)=>s+e.amountFull,0);
+    const tpd = srt.filter(e=>e.paid).reduce((s,e)=>s+e.amountFull,0), tup = srt.filter(e=>!e.paid).reduce((s,e)=>s+e.amountFull,0);
+    
+    document.getElementById('logSummary').innerHTML = `
+        <div class="summary-item"><div class="label">Отправок</div><div class="value">${srt.length}</div></div>
+        <div class="summary-item"><div class="label">Товаров</div><div class="value">${tq.toLocaleString('ru-RU')}</div></div>
+        <div class="summary-item"><div class="label">Сумма</div><div class="value">${fmtPrice(ta)}</div></div>
+        <div class="summary-item"><div class="label">С НДС</div><div class="value">${fmtPrice(taf)}</div></div>
+        <div class="summary-item"><div class="label">Оплачено / Не опл.</div><div class="value" style="font-size:15px"><span style="color:#10b981">${fmtPrice(tpd)}</span> / <span style="color:#f59e0b">${fmtPrice(tup)}</span></div></div>`;
+    
     let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th class="num">₽/ед</th><th>Статус</th><th>НДС</th><th></th></tr></thead><tbody>';
     let lm = '';
     srt.forEach(e => {
         const m = monthName(e.date+'T00:00:00');
         if (m!==lm&&!fm) { lm=m; html += `<tr><td colspan="13" class="month-sep">📅 ${m} 2026</td></tr>`; }
+        const up = e.qty>0?e.amount/e.qty:0;
         html += `<tr><td>${e.date.split('-').reverse().join('.')}</td><td>${e.marketplace}</td><td>${e.type}</td><td>${e.supplier}</td><td>${e.city}</td>
             <td class="num">${e.qty.toLocaleString('ru-RU')}</td><td class="num">${e.boxes}</td><td class="num">${fmtPrice(e.amount)}</td><td class="num">${fmtPrice(e.amountFull)}</td>
-            <td class="num">${(e.qty>0?e.amount/e.qty:0).toFixed(2)} ₽</td>
+            <td class="num">${up.toFixed(2)} ₽</td>
             <td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid(${e.id})">${e.paid?'Оплачен':'Не опл.'}</button></td>
             <td><span class="badge badge-nds">${e.nds}</span></td>
             <td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry(${e.id})">✕</button></td></tr>`;
