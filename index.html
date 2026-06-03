@@ -174,9 +174,11 @@
         }
         .summary-item .label { font-size: 10px; text-transform: uppercase; color: var(--sub); }
         .summary-item .value { font-size: 18px; font-weight: 700; }
+        .summary-item.current-week { border: 2px solid var(--accent); background: #f0f4ff; }
 
         .week-row { background: #f9fafb; border-left: 4px solid var(--accent); }
         .week-row-alt { background: #f3f4f6; border-left: 4px solid #93a8d8; }
+        .week-row.current { background: #f0f4ff; border-left: 4px solid var(--accent); font-weight: 600; }
         .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; }
         .progress-fill.good { background: var(--success); }
@@ -233,11 +235,11 @@
 <!-- ГРАФИК ОТГРУЗОК -->
 <div class="page active" id="page-schedule">
     <h1>📊 График отгрузок</h1>
-    <p class="subtitle">Сводка из WB и Ozon — данные в облаке Firebase</p>
+    <p class="subtitle">Текущая неделя сверху — данные из WB и Ozon</p>
     <div class="top-bar">
         <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
         <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 Экспорт CSV</button>
-        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b> | Строк: <b id="scheduleTotalRows">0</b></span>
+        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Всего недель: <b id="scheduleWeekCount">0</b> | Строк: <b id="scheduleTotalRows">0</b></span>
     </div>
     <div class="import-area" id="scheduleImportBlock" style="display:none;">
         <textarea id="scheduleImportText" placeholder="Вставь строки (дата	МП	город	кол-во)"></textarea>
@@ -653,6 +655,14 @@ function getWeekKey(ds) {
     return { key: mon.toISOString().slice(0,10), label: fmt(mon) + '-' + fmt(sun) };
 }
 
+// Получить ключ текущей календарной недели
+function getCurrentWeekKey() {
+    const now = new Date();
+    const day = now.getDay() || 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - day + 1);
+    return mon.toISOString().slice(0,10);
+}
+
 function downloadCSV(csv, fn) {
     const b = new Blob(['\uFEFF'+csv], {type:'text/csv'});
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fn; a.click();
@@ -720,14 +730,13 @@ function exportScheduleCSV() {
         if (s.marketplace==='Wildberries') grp[wk.key].wb+=s.qty; else grp[wk.key].ozon+=s.qty;
     });
     let csv = 'Неделя\tWB\tOzon\tВсего\tПроп. сп.\tЗагрузка\n';
-    Object.keys(grp).filter(k => !k.startsWith('unknown')).sort().forEach(k => {
+    Object.keys(grp).filter(k => !k.startsWith('unknown')).sort().reverse().forEach(k => {
         const g=grp[k], t=g.wb+g.ozon, cap=weekCapacities[k]||0;
         csv += `${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`;
     });
     downloadCSV(csv, 'график_отгрузок.csv');
 }
 
-// Только WB и Ozon, без логистики
 function getAllShipments() {
     const all = [];
     wbShipments.forEach(s => all.push({...s, marketplace:'Wildberries'}));
@@ -801,7 +810,7 @@ function resetLogFilters() {
     renderLog();
 }
 
-// ========== ОТОБРАЖЕНИЕ ==========
+// ========== ОТОБРАЖЕНИЕ ГРАФИКА (текущая неделя сверху) ==========
 function renderSchedule() {
     const all = getAllShipments();
     const grp = {};
@@ -812,35 +821,100 @@ function renderSchedule() {
         else grp[wk.key].ozon += s.qty;
         grp[wk.key].details.push(s);
     });
-    const weeks = Object.keys(grp).sort();
+    
+    // Сортируем недели в обратном порядке (новые сверху)
+    const weeks = Object.keys(grp).sort().reverse();
+    const currentWeekKey = getCurrentWeekKey();
+    
     document.getElementById('scheduleWeekCount').textContent = weeks.filter(k => !k.startsWith('unknown')).length;
     document.getElementById('scheduleTotalRows').textContent = all.length;
-    if (!weeks.length) { document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных</div>'; document.getElementById('scheduleSummary').innerHTML = ''; return; }
     
-    const tw = all.filter(s=>s.marketplace==='Wildberries').reduce((s,x)=>s+x.qty,0);
-    const to = all.filter(s=>s.marketplace==='Ozon').reduce((s,x)=>s+x.qty,0);
-    const tc = Object.values(weekCapacities).reduce((s,c)=>s+(c||0),0);
-    const al = tc>0?Math.round((tw+to)/tc*100):0;
+    if (!weeks.length) {
+        document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных</div>';
+        document.getElementById('scheduleSummary').innerHTML = '';
+        return;
+    }
     
+    // Берём данные за текущую календарную неделю
+    // Если на текущую неделю ещё нет данных — показываем ближайшую последнюю
+    const currentData = grp[currentWeekKey] || (weeks.length > 0 ? grp[weeks[0]] : { wb: 0, ozon: 0 });
+    const currentLabel = grp[currentWeekKey] ? grp[currentWeekKey].label : (weeks.length > 0 ? grp[weeks[0]].label : 'Нет данных');
+    const isCurrentWeekData = !!grp[currentWeekKey];
+    
+    const currentTotal = currentData.wb + currentData.ozon;
+    const currentCap = weekCapacities[currentWeekKey] || 0;
+    const currentLoad = currentCap > 0 ? Math.round(currentTotal / currentCap * 100) : 0;
+    const loadColor = currentLoad > 100 ? '#ef4444' : currentLoad > 80 ? '#f59e0b' : '#10b981';
+    
+    // Сводка по текущей неделе
     document.getElementById('scheduleSummary').innerHTML = `
-        <div class="summary-item"><div class="label">Всего к отгрузке</div><div class="value">${(tw+to).toLocaleString('ru-RU')} шт</div></div>
-        <div class="summary-item"><div class="label">🟣 WB</div><div class="value" style="color:#6a1b9a">${tw.toLocaleString('ru-RU')} шт</div></div>
-        <div class="summary-item"><div class="label">🔵 Ozon</div><div class="value" style="color:#005bff">${to.toLocaleString('ru-RU')} шт</div></div>
-        <div class="summary-item"><div class="label">Способность</div><div class="value">${tc.toLocaleString('ru-RU')}</div></div>
-        <div class="summary-item"><div class="label">Загруженность</div><div class="value" style="color:${al>100?'#ef4444':al>80?'#f59e0b':'#10b981'}">${al||'—'}%</div></div>`;
+        <div class="summary-item current-week">
+            <div class="label">📅 Текущая неделя</div>
+            <div class="value" style="font-size:14px;">${currentLabel}${!isCurrentWeekData ? ' (данных нет)' : ''}</div>
+        </div>
+        <div class="summary-item current-week">
+            <div class="label">Всего к отгрузке</div>
+            <div class="value">${currentTotal.toLocaleString('ru-RU')} шт</div>
+        </div>
+        <div class="summary-item current-week">
+            <div class="label">🟣 WB</div>
+            <div class="value" style="color:#6a1b9a">${currentData.wb.toLocaleString('ru-RU')} шт</div>
+        </div>
+        <div class="summary-item current-week">
+            <div class="label">🔵 Ozon</div>
+            <div class="value" style="color:#005bff">${currentData.ozon.toLocaleString('ru-RU')} шт</div>
+        </div>
+        <div class="summary-item current-week">
+            <div class="label">Способность</div>
+            <div class="value">${currentCap.toLocaleString('ru-RU')} шт/нед</div>
+        </div>
+        <div class="summary-item current-week">
+            <div class="label">Загруженность</div>
+            <div class="value" style="color:${loadColor}">${currentCap > 0 ? currentLoad + '%' : '—'}</div>
+        </div>`;
     
+    // Таблица с неделями (новые сверху)
     let html = '<table><thead><tr><th>Неделя</th><th class="num">🟣 WB</th><th class="num">🔵 Ozon</th><th class="num">Всего</th><th>Пропускная способность</th><th>Загруженность</th></tr></thead><tbody>';
-    weeks.forEach((key,i) => {
-        const g = grp[key], t = g.wb+g.ozon, cap = weekCapacities[key]||0, pct = cap>0?Math.round(t/cap*100):0;
-        const bc = pct>100?'danger':pct>80?'warn':'good';
-        html += `<tr class="${i%2?'week-row-alt':'week-row'}">
-            <td><b>📅 ${g.label}</b></td>
+    
+    weeks.forEach((key, i) => {
+        const g = grp[key], t = g.wb + g.ozon, cap = weekCapacities[key] || 0;
+        const pct = cap > 0 ? Math.round(t / cap * 100) : 0;
+        const bc = pct > 100 ? 'danger' : pct > 80 ? 'warn' : 'good';
+        const isCurrent = key === currentWeekKey;
+        const rowClass = isCurrent ? 'week-row current' : (i % 2 === 0 ? 'week-row' : 'week-row-alt');
+        
+        html += `<tr class="${rowClass}">
+            <td><b>📅 ${g.label}</b>${isCurrent ? ' <span class="badge badge-info">текущая</span>' : ''}</td>
             <td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td>
             <td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td>
             <td class="num"><b>${t.toLocaleString('ru-RU')}</b></td>
-            <td class="capacity-cell"><input class="capacity-input" type="number" value="${cap||''}" onchange="updateWeekCapacity('${key}',this.value)"></td>
-            <td><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div>${cap>0?pct+'%':'—'}</td></tr>`;
+            <td class="capacity-cell"><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onchange="updateWeekCapacity('${key}',this.value)"></td>
+            <td style="min-width:150px;">
+                <div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div>
+                <span style="font-size:11px;font-weight:600;">${cap>0?pct+'%':'—'}</span>
+                ${pct>100?' <span class="badge badge-danger">Перегруз</span>':''}
+                ${pct>80&&pct<=100?' <span class="badge badge-warning">Высокая</span>':''}
+                ${pct<=80&&cap>0?' <span class="badge badge-success">Норма</span>':''}
+            </td>
+        </tr>`;
+        
+        if (g.details.length) {
+            const byCity = {};
+            g.details.forEach(d => {
+                const ck = d.city + '|' + d.marketplace;
+                if (!byCity[ck]) byCity[ck] = 0;
+                byCity[ck] += d.qty;
+            });
+            html += '<tr style="background:#fafafa;"><td colspan="6" style="padding:4px 10px;font-size:10px;color:var(--sub);">';
+            Object.entries(byCity).forEach(([ck, qty]) => {
+                const [city, mp] = ck.split('|');
+                const mb = mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon';
+                html += `<span class="badge ${mb}" style="margin:2px;">${city}: ${qty.toLocaleString('ru-RU')} шт</span> `;
+            });
+            html += '</td></tr>';
+        }
     });
+    
     html += '</tbody></table>';
     document.getElementById('scheduleTable').innerHTML = html;
 }
