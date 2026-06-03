@@ -175,7 +175,7 @@
             background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
             overflow-x: auto; margin-bottom: 14px;
         }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1000px; }
         th {
             text-align: left; padding: 10px; font-size: 9px; font-weight: 700;
             text-transform: uppercase; color: var(--sub); border-bottom: 2px solid var(--border);
@@ -194,7 +194,6 @@
         .badge-info { background: #e0f2fe; color: #0369a1; }
         .badge-paid { background: #d1fae5; color: #065f46; cursor: pointer; }
         .badge-unpaid { background: #fef3c7; color: #92400e; cursor: pointer; }
-        .badge-nds { background: #e0e7ff; color: #3730a3; }
 
         .btn-status {
             padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
@@ -251,6 +250,41 @@
             font-size: 10px; margin-left: 4px;
         }
         .toggle-icon.open { transform: rotate(180deg); }
+
+        .truck-alert {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .truck-alert h3 { color: #856404; margin-bottom: 8px; font-size: 14px; }
+        .truck-alert .truck-item {
+            display: inline-block;
+            background: #fff;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 4px;
+            font-size: 12px;
+        }
+        .log-edit-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            background: #fff;
+        }
+        .log-edit-input:focus { outline: none; border-color: var(--accent); }
+        .log-select {
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            background: #fff;
+            font-family: inherit;
+        }
     </style>
 </head>
 <body>
@@ -337,7 +371,14 @@
 <!-- ЛОГИСТИКА -->
 <div class="page" id="page-logistics">
     <h1>🚚 Логистика</h1>
-    <p class="subtitle">Учёт логистических отправлений (не попадает в график отгрузок)</p>
+    <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты</p>
+    
+    <!-- ПРЕДУПРЕЖДЕНИЕ О МАШИНАХ НА ЗАВТРА -->
+    <div class="truck-alert" id="truckAlert" style="display:none;">
+        <h3>🚛 На завтра нужно заказать машины:</h3>
+        <div id="truckList"></div>
+    </div>
+    
     <div class="top-bar">
         <button class="btn btn-outline btn-sm" id="btnToggleLogImport">📥 Импорт</button>
         <button class="btn btn-outline btn-sm" id="btnExportLog">📤 Экспорт CSV</button>
@@ -347,12 +388,14 @@
         <textarea id="logImportText" placeholder="Вставь строки (дата МП тип поставщик город кол-во паллет сумма статус НДС%)"></textarea>
         <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
     </div>
+    
+    <!-- ФОРМА ДОБАВЛЕНИЯ -->
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Дата</label><input type="date" id="logDate"></div>
             <div class="field"><label>МП</label><select id="logMP"><option>Wildberries</option><option>Ozon</option></select></div>
             <div class="field"><label>Тип</label><select id="logType"><option>FBO</option><option>FBS</option></select></div>
-            <div class="field"><label>Поставщик</label><input type="text" id="logSupplier" placeholder="Большие Амбиции"></div>
+            <div class="field"><label>Поставщик</label><select id="logSupplier"><option value="">—</option><option>Большие Амбиции</option><option>ИП Орищенко</option><option>НордТрансСклад</option><option>Тессар</option></select></div>
             <div class="field"><label>Город</label><input type="text" id="logCity" placeholder="Краснодар" list="cityList"></div>
             <div class="field" style="max-width:80px"><label>Кол-во</label><input type="number" id="logQty" min="1"></div>
             <div class="field" style="max-width:70px"><label>Паллет</label><input type="number" id="logBoxes" min="1"></div>
@@ -364,6 +407,7 @@
             </div>
         </div>
     </div>
+    
     <div class="filters">
         <input type="month" id="logFilterMonth" style="width:130px;">
         <select id="logFilterStatus"><option value="all">Все статусы</option><option value="paid">Оплачен</option><option value="unpaid">Не оплачен</option></select>
@@ -445,6 +489,8 @@ let weekCapacities = {};
 let isOnline = false;
 let currentPage = 'schedule';
 
+const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
+
 function updateSyncStatus(status) {
     const el = document.getElementById('syncStatus');
     el.className = 'sync-status';
@@ -497,8 +543,6 @@ function loadFromLocalStorage() {
     ozonShipments = oz.map(s => ({ ...s, status: s.status || 'in_work' }));
     logEntries = log.map(e => ({ ...e, paid: e.paid || false }));
     weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
-    
-    console.log('📂 Загружено из localStorage:', 'WB:', wbShipments.length, 'Ozon:', ozonShipments.length);
 }
 
 function saveToLocalStorage() {
@@ -507,7 +551,6 @@ function saveToLocalStorage() {
     localStorage.setItem('log', JSON.stringify(logEntries));
     localStorage.setItem('cap', JSON.stringify(weekCapacities));
     localStorage.setItem('currentPage', currentPage);
-    console.log('💾 Данные сохранены в localStorage');
 }
 
 // ========== ТОЧЕЧНЫЕ ОПЕРАЦИИ С FIREBASE ==========
@@ -517,33 +560,24 @@ async function addShipmentToFirebase(mp, shipment) {
         const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
         const { id, ...data } = shipment;
         await db.collection(collection).doc(String(id)).set(data);
-        console.log('📤 Отгрузка добавлена в Firebase:', mp, shipment.city);
-    } catch (e) { 
-        console.error('Firebase add error:', e);
-    }
+    } catch (e) { console.error('Firebase add error:', e); }
 }
 
 async function updateStatusInFirebase(mp, id, status) {
     const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
     const docRef = db.collection(collection).doc(String(id));
-    
     try {
         const doc = await docRef.get();
         if (doc.exists) {
             await docRef.update({ status: status });
-            console.log('📤 Firebase обновлён:', mp, id, status);
         } else {
             const shipment = (mp === 'Wildberries' ? wbShipments : ozonShipments).find(s => String(s.id) === String(id));
             if (shipment) {
                 const { id: sid, ...data } = shipment;
                 await docRef.set(data);
-                console.log('📤 Создан новый документ в Firebase:', mp, id);
             }
         }
-    } catch (e) {
-        console.error('Firebase update error:', e);
-        throw e;
-    }
+    } catch (e) { console.error('Firebase update error:', e); }
 }
 
 async function deleteFromFirebase(mp, id) {
@@ -562,10 +596,10 @@ async function addLogToFirebase(entry) {
     } catch (e) { console.error(e); }
 }
 
-async function updateLogPaidInFirebase(id, paid) {
+async function updateLogFieldInFirebase(id, field, value) {
     if (!isOnline) return;
     try {
-        await db.collection('logistics').doc(String(id)).update({ paid });
+        await db.collection('logistics').doc(String(id)).update({ [field]: value });
     } catch (e) { console.error(e); }
 }
 
@@ -587,6 +621,96 @@ function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ========== РЕДАКТИРОВАНИЕ ПОЛЕЙ ЛОГИСТИКИ ==========
+function updateLogSupplier(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.supplier = value;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'supplier', value);
+    }
+}
+
+function updateLogPallets(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.boxes = parseInt(value) || 0;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'boxes', entry.boxes);
+    }
+}
+
+function updateLogAmount(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        const amount = parseFloat(value) || 0;
+        const rate = (entry.nds === '22%') ? 1.22 : 1.07;
+        entry.amount = amount;
+        entry.amountFull = Math.round(amount * rate * 100) / 100;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'amount', entry.amount);
+        updateLogFieldInFirebase(id, 'amountFull', entry.amountFull);
+        renderLog();
+    }
+}
+
+function updateLogNds(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.nds = value;
+        const rate = value === '22%' ? 1.22 : 1.07;
+        entry.amountFull = Math.round((entry.amount || 0) * rate * 100) / 100;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'nds', value);
+        updateLogFieldInFirebase(id, 'amountFull', entry.amountFull);
+        renderLog();
+    }
+}
+
+function toggleLogPaid(id) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.paid = !entry.paid;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'paid', entry.paid);
+        renderLog();
+    }
+}
+
+// ========== ПРОВЕРКА МАШИН НА ЗАВТРА ==========
+function checkTrucksForTomorrow() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    
+    const tomorrowShipments = [...wbShipments, ...ozonShipments].filter(s => s.date === tomorrowStr);
+    
+    const truckAlert = document.getElementById('truckAlert');
+    const truckList = document.getElementById('truckList');
+    
+    if (tomorrowShipments.length === 0) {
+        truckAlert.style.display = 'none';
+        return;
+    }
+    
+    truckAlert.style.display = 'block';
+    
+    const byCity = {};
+    tomorrowShipments.forEach(s => {
+        const key = s.city;
+        if (!byCity[key]) byCity[key] = { city: s.city, mp: s.source, qty: 0 };
+        byCity[key].qty += s.qty;
+    });
+    
+    truckList.innerHTML = Object.values(byCity).map(item => 
+        `<div class="truck-item">
+            🚛 <b>${item.city}</b> — ${item.qty.toLocaleString('ru-RU')} ед. 
+            <span class="badge ${item.mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon'}">${item.mp === 'Wildberries' ? 'WB' : 'Ozon'}</span>
+            ${routesDB[item.city] ? ' — ' + routesDB[item.city].delivery : ''}
+        </div>`
+    ).join('');
 }
 
 // ========== СОХРАНЕНИЕ ОТГРУЗКИ ==========
@@ -628,7 +752,6 @@ async function deleteShipment(mp, id) {
     renderSchedule();
 }
 
-// Функция обновления статуса — перерисовывает карточки
 function handleStatusChange(event) {
     const select = event.target;
     if (!select.classList.contains('status-select')) return;
@@ -637,31 +760,16 @@ function handleStatusChange(event) {
     const id = select.dataset.id;
     const status = select.value;
     
-    console.log('🔄 Меняем статус:', mp, id, status);
-    
-    // Обновляем данные в массиве — ищем по строке
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
     const shipment = arr.find(s => String(s.id) === String(id));
     
     if (shipment) {
         shipment.status = status;
-        console.log('✅ Статус обновлён:', shipment.city);
-        
-        // Сохраняем в localStorage
         saveToLocalStorage();
-        
-        // Пробуем Firebase
         if (isOnline) {
-            updateStatusInFirebase(mp, id, status).catch(e => {
-                console.warn('Firebase update failed:', e);
-            });
+            updateStatusInFirebase(mp, id, status).catch(e => console.warn('Firebase update failed:', e));
         }
-        
-        // Перерисовываем карточки
         renderShipmentCards(mp);
-    } else {
-        console.error('❌ Отгрузка не найдена. Ищем:', id, 'тип:', typeof id);
-        console.error('Доступные ID:', arr.map(s => ({ id: s.id, type: typeof s.id })));
     }
 }
 
@@ -701,7 +809,7 @@ function downloadCSV(csv, fn) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fn; a.click();
 }
 
-function fmtPrice(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+function fmtPrice(n) { return n ? n.toLocaleString('ru-RU') + ' ₽' : '0 ₽'; }
 function monthName(d) { return ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][new Date(d).getMonth()]; }
 
 function switchPage(page) {
@@ -714,7 +822,12 @@ function switchPage(page) {
     const map = {schedule:0, wb:1, ozon:2, logistics:3};
     const cls = ['active','wb-active','ozon-active','log-active'];
     document.querySelectorAll('.nav-btn')[map[page]].classList.add(cls[map[page]]);
-    if (page === 'logistics') { updateLogCalc(); renderLog(); }
+    
+    if (page === 'logistics') { 
+        updateLogCalc(); 
+        renderLog(); 
+        checkTrucksForTomorrow();
+    }
 }
 
 // ========== ГРАФИК ==========
@@ -808,33 +921,23 @@ async function addLogEntry() {
     const date = document.getElementById('logDate').value;
     const mp = document.getElementById('logMP').value;
     const type = document.getElementById('logType').value;
-    const supplier = document.getElementById('logSupplier').value.trim();
+    const supplier = document.getElementById('logSupplier').value;
     const city = document.getElementById('logCity').value.trim();
     const qty = parseInt(document.getElementById('logQty').value) || 0;
     const boxes = parseInt(document.getElementById('logBoxes').value) || 0;
     const amount = parseFloat(document.getElementById('logAmount').value) || 0;
     const nds = document.getElementById('logNDS').value;
     const rate = nds === '22%' ? 1.22 : 1.07;
-    if (!date || !supplier || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
+    if (!date || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
     
     const entry = { id: Date.now(), date, marketplace: mp, type, supplier, city, qty, boxes, amount, amountFull: Math.round(amount*rate*100)/100, paid: false, nds, source: 'Логистика' };
     logEntries.push(entry);
     
     await addLogToFirebase(entry);
     saveToLocalStorage();
-    ['logSupplier','logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = '');
+    ['logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = '');
     updateLogCalc();
     renderLog();
-}
-
-async function toggleLogPaid(id) { 
-    const e = logEntries.find(l => l.id === id); 
-    if (e) { 
-        e.paid = !e.paid; 
-        await updateLogPaidInFirebase(id, e.paid);
-        saveToLocalStorage();
-        renderLog();
-    } 
 }
 
 async function deleteLogEntry(id) { 
@@ -881,7 +984,7 @@ function exportLogCSV() {
     let csv = 'Дата\tМП\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tСумма с НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед с НДС\n';
     [...logEntries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e => {
         const up = e.qty>0?e.amount/e.qty:0, upf = e.qty>0?e.amountFull/e.qty:0;
-        csv += `${e.date.split('-').reverse().join('.')}\t${e.marketplace}\t${e.type}\t${e.supplier}\t${e.city}\t${e.qty}\t${e.boxes}\t${e.amount}\t${e.amountFull}\t${e.paid?'Оплачен':'Не оплачен'}\t${e.nds}\t${up.toFixed(2)}\t${upf.toFixed(2)}\n`;
+        csv += `${e.date.split('-').reverse().join('.')}\t${e.marketplace}\t${e.type}\t${e.supplier||''}\t${e.city}\t${e.qty}\t${e.boxes}\t${e.amount}\t${e.amountFull}\t${e.paid?'Оплачен':'Не оплачен'}\t${e.nds}\t${up.toFixed(2)}\t${upf.toFixed(2)}\n`;
     });
     downloadCSV(csv, 'логистика.csv');
 }
@@ -1021,7 +1124,6 @@ function renderShipmentCards(mp) {
     });
     
     document.getElementById(containerId).innerHTML = html;
-    console.log('🎨 Карточки перерисованы:', mp, srt.length);
 }
 
 function renderLog() {
@@ -1029,16 +1131,24 @@ function renderLog() {
     const fs = document.getElementById('logFilterStatus').value;
     const fmp = document.getElementById('logFilterMP').value;
     let fl = [...logEntries];
-    if (fm) fl = fl.filter(e=>e.date.startsWith(fm));
-    if (fs==='paid') fl = fl.filter(e=>e.paid);
-    if (fs==='unpaid') fl = fl.filter(e=>!e.paid);
-    if (fmp!=='all') fl = fl.filter(e=>e.marketplace===fmp);
-    const srt = fl.sort((a,b)=>a.date.localeCompare(b.date));
+    if (fm) fl = fl.filter(e => e.date && e.date.startsWith(fm));
+    if (fs === 'paid') fl = fl.filter(e => e.paid);
+    if (fs === 'unpaid') fl = fl.filter(e => !e.paid);
+    if (fmp !== 'all') fl = fl.filter(e => e.marketplace === fmp);
+    const srt = fl.sort((a,b) => (b.date||'').localeCompare(a.date||''));
     document.getElementById('logCount').textContent = srt.length;
-    if (!srt.length) { document.getElementById('logTable').innerHTML = '<div class="empty">Нет записей</div>'; return; }
     
-    const tq = srt.reduce((s,e)=>s+e.qty,0), ta = srt.reduce((s,e)=>s+e.amount,0), taf = srt.reduce((s,e)=>s+e.amountFull,0);
-    const tpd = srt.filter(e=>e.paid).reduce((s,e)=>s+e.amountFull,0), tup = srt.filter(e=>!e.paid).reduce((s,e)=>s+e.amountFull,0);
+    if (!srt.length) { 
+        document.getElementById('logTable').innerHTML = '<div class="empty">Нет записей</div>'; 
+        document.getElementById('logSummary').innerHTML = '';
+        return; 
+    }
+    
+    const tq = srt.reduce((s,e) => s + (e.qty||0), 0);
+    const ta = srt.reduce((s,e) => s + (e.amount||0), 0);
+    const taf = srt.reduce((s,e) => s + (e.amountFull||0), 0);
+    const tpd = srt.filter(e => e.paid).reduce((s,e) => s + (e.amountFull||0), 0);
+    const tup = srt.filter(e => !e.paid).reduce((s,e) => s + (e.amountFull||0), 0);
     
     document.getElementById('logSummary').innerHTML = `
         <div class="summary-item"><div class="label">Отправок</div><div class="value">${srt.length}</div></div>
@@ -1047,19 +1157,39 @@ function renderLog() {
         <div class="summary-item"><div class="label">С НДС</div><div class="value">${fmtPrice(taf)}</div></div>
         <div class="summary-item"><div class="label">Оплачено / Не опл.</div><div class="value" style="font-size:15px"><span style="color:#10b981">${fmtPrice(tpd)}</span> / <span style="color:#f59e0b">${fmtPrice(tup)}</span></div></div>`;
     
-    let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th class="num">₽/ед</th><th>Статус</th><th>НДС</th><th></th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';
+    
     let lm = '';
     srt.forEach(e => {
-        const m = monthName(e.date+'T00:00:00');
-        if (m!==lm&&!fm) { lm=m; html += `<tr><td colspan="13" class="month-sep">📅 ${m} 2026</td></tr>`; }
-        const up = e.qty>0?e.amount/e.qty:0;
-        html += `<tr><td>${e.date.split('-').reverse().join('.')}</td><td>${e.marketplace}</td><td>${e.type}</td><td>${e.supplier}</td><td>${e.city}</td>
-            <td class="num">${e.qty.toLocaleString('ru-RU')}</td><td class="num">${e.boxes}</td><td class="num">${fmtPrice(e.amount)}</td><td class="num">${fmtPrice(e.amountFull)}</td>
-            <td class="num">${up.toFixed(2)} ₽</td>
-            <td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid(${e.id})">${e.paid?'Оплачен':'Не опл.'}</button></td>
-            <td><span class="badge badge-nds">${e.nds}</span></td>
-            <td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry(${e.id})">✕</button></td></tr>`;
+        if (!e.date) return;
+        const m = monthName(e.date + 'T00:00:00');
+        if (m !== lm && !fm) { lm = m; html += `<tr><td colspan="12" class="month-sep">📅 ${m} 2026</td></tr>`; }
+        
+        html += `<tr>
+            <td>${e.date.split('-').reverse().join('.')}</td>
+            <td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${e.marketplace}</span></td>
+            <td>${e.type||'FBO'}</td>
+            <td>
+                <select class="log-select" onchange="updateLogSupplier('${e.id}', this.value)">
+                    ${SUPPLIERS.map(s => `<option value="${s}" ${e.supplier === s ? 'selected' : ''}>${s || '—'}</option>`).join('')}
+                </select>
+            </td>
+            <td>${e.city||''}</td>
+            <td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td>
+            <td class="num"><input class="log-edit-input" style="width:60px;text-align:center;" value="${e.boxes||0}" type="number" onchange="updateLogPallets('${e.id}', this.value)"></td>
+            <td class="num"><input class="log-edit-input" style="width:90px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" onchange="updateLogAmount('${e.id}', this.value)"></td>
+            <td class="num">${fmtPrice(e.amountFull)}</td>
+            <td>
+                <select onchange="updateLogNds('${e.id}', this.value)" style="font-size:10px;padding:2px;">
+                    <option value="22%" ${e.nds==='22%'?'selected':''}>22%</option>
+                    <option value="7%" ${e.nds==='7%'?'selected':''}>7%</option>
+                </select>
+            </td>
+            <td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid('${e.id}')">${e.paid?'Оплачен':'Не опл.'}</button></td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry('${e.id}')">✕</button></td>
+        </tr>`;
     });
+    
     html += '</tbody></table>';
     document.getElementById('logTable').innerHTML = html;
 }
@@ -1069,6 +1199,7 @@ function renderAll() {
     renderShipmentCards('Wildberries'); 
     renderShipmentCards('Ozon'); 
     renderLog(); 
+    checkTrucksForTomorrow();
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -1077,15 +1208,12 @@ document.getElementById('shipDateWildberries').value = new Date().toISOString().
 document.getElementById('shipDateOzon').value = new Date().toISOString().slice(0,10);
 document.getElementById('cityList').innerHTML = Object.keys(routesDB).map(c => `<option value="${c}">`).join('');
 
-// Восстанавливаем последнюю страницу
 currentPage = localStorage.getItem('currentPage') || 'schedule';
 switchPage(currentPage);
 
-// Навигация
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', function() { switchPage(this.dataset.page); }));
 document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
 
-// Делегирование событий на document
 document.addEventListener('change', function(e) {
     if (e.target.classList.contains('status-select')) {
         handleStatusChange(e);
@@ -1100,21 +1228,17 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// График
 document.getElementById('btnImportSchedule').addEventListener('click', toggleScheduleImport);
 document.getElementById('btnDoScheduleImport').addEventListener('click', doScheduleImport);
 document.getElementById('btnExportSchedule').addEventListener('click', exportScheduleCSV);
 
-// WB
 document.getElementById('btnSaveWb').addEventListener('click', () => saveShipment('Wildberries'));
 document.getElementById('btnClearWb').addEventListener('click', () => clearShipmentForm('Wildberries'));
 document.getElementById('shipCityWildberries').addEventListener('input', showRouteInfo);
 
-// Ozon
 document.getElementById('btnSaveOzon').addEventListener('click', () => saveShipment('Ozon'));
 document.getElementById('btnClearOzon').addEventListener('click', () => clearShipmentForm('Ozon'));
 
-// Логистика
 document.getElementById('btnAddLog').addEventListener('click', addLogEntry);
 document.getElementById('btnToggleLogImport').addEventListener('click', toggleLogImport);
 document.getElementById('btnDoLogImport').addEventListener('click', doLogImport);
