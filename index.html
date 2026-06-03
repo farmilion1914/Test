@@ -514,16 +514,29 @@ async function addShipmentToFirebase(mp, shipment) {
         const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
         const { id, ...data } = shipment;
         await db.collection(collection).doc(String(id)).set(data);
-    } catch (e) { console.error('Firebase add error:', e); }
+    } catch (e) { 
+        console.error('Firebase add error:', e);
+        isOnline = false;
+        updateSyncStatus('offline');
+    }
 }
 
 async function updateStatusInFirebase(mp, id, status) {
-    if (!isOnline) return;
-    try {
-        const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
-        await db.collection(collection).doc(String(id)).update({ status });
-        console.log('Firebase updated:', mp, id, status);
-    } catch (e) { console.error('Firebase update error:', e); }
+    const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+    const docRef = db.collection(collection).doc(String(id));
+    
+    const doc = await docRef.get();
+    if (doc.exists) {
+        await docRef.update({ status: status });
+        console.log('📤 Firebase обновлён:', mp, id, status);
+    } else {
+        const shipment = (mp === 'Wildberries' ? wbShipments : ozonShipments).find(s => s.id === id);
+        if (shipment) {
+            const { id: sid, ...data } = shipment;
+            await docRef.set(data);
+            console.log('📤 Создан новый документ в Firebase:', mp, id);
+        }
+    }
 }
 
 async function deleteFromFirebase(mp, id) {
@@ -608,35 +621,39 @@ async function deleteShipment(mp, id) {
     renderSchedule();
 }
 
-// Функция обновления статуса (вызывается через делегирование)
-async function handleStatusChange(event) {
+// Функция обновления статуса — перерисовывает карточки
+function handleStatusChange(event) {
     const select = event.target;
-    if (!select.classList.contains('status-select')) return;
     
     const mp = select.dataset.mp;
     const id = parseInt(select.dataset.id);
     const status = select.value;
     
-    console.log('Status change:', mp, id, status);
+    console.log('🔄 Меняем статус:', mp, id, status);
     
     // Обновляем данные в массиве
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
     const shipment = arr.find(s => s.id === id);
+    
     if (shipment) {
         shipment.status = status;
         
-        // Меняем цвет select мгновенно
-        const statusObj = STATUSES.find(s => s.value === status) || STATUSES[0];
-        // Удаляем все статусные классы
-        STATUSES.forEach(s => select.classList.remove(s.class));
-        // Добавляем нужный
-        select.classList.add(statusObj.class);
-        
-        console.log('Status updated:', shipment.city, status, statusObj.class);
-        
-        // Сохраняем
+        // Сохраняем в localStorage СРАЗУ
         saveToLocalStorage();
-        await updateStatusInFirebase(mp, id, status);
+        
+        // Пробуем Firebase (без await чтобы не блокировать)
+        if (isOnline) {
+            updateStatusInFirebase(mp, id, status).catch(e => {
+                console.warn('Firebase update failed:', e);
+            });
+        }
+        
+        // ПЕРЕРИСОВЫВАЕМ ВСЕ КАРТОЧКИ для этого МП
+        renderShipmentCards(mp);
+        
+        console.log('✅ Статус обновлён и карточки перерисованы:', shipment.city);
+    } else {
+        console.error('❌ Отгрузка не найдена:', id);
     }
 }
 
@@ -1059,23 +1076,18 @@ switchPage(currentPage);
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', function() { switchPage(this.dataset.page); }));
 document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
 
-// Делегирование событий для карточек WB и Ozon
-document.getElementById('wbCards').addEventListener('change', handleStatusChange);
-document.getElementById('ozonCards').addEventListener('change', handleStatusChange);
-
-document.getElementById('wbCards').addEventListener('click', function(e) {
-    if (e.target.classList.contains('card-delete')) {
-        const mp = e.target.dataset.mp;
-        const id = parseInt(e.target.dataset.id);
-        deleteShipment(mp, id);
+// Делегирование событий на document
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('status-select')) {
+        handleStatusChange(e);
     }
 });
 
-document.getElementById('ozonCards').addEventListener('click', function(e) {
+document.addEventListener('click', function(e) {
     if (e.target.classList.contains('card-delete')) {
         const mp = e.target.dataset.mp;
         const id = parseInt(e.target.dataset.id);
-        deleteShipment(mp, id);
+        if (id) deleteShipment(mp, id);
     }
 });
 
