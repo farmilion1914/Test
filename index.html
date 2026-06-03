@@ -92,32 +92,6 @@
         .route-schedule { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .route-chip { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
 
-        .file-upload-section { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
-        .file-upload-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--sub); margin-bottom: 8px; }
-        .file-upload-box {
-            border: 2px dashed var(--border); border-radius: 10px;
-            padding: 20px; text-align: center; cursor: pointer;
-            transition: all 0.2s; background: #fafafa;
-        }
-        .file-upload-box:hover { border-color: var(--accent); background: #f0f4ff; }
-        .file-upload-box.wb:hover { border-color: var(--wb); background: #faf5ff; }
-        .file-upload-box.ozon:hover { border-color: var(--ozon); background: #f0f7ff; }
-        .file-upload-box.has-file { border-color: var(--success); background: #f0fdf4; border-style: solid; }
-        .file-upload-box input[type="file"] { display: none; }
-        .file-icon { font-size: 24px; margin-bottom: 4px; }
-        .file-name { font-size: 12px; font-weight: 600; color: var(--success); margin-top: 4px; display: none; }
-        .file-name.show { display: block; }
-        .file-hint { font-size: 11px; color: var(--sub); margin-top: 4px; }
-        .file-preview {
-            margin-top: 10px; background: #fff; border: 1px solid var(--border);
-            border-radius: 8px; padding: 10px; font-size: 11px;
-            max-height: 150px; overflow-y: auto; display: none;
-        }
-        .file-preview.show { display: block; }
-        .file-preview table { width: 100%; font-size: 11px; }
-        .file-preview th { font-size: 9px; padding: 4px 6px; }
-        .file-preview td { padding: 3px 6px; }
-
         .import-area { margin-bottom: 14px; }
         .import-area textarea {
             width: 100%; height: 120px; font-family: 'SF Mono', monospace;
@@ -176,9 +150,10 @@
         .summary-item .value { font-size: 18px; font-weight: 700; }
         .summary-item.current-week { border: 2px solid var(--accent); background: #f0f4ff; }
 
-        .week-row { background: #f9fafb; border-left: 4px solid var(--accent); }
-        .week-row-alt { background: #f3f4f6; border-left: 4px solid #93a8d8; }
+        .week-row { background: #f9fafb; border-left: 4px solid var(--accent); cursor: pointer; }
+        .week-row-alt { background: #f3f4f6; border-left: 4px solid #93a8d8; cursor: pointer; }
         .week-row.current { background: #f0f4ff; border-left: 4px solid var(--accent); font-weight: 600; }
+        .week-row:hover, .week-row-alt:hover { background: #e8edf5; }
         .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; }
         .progress-fill.good { background: var(--success); }
@@ -197,8 +172,6 @@
             background: #f3f4f6; font-weight: 700; font-size: 11px;
             text-transform: uppercase; color: var(--sub); padding: 8px 10px !important;
         }
-        .items-list { display: none; background: #f9fafb; padding: 8px 12px; font-size: 10px; color: var(--sub); }
-        .items-list.show { display: table-row; }
         .toast {
             position: fixed; bottom: 20px; right: 20px;
             background: #1a1e25; color: #fff; padding: 10px 18px;
@@ -211,6 +184,13 @@
             background: #f0f4ff; border: 1px dashed #93a8d8; border-radius: 7px;
             padding: 7px 9px; font-size: 13px; font-weight: 600; color: #1d4ed8; text-align: right;
         }
+        .toggle-icon {
+            display: inline-block;
+            transition: transform 0.2s;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        .toggle-icon.open { transform: rotate(180deg); }
     </style>
 </head>
 <body>
@@ -235,7 +215,7 @@
 <!-- ГРАФИК ОТГРУЗОК -->
 <div class="page active" id="page-schedule">
     <h1>📊 График отгрузок</h1>
-    <p class="subtitle">Текущая неделя сверху — данные из WB и Ozon</p>
+    <p class="subtitle">Текущая неделя сверху — нажми на неделю чтобы увидеть города</p>
     <div class="top-bar">
         <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
         <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 Экспорт CSV</button>
@@ -252,36 +232,22 @@
 <!-- WB -->
 <div class="page" id="page-wb">
     <h1>🟣 Wildberries — Отгрузки</h1>
-    <p class="subtitle">Создание отгрузки с прикреплением списка товаров</p>
+    <p class="subtitle">Добавление планируемых отгрузок</p>
     
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Дата отгрузки</label><input type="date" id="shipDateWildberries"></div>
             <div class="field"><label>Город</label><input type="text" id="shipCityWildberries" placeholder="Начните вводить город" list="cityList" oninput="showRouteInfo()"></div>
             <div class="field" style="max-width:110px"><label>Кол-во товаров</label><input type="number" id="shipQtyWildberries" min="1" placeholder="Всего единиц"></div>
+            <div class="field" style="justify-content:flex-end">
+                <button class="btn btn-wb btn-sm" id="btnSaveWb" style="padding:10px 24px;">✅ Сохранить отгрузку</button>
+                <button class="btn btn-outline btn-sm" id="btnClearWb">🗑 Очистить</button>
+            </div>
         </div>
-        
         <div class="route-info" id="routeInfoWildberries">
             <div class="route-title" id="routeTitleWildberries"></div>
             <div class="route-detail" id="routeDetailWildberries"></div>
             <div class="route-schedule" id="routeScheduleWildberries"></div>
-        </div>
-        
-        <div class="file-upload-section">
-            <div class="file-upload-label">📎 Список товаров (Excel)</div>
-            <div class="file-upload-box wb" id="wbFileUploadBox">
-                <div class="file-icon">📄</div>
-                <div style="font-size:13px;font-weight:600;">Перетащите файл или нажмите</div>
-                <div class="file-hint">Excel (.xlsx, .xls) или CSV со списком товаров</div>
-                <div class="file-name" id="wbFileName"></div>
-                <input type="file" id="wbFileInput" accept=".xlsx,.xls,.csv">
-            </div>
-            <div class="file-preview" id="wbFilePreview"></div>
-        </div>
-        
-        <div style="margin-top:14px;display:flex;gap:8px;">
-            <button class="btn btn-wb btn-sm" id="btnSaveWb" style="padding:10px 24px;">✅ Сохранить отгрузку</button>
-            <button class="btn btn-outline btn-sm" id="btnClearWb">🗑 Очистить форму</button>
         </div>
     </div>
 
@@ -291,30 +257,17 @@
 <!-- OZON -->
 <div class="page" id="page-ozon">
     <h1>🔵 Ozon — Отгрузки</h1>
-    <p class="subtitle">Создание отгрузки с прикреплением списка товаров</p>
+    <p class="subtitle">Добавление планируемых отгрузок</p>
     
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Дата отгрузки</label><input type="date" id="shipDateOzon"></div>
             <div class="field"><label>Город</label><input type="text" id="shipCityOzon" placeholder="Начните вводить город" list="cityList"></div>
             <div class="field" style="max-width:110px"><label>Кол-во товаров</label><input type="number" id="shipQtyOzon" min="1" placeholder="Всего единиц"></div>
-        </div>
-        
-        <div class="file-upload-section">
-            <div class="file-upload-label">📎 Список товаров (Excel)</div>
-            <div class="file-upload-box ozon" id="ozonFileUploadBox">
-                <div class="file-icon">📄</div>
-                <div style="font-size:13px;font-weight:600;">Перетащите файл или нажмите</div>
-                <div class="file-hint">Excel (.xlsx, .xls) или CSV со списком товаров</div>
-                <div class="file-name" id="ozonFileName"></div>
-                <input type="file" id="ozonFileInput" accept=".xlsx,.xls,.csv">
+            <div class="field" style="justify-content:flex-end">
+                <button class="btn btn-ozon btn-sm" id="btnSaveOzon" style="padding:10px 24px;">✅ Сохранить отгрузку</button>
+                <button class="btn btn-outline btn-sm" id="btnClearOzon">🗑 Очистить</button>
             </div>
-            <div class="file-preview" id="ozonFilePreview"></div>
-        </div>
-        
-        <div style="margin-top:14px;display:flex;gap:8px;">
-            <button class="btn btn-ozon btn-sm" id="btnSaveOzon" style="padding:10px 24px;">✅ Сохранить отгрузку</button>
-            <button class="btn btn-outline btn-sm" id="btnClearOzon">🗑 Очистить форму</button>
         </div>
     </div>
 
@@ -422,8 +375,6 @@ let ozonShipments = [];
 let logEntries = [];
 let weekCapacities = {};
 let isOnline = false;
-let wbTempFileData = null;
-let ozonTempFileData = null;
 
 function updateSyncStatus(status) {
     const el = document.getElementById('syncStatus');
@@ -500,98 +451,15 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ========== ЗАГРУЗКА EXCEL ==========
-function handleFileSelect(file, mp) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-            if (rows.length < 2) return alert('Файл пуст');
-            const items = rows.slice(1).filter(r => r && r.length >= 1);
-            if (mp === 'Wildberries') {
-                wbTempFileData = { name: file.name, items, raw: rows };
-                document.getElementById('wbFileName').textContent = '📎 ' + file.name + ' (' + items.length + ' товаров)';
-                document.getElementById('wbFileName').classList.add('show');
-                document.getElementById('wbFileUploadBox').classList.add('has-file');
-                showFilePreview('wbFilePreview', rows);
-            } else {
-                ozonTempFileData = { name: file.name, items, raw: rows };
-                document.getElementById('ozonFileName').textContent = '📎 ' + file.name + ' (' + items.length + ' товаров)';
-                document.getElementById('ozonFileName').classList.add('show');
-                document.getElementById('ozonFileUploadBox').classList.add('has-file');
-                showFilePreview('ozonFilePreview', rows);
-            }
-        } catch (err) { console.error(err); alert('Ошибка чтения файла'); }
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-function handleCSVFile(file, mp) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const lines = e.target.result.split('\n').filter(l => l.trim());
-        const rows = lines.map(l => l.split(/[\t,;]/));
-        const items = rows.slice(1).filter(r => r.length >= 1);
-        if (mp === 'Wildberries') {
-            wbTempFileData = { name: file.name, items, raw: rows };
-            document.getElementById('wbFileName').textContent = '📎 ' + file.name + ' (' + items.length + ' товаров)';
-            document.getElementById('wbFileName').classList.add('show');
-            document.getElementById('wbFileUploadBox').classList.add('has-file');
-            showFilePreview('wbFilePreview', rows);
-        } else {
-            ozonTempFileData = { name: file.name, items, raw: rows };
-            document.getElementById('ozonFileName').textContent = '📎 ' + file.name + ' (' + items.length + ' товаров)';
-            document.getElementById('ozonFileName').classList.add('show');
-            document.getElementById('ozonFileUploadBox').classList.add('has-file');
-            showFilePreview('ozonFilePreview', rows);
-        }
-    };
-    reader.readAsText(file);
-}
-
-function showFilePreview(previewId, rows) {
-    const preview = document.getElementById(previewId);
-    const headers = rows[0] || [];
-    const data = rows.slice(1, 6);
-    let html = '<div style="font-weight:600;margin-bottom:6px;">Предпросмотр (первые 5 строк):</div>';
-    html += '<table><thead><tr>';
-    headers.forEach(h => html += `<th>${h || '—'}</th>`);
-    html += '</tr></thead><tbody>';
-    data.forEach(row => {
-        html += '<tr>';
-        if (Array.isArray(row)) row.forEach(cell => html += `<td>${cell || '—'}</td>`);
-        else html += `<td>${row || '—'}</td>`;
-        html += '</tr>';
-    });
-    html += '</tbody></table>';
-    if (rows.length > 6) html += `<div style="font-size:10px;color:var(--sub);margin-top:4px;">... и ещё ${rows.length - 6} строк</div>`;
-    preview.innerHTML = html;
-    preview.classList.add('show');
-}
-
-// ========== СОХРАНЕНИЕ ОТГРУЗКИ ==========
-async function saveShipmentWithFile(mp) {
+// ========== СОХРАНЕНИЕ ОТГРУЗКИ (без файла) ==========
+async function saveShipment(mp) {
     const date = document.getElementById('shipDate' + mp).value;
     const city = document.getElementById('shipCity' + mp).value.trim();
     const qty = parseInt(document.getElementById('shipQty' + mp).value) || 0;
-    const fileData = mp === 'Wildberries' ? wbTempFileData : ozonTempFileData;
     if (!date || !city || qty <= 0) return alert('Заполните дату, город и количество');
-    if (!fileData) return alert('Прикрепите файл со списком товаров');
-    
-    const shipment = {
-        id: Date.now(),
-        date, city, qty, source: mp,
-        fileName: fileData.name,
-        items: fileData.items,
-        createdAt: new Date().toISOString()
-    };
     
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
-    arr.push(shipment);
+    arr.push({ id: Date.now(), date, city, qty, source: mp });
     await syncToFirebase();
     clearShipmentForm(mp);
     showToast('✅ Отгрузка сохранена: ' + city + ' — ' + qty.toLocaleString('ru-RU') + ' ед.');
@@ -602,20 +470,7 @@ function clearShipmentForm(mp) {
     document.getElementById('shipCity' + mp).value = '';
     document.getElementById('shipQty' + mp).value = '';
     if (mp === 'Wildberries') {
-        wbTempFileData = null;
-        document.getElementById('wbFileName').textContent = '';
-        document.getElementById('wbFileName').classList.remove('show');
-        document.getElementById('wbFileUploadBox').classList.remove('has-file');
-        document.getElementById('wbFilePreview').innerHTML = '';
-        document.getElementById('wbFilePreview').classList.remove('show');
         document.getElementById('routeInfoWildberries').classList.remove('show');
-    } else {
-        ozonTempFileData = null;
-        document.getElementById('ozonFileName').textContent = '';
-        document.getElementById('ozonFileName').classList.remove('show');
-        document.getElementById('ozonFileUploadBox').classList.remove('has-file');
-        document.getElementById('ozonFilePreview').innerHTML = '';
-        document.getElementById('ozonFilePreview').classList.remove('show');
     }
 }
 
@@ -624,11 +479,6 @@ async function deleteShipment(mp, id) {
     if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => s.id !== id);
     else ozonShipments = ozonShipments.filter(s => s.id !== id);
     await syncToFirebase();
-}
-
-function toggleItemsList(id) {
-    const el = document.getElementById('items-' + id);
-    if (el) el.classList.toggle('show');
 }
 
 function showRouteInfo() {
@@ -655,7 +505,6 @@ function getWeekKey(ds) {
     return { key: mon.toISOString().slice(0,10), label: fmt(mon) + '-' + fmt(sun) };
 }
 
-// Получить ключ текущей календарной недели
 function getCurrentWeekKey() {
     const now = new Date();
     const day = now.getDay() || 7;
@@ -810,7 +659,7 @@ function resetLogFilters() {
     renderLog();
 }
 
-// ========== ОТОБРАЖЕНИЕ ГРАФИКА (текущая неделя сверху) ==========
+// ========== ОТОБРАЖЕНИЕ ==========
 function renderSchedule() {
     const all = getAllShipments();
     const grp = {};
@@ -822,7 +671,6 @@ function renderSchedule() {
         grp[wk.key].details.push(s);
     });
     
-    // Сортируем недели в обратном порядке (новые сверху)
     const weeks = Object.keys(grp).sort().reverse();
     const currentWeekKey = getCurrentWeekKey();
     
@@ -835,8 +683,6 @@ function renderSchedule() {
         return;
     }
     
-    // Берём данные за текущую календарную неделю
-    // Если на текущую неделю ещё нет данных — показываем ближайшую последнюю
     const currentData = grp[currentWeekKey] || (weeks.length > 0 ? grp[weeks[0]] : { wb: 0, ozon: 0 });
     const currentLabel = grp[currentWeekKey] ? grp[currentWeekKey].label : (weeks.length > 0 ? grp[weeks[0]].label : 'Нет данных');
     const isCurrentWeekData = !!grp[currentWeekKey];
@@ -846,34 +692,14 @@ function renderSchedule() {
     const currentLoad = currentCap > 0 ? Math.round(currentTotal / currentCap * 100) : 0;
     const loadColor = currentLoad > 100 ? '#ef4444' : currentLoad > 80 ? '#f59e0b' : '#10b981';
     
-    // Сводка по текущей неделе
     document.getElementById('scheduleSummary').innerHTML = `
-        <div class="summary-item current-week">
-            <div class="label">📅 Текущая неделя</div>
-            <div class="value" style="font-size:14px;">${currentLabel}${!isCurrentWeekData ? ' (данных нет)' : ''}</div>
-        </div>
-        <div class="summary-item current-week">
-            <div class="label">Всего к отгрузке</div>
-            <div class="value">${currentTotal.toLocaleString('ru-RU')} шт</div>
-        </div>
-        <div class="summary-item current-week">
-            <div class="label">🟣 WB</div>
-            <div class="value" style="color:#6a1b9a">${currentData.wb.toLocaleString('ru-RU')} шт</div>
-        </div>
-        <div class="summary-item current-week">
-            <div class="label">🔵 Ozon</div>
-            <div class="value" style="color:#005bff">${currentData.ozon.toLocaleString('ru-RU')} шт</div>
-        </div>
-        <div class="summary-item current-week">
-            <div class="label">Способность</div>
-            <div class="value">${currentCap.toLocaleString('ru-RU')} шт/нед</div>
-        </div>
-        <div class="summary-item current-week">
-            <div class="label">Загруженность</div>
-            <div class="value" style="color:${loadColor}">${currentCap > 0 ? currentLoad + '%' : '—'}</div>
-        </div>`;
+        <div class="summary-item current-week"><div class="label">📅 Текущая неделя</div><div class="value" style="font-size:14px;">${currentLabel}${!isCurrentWeekData ? ' (данных нет)' : ''}</div></div>
+        <div class="summary-item current-week"><div class="label">Всего к отгрузке</div><div class="value">${currentTotal.toLocaleString('ru-RU')} шт</div></div>
+        <div class="summary-item current-week"><div class="label">🟣 WB</div><div class="value" style="color:#6a1b9a">${currentData.wb.toLocaleString('ru-RU')} шт</div></div>
+        <div class="summary-item current-week"><div class="label">🔵 Ozon</div><div class="value" style="color:#005bff">${currentData.ozon.toLocaleString('ru-RU')} шт</div></div>
+        <div class="summary-item current-week"><div class="label">Способность</div><div class="value">${currentCap.toLocaleString('ru-RU')} шт/нед</div></div>
+        <div class="summary-item current-week"><div class="label">Загруженность</div><div class="value" style="color:${loadColor}">${currentCap > 0 ? currentLoad + '%' : '—'}</div></div>`;
     
-    // Таблица с неделями (новые сверху)
     let html = '<table><thead><tr><th>Неделя</th><th class="num">🟣 WB</th><th class="num">🔵 Ozon</th><th class="num">Всего</th><th>Пропускная способность</th><th>Загруженность</th></tr></thead><tbody>';
     
     weeks.forEach((key, i) => {
@@ -882,30 +708,22 @@ function renderSchedule() {
         const bc = pct > 100 ? 'danger' : pct > 80 ? 'warn' : 'good';
         const isCurrent = key === currentWeekKey;
         const rowClass = isCurrent ? 'week-row current' : (i % 2 === 0 ? 'week-row' : 'week-row-alt');
+        const hasDetails = g.details.length > 0;
+        const weekId = 'week-' + key.replace(/[^a-zA-Z0-9]/g, '-');
         
-        html += `<tr class="${rowClass}">
-            <td><b>📅 ${g.label}</b>${isCurrent ? ' <span class="badge badge-info">текущая</span>' : ''}</td>
+        html += `<tr class="${rowClass}" onclick="toggleWeekDetails('${weekId}', this)">
+            <td><b>📅 ${g.label}</b>${isCurrent ? ' <span class="badge badge-info">текущая</span>' : ''}${hasDetails ? '<span class="toggle-icon" id="icon-' + weekId + '">▼</span>' : ''}</td>
             <td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td>
             <td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td>
             <td class="num"><b>${t.toLocaleString('ru-RU')}</b></td>
-            <td class="capacity-cell"><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onchange="updateWeekCapacity('${key}',this.value)"></td>
-            <td style="min-width:150px;">
-                <div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div>
-                <span style="font-size:11px;font-weight:600;">${cap>0?pct+'%':'—'}</span>
-                ${pct>100?' <span class="badge badge-danger">Перегруз</span>':''}
-                ${pct>80&&pct<=100?' <span class="badge badge-warning">Высокая</span>':''}
-                ${pct<=80&&cap>0?' <span class="badge badge-success">Норма</span>':''}
-            </td>
+            <td class="capacity-cell"><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onclick="event.stopPropagation()" onchange="updateWeekCapacity('${key}',this.value)"></td>
+            <td style="min-width:150px;"><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-weight:600;">${cap>0?pct+'%':'—'}</span>${pct>100?' <span class="badge badge-danger">Перегруз</span>':''}${pct>80&&pct<=100?' <span class="badge badge-warning">Высокая</span>':''}${pct<=80&&cap>0?' <span class="badge badge-success">Норма</span>':''}</td>
         </tr>`;
         
-        if (g.details.length) {
+        if (hasDetails) {
             const byCity = {};
-            g.details.forEach(d => {
-                const ck = d.city + '|' + d.marketplace;
-                if (!byCity[ck]) byCity[ck] = 0;
-                byCity[ck] += d.qty;
-            });
-            html += '<tr style="background:#fafafa;"><td colspan="6" style="padding:4px 10px;font-size:10px;color:var(--sub);">';
+            g.details.forEach(d => { const ck = d.city + '|' + d.marketplace; if (!byCity[ck]) byCity[ck] = 0; byCity[ck] += d.qty; });
+            html += `<tr id="${weekId}" class="week-details" style="display:none;background:#fafafa;"><td colspan="6" style="padding:8px 12px;font-size:10px;color:var(--sub);">`;
             Object.entries(byCity).forEach(([ck, qty]) => {
                 const [city, mp] = ck.split('|');
                 const mb = mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon';
@@ -919,6 +737,20 @@ function renderSchedule() {
     document.getElementById('scheduleTable').innerHTML = html;
 }
 
+function toggleWeekDetails(weekId, rowElement) {
+    const el = document.getElementById(weekId);
+    const icon = document.getElementById('icon-' + weekId);
+    if (el) {
+        if (el.style.display === 'none' || el.style.display === '') {
+            el.style.display = 'table-row';
+            if (icon) icon.classList.add('open');
+        } else {
+            el.style.display = 'none';
+            if (icon) icon.classList.remove('open');
+        }
+    }
+}
+
 function renderShipments(mp) {
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
     const tid = mp==='Wildberries'?'wbTable':'ozonTable';
@@ -928,33 +760,15 @@ function renderShipments(mp) {
     let html = '<table><thead><tr><th>Дата</th><th>Город</th><th class="num">Кол-во</th>';
     if (mp==='Wildberries') html += '<th>Рейсы</th><th>Срок</th>';
     else html += '<th>Доставка</th>';
-    html += '<th>Файл</th><th></th></tr></thead><tbody>';
+    html += '<th></th></tr></thead><tbody>';
     
     srt.forEach(e => {
-        const hasFile = e.fileName && e.items && e.items.length > 0;
         html += `<tr><td>${e.date}</td><td>${e.city}</td><td class="num">${e.qty.toLocaleString('ru-RU')}</td>`;
         if (mp==='Wildberries') {
             const r = routesDB[e.city] || {schedule:'—',delivery:'—'};
             html += `<td style="font-size:11px;">${r.schedule}</td><td><span class="badge badge-success">${r.delivery}</span></td>`;
         } else { html += '<td><span class="badge badge-info">день в день</span></td>'; }
-        html += `<td>${hasFile ? `<span class="badge badge-success" style="cursor:pointer" onclick="toggleItemsList(${e.id})">📎 ${e.fileName}</span>` : '—'}</td>
-            <td><button class="btn btn-danger btn-sm" onclick="deleteShipment('${mp}',${e.id})">✕</button></td></tr>`;
-        
-        if (hasFile) {
-            html += `<tr class="items-list" id="items-${e.id}"><td colspan="${mp==='Wildberries'?7:6}" style="padding:8px 12px;">`;
-            html += '<table style="font-size:10px;width:100%;"><thead><tr>';
-            if (e.items[0] && Array.isArray(e.items[0])) e.items[0].forEach(h => html += `<th>${h||'—'}</th>`);
-            else html += '<th>Товар</th>';
-            html += '</tr></thead><tbody>';
-            e.items.slice(0, 10).forEach(item => {
-                html += '<tr>';
-                if (Array.isArray(item)) item.forEach(c => html += `<td>${c||'—'}</td>`);
-                else html += `<td>${item||'—'}</td>`;
-                html += '</tr>';
-            });
-            if (e.items.length > 10) html += `<tr><td colspan="10" style="color:var(--sub);">... и ещё ${e.items.length - 10} позиций</td></tr>`;
-            html += '</tbody></table></td></tr>';
-        }
+        html += `<td><button class="btn btn-danger btn-sm" onclick="deleteShipment('${mp}',${e.id})">✕</button></td></tr>`;
     });
     html += '</tbody></table>';
     document.getElementById(tid).innerHTML = html;
@@ -1017,62 +831,13 @@ document.getElementById('btnDoScheduleImport').addEventListener('click', doSched
 document.getElementById('btnExportSchedule').addEventListener('click', exportScheduleCSV);
 
 // WB
-document.getElementById('btnSaveWb').addEventListener('click', () => saveShipmentWithFile('Wildberries'));
+document.getElementById('btnSaveWb').addEventListener('click', () => saveShipment('Wildberries'));
 document.getElementById('btnClearWb').addEventListener('click', () => clearShipmentForm('Wildberries'));
-
-const wbBox = document.getElementById('wbFileUploadBox');
-const wbInput = document.getElementById('wbFileInput');
-wbBox.addEventListener('click', () => wbInput.click());
-wbBox.addEventListener('dragover', e => { e.preventDefault(); wbBox.style.borderColor = '#6a1b9a'; });
-wbBox.addEventListener('dragleave', () => { wbBox.style.borderColor = ''; });
-wbBox.addEventListener('drop', e => {
-    e.preventDefault(); wbBox.style.borderColor = '';
-    const file = e.dataTransfer.files[0];
-    if (file) {
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (['xlsx','xls'].includes(ext)) handleFileSelect(file, 'Wildberries');
-        else if (ext === 'csv') handleCSVFile(file, 'Wildberries');
-        else alert('Поддерживаются .xlsx, .xls, .csv');
-    }
-});
-wbInput.addEventListener('change', function() {
-    if (this.files[0]) {
-        const file = this.files[0];
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (['xlsx','xls'].includes(ext)) handleFileSelect(file, 'Wildberries');
-        else if (ext === 'csv') handleCSVFile(file, 'Wildberries');
-        else alert('Поддерживаются .xlsx, .xls, .csv');
-    }
-});
+document.getElementById('shipCityWildberries').addEventListener('input', showRouteInfo);
 
 // Ozon
-document.getElementById('btnSaveOzon').addEventListener('click', () => saveShipmentWithFile('Ozon'));
+document.getElementById('btnSaveOzon').addEventListener('click', () => saveShipment('Ozon'));
 document.getElementById('btnClearOzon').addEventListener('click', () => clearShipmentForm('Ozon'));
-
-const ozBox = document.getElementById('ozonFileUploadBox');
-const ozInput = document.getElementById('ozonFileInput');
-ozBox.addEventListener('click', () => ozInput.click());
-ozBox.addEventListener('dragover', e => { e.preventDefault(); ozBox.style.borderColor = '#005bff'; });
-ozBox.addEventListener('dragleave', () => { ozBox.style.borderColor = ''; });
-ozBox.addEventListener('drop', e => {
-    e.preventDefault(); ozBox.style.borderColor = '';
-    const file = e.dataTransfer.files[0];
-    if (file) {
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (['xlsx','xls'].includes(ext)) handleFileSelect(file, 'Ozon');
-        else if (ext === 'csv') handleCSVFile(file, 'Ozon');
-        else alert('Поддерживаются .xlsx, .xls, .csv');
-    }
-});
-ozInput.addEventListener('change', function() {
-    if (this.files[0]) {
-        const file = this.files[0];
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (['xlsx','xls'].includes(ext)) handleFileSelect(file, 'Ozon');
-        else if (ext === 'csv') handleCSVFile(file, 'Ozon');
-        else alert('Поддерживаются .xlsx, .xls, .csv');
-    }
-});
 
 // Логистика
 document.getElementById('btnAddLog').addEventListener('click', addLogEntry);
