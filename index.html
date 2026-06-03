@@ -92,6 +92,67 @@
         .route-schedule { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .route-chip { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
 
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .shipment-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+            position: relative;
+        }
+        .shipment-card:hover { border-color: #93a8d8; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .shipment-card .card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .shipment-card .card-city { font-size: 16px; font-weight: 700; color: var(--text); }
+        .shipment-card .card-date { font-size: 11px; color: var(--sub); }
+        .shipment-card .card-qty { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .shipment-card .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--sub); margin-bottom: 12px; }
+        .shipment-card .card-status { margin-top: 8px; }
+        .shipment-card .card-status select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        .status-work { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+        .status-wait { background: #e0e7ff; color: #3730a3; border-color: #818cf8; }
+        .status-reject { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+        .status-sent { background: #d1fae5; color: #065f46; border-color: #34d399; }
+        .status-ready { background: #dbeafe; color: #1e40af; border-color: #60a5fa; }
+        .shipment-card .card-delete {
+            position: absolute;
+            top: 8px; right: 8px;
+            background: none; border: none;
+            color: var(--sub); cursor: pointer;
+            font-size: 16px; padding: 4px 8px;
+            border-radius: 6px; transition: all 0.15s;
+        }
+        .shipment-card .card-delete:hover { background: #fee2e2; color: var(--danger); }
+        .shipment-card .route-badge {
+            display: inline-block;
+            font-size: 10px; padding: 2px 6px;
+            border-radius: 10px; margin-top: 6px;
+        }
+
         .import-area { margin-bottom: 14px; }
         .import-area textarea {
             width: 100%; height: 120px; font-family: 'SF Mono', monospace;
@@ -185,10 +246,8 @@
             padding: 7px 9px; font-size: 13px; font-weight: 600; color: #1d4ed8; text-align: right;
         }
         .toggle-icon {
-            display: inline-block;
-            transition: transform 0.2s;
-            font-size: 10px;
-            margin-left: 4px;
+            display: inline-block; transition: transform 0.2s;
+            font-size: 10px; margin-left: 4px;
         }
         .toggle-icon.open { transform: rotate(180deg); }
     </style>
@@ -232,7 +291,7 @@
 <!-- WB -->
 <div class="page" id="page-wb">
     <h1>🟣 Wildberries — Отгрузки</h1>
-    <p class="subtitle">Добавление планируемых отгрузок</p>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
     
     <div class="form-card">
         <div class="form-row">
@@ -251,13 +310,13 @@
         </div>
     </div>
 
-    <div class="table-wrap" id="wbTable"><div class="empty">Загрузка...</div></div>
+    <div class="cards-grid" id="wbCards"><div class="empty" style="grid-column:1/-1;">Загрузка...</div></div>
 </div>
 
 <!-- OZON -->
 <div class="page" id="page-ozon">
     <h1>🔵 Ozon — Отгрузки</h1>
-    <p class="subtitle">Добавление планируемых отгрузок</p>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
     
     <div class="form-card">
         <div class="form-row">
@@ -271,7 +330,7 @@
         </div>
     </div>
 
-    <div class="table-wrap" id="ozonTable"><div class="empty">Загрузка...</div></div>
+    <div class="cards-grid" id="ozonCards"><div class="empty" style="grid-column:1/-1;">Загрузка...</div></div>
 </div>
 
 <!-- ЛОГИСТИКА -->
@@ -369,6 +428,14 @@ const routesDB = {
     'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
 };
 
+const STATUSES = [
+    { value: 'in_work', label: '⚙️ В работе', class: 'status-work' },
+    { value: 'waiting', label: '⏳ Ожидает', class: 'status-wait' },
+    { value: 'rejected', label: '🚫 Не принят в работу', class: 'status-reject' },
+    { value: 'sent', label: '📦 Отправлено', class: 'status-sent' },
+    { value: 'ready', label: '✅ Готово, ожидает отправки', class: 'status-ready' }
+];
+
 // ========== СОСТОЯНИЕ ==========
 let wbShipments = [];
 let ozonShipments = [];
@@ -424,25 +491,59 @@ function saveToLocalStorage() {
     localStorage.setItem('cap', JSON.stringify(weekCapacities));
 }
 
-async function syncToFirebase() {
+// ========== ТОЧЕЧНЫЕ ОПЕРАЦИИ С FIREBASE ==========
+async function addShipmentToFirebase(mp, shipment) {
     if (!isOnline) return;
     try {
-        const batch = db.batch();
-        const [wbSnap, ozSnap, logSnap] = await Promise.all([
-            db.collection('shipments_wb').get(),
-            db.collection('shipments_ozon').get(),
-            db.collection('logistics').get()
-        ]);
-        wbSnap.docs.forEach(d => batch.delete(d.ref));
-        ozSnap.docs.forEach(d => batch.delete(d.ref));
-        logSnap.docs.forEach(d => batch.delete(d.ref));
-        wbShipments.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_wb').doc(String(s.id)), data); });
-        ozonShipments.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_ozon').doc(String(s.id)), data); });
-        logEntries.forEach(e => { const { id, ...data } = e; batch.set(db.collection('logistics').doc(String(e.id)), data); });
-        batch.set(db.collection('settings').doc('capacities'), { capacities: weekCapacities });
-        await batch.commit();
-        saveToLocalStorage();
-    } catch (e) { console.error('Sync error:', e); }
+        const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+        const { id, ...data } = shipment;
+        await db.collection(collection).doc(String(id)).set(data);
+    } catch (e) { console.error('Firebase add error:', e); }
+}
+
+async function updateStatusInFirebase(mp, id, status) {
+    if (!isOnline) return;
+    try {
+        const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+        await db.collection(collection).doc(String(id)).update({ status });
+    } catch (e) { console.error('Firebase update error:', e); }
+}
+
+async function deleteFromFirebase(mp, id) {
+    if (!isOnline) return;
+    try {
+        const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+        await db.collection(collection).doc(String(id)).delete();
+    } catch (e) { console.error('Firebase delete error:', e); }
+}
+
+async function addLogToFirebase(entry) {
+    if (!isOnline) return;
+    try {
+        const { id, ...data } = entry;
+        await db.collection('logistics').doc(String(id)).set(data);
+    } catch (e) { console.error(e); }
+}
+
+async function updateLogPaidInFirebase(id, paid) {
+    if (!isOnline) return;
+    try {
+        await db.collection('logistics').doc(String(id)).update({ paid });
+    } catch (e) { console.error(e); }
+}
+
+async function deleteLogFromFirebase(id) {
+    if (!isOnline) return;
+    try {
+        await db.collection('logistics').doc(String(id)).delete();
+    } catch (e) { console.error(e); }
+}
+
+async function saveCapacityToFirebase() {
+    if (!isOnline) return;
+    try {
+        await db.collection('settings').doc('capacities').set({ capacities: weekCapacities }, { merge: true });
+    } catch (e) { console.error(e); }
 }
 
 function showToast(msg) {
@@ -451,16 +552,20 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ========== СОХРАНЕНИЕ ОТГРУЗКИ (без файла) ==========
+// ========== СОХРАНЕНИЕ ОТГРУЗКИ ==========
 async function saveShipment(mp) {
     const date = document.getElementById('shipDate' + mp).value;
     const city = document.getElementById('shipCity' + mp).value.trim();
     const qty = parseInt(document.getElementById('shipQty' + mp).value) || 0;
     if (!date || !city || qty <= 0) return alert('Заполните дату, город и количество');
     
+    const shipment = { id: Date.now(), date, city, qty, source: mp, status: 'in_work' };
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
-    arr.push({ id: Date.now(), date, city, qty, source: mp });
-    await syncToFirebase();
+    arr.push(shipment);
+    
+    await addShipmentToFirebase(mp, shipment);
+    saveToLocalStorage();
+    renderShipmentCards(mp);
     clearShipmentForm(mp);
     showToast('✅ Отгрузка сохранена: ' + city + ' — ' + qty.toLocaleString('ru-RU') + ' ед.');
 }
@@ -478,7 +583,21 @@ async function deleteShipment(mp, id) {
     if (!confirm('Удалить отгрузку?')) return;
     if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => s.id !== id);
     else ozonShipments = ozonShipments.filter(s => s.id !== id);
-    await syncToFirebase();
+    
+    await deleteFromFirebase(mp, id);
+    saveToLocalStorage();
+    renderShipmentCards(mp);
+    renderSchedule();
+}
+
+async function updateShipmentStatus(mp, id, status) {
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    const shipment = arr.find(s => s.id === id);
+    if (shipment) {
+        shipment.status = status;
+        await updateStatusInFirebase(mp, id, status);
+        saveToLocalStorage();
+    }
 }
 
 function showRouteInfo() {
@@ -541,6 +660,8 @@ async function doScheduleImport() {
     const text = document.getElementById('scheduleImportText').value.trim();
     if (!text) return;
     let impWb = 0, impOz = 0;
+    const newWb = [], newOz = [];
+    
     text.split('\n').filter(l => l.trim()).forEach(line => {
         let cols = line.split('\t');
         if (cols.length < 4) cols = line.split(/[\t,;]/);
@@ -558,17 +679,32 @@ async function doScheduleImport() {
             const dp = dateStr.split('.');
             if (dp.length === 3) dateStr = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
             if (isNaN(new Date(dateStr).getTime())) return;
-            if (target === 'Wildberries') { wbShipments.push({id:Date.now()+Math.random(),date:dateStr,city,qty,source:'Wildberries'}); impWb++; }
-            else { ozonShipments.push({id:Date.now()+Math.random(),date:dateStr,city,qty,source:'Ozon'}); impOz++; }
+            const shipment = { id: Date.now() + Math.random(), date: dateStr, city, qty, source: target, status: 'in_work' };
+            if (target === 'Wildberries') { newWb.push(shipment); wbShipments.push(shipment); impWb++; }
+            else { newOz.push(shipment); ozonShipments.push(shipment); impOz++; }
         }
     });
-    await syncToFirebase();
+    
+    // Пакетная загрузка в Firebase
+    if (isOnline) {
+        const batch = db.batch();
+        newWb.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_wb').doc(String(id)), data); });
+        newOz.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_ozon').doc(String(id)), data); });
+        try { await batch.commit(); } catch (e) { console.error(e); }
+    }
+    
+    saveToLocalStorage();
     document.getElementById('scheduleImportText').value = '';
     toggleScheduleImport();
+    renderAll();
     showToast(`✅ WB: ${impWb}, Ozon: ${impOz}`);
 }
 
-async function updateWeekCapacity(key, val) { weekCapacities[key] = parseInt(val) || 0; await syncToFirebase(); }
+async function updateWeekCapacity(key, val) { 
+    weekCapacities[key] = parseInt(val) || 0; 
+    await saveCapacityToFirebase();
+    saveToLocalStorage();
+}
 
 function exportScheduleCSV() {
     const all = getAllShipments();
@@ -612,21 +748,42 @@ async function addLogEntry() {
     const nds = document.getElementById('logNDS').value;
     const rate = nds === '22%' ? 1.22 : 1.07;
     if (!date || !supplier || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
-    logEntries.push({id:Date.now(),date,marketplace:mp,type,supplier,city,qty,boxes,amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds,source:'Логистика'});
-    await syncToFirebase();
+    
+    const entry = { id: Date.now(), date, marketplace: mp, type, supplier, city, qty, boxes, amount, amountFull: Math.round(amount*rate*100)/100, paid: false, nds, source: 'Логистика' };
+    logEntries.push(entry);
+    
+    await addLogToFirebase(entry);
+    saveToLocalStorage();
     ['logSupplier','logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = '');
     updateLogCalc();
+    renderLog();
 }
 
-async function toggleLogPaid(id) { const e = logEntries.find(l => l.id === id); if (e) { e.paid = !e.paid; await syncToFirebase(); } }
-async function deleteLogEntry(id) { if (confirm('Удалить?')) { logEntries = logEntries.filter(l => l.id !== id); await syncToFirebase(); } }
+async function toggleLogPaid(id) { 
+    const e = logEntries.find(l => l.id === id); 
+    if (e) { 
+        e.paid = !e.paid; 
+        await updateLogPaidInFirebase(id, e.paid);
+        saveToLocalStorage();
+        renderLog();
+    } 
+}
+
+async function deleteLogEntry(id) { 
+    if (confirm('Удалить?')) { 
+        logEntries = logEntries.filter(l => l.id !== id); 
+        await deleteLogFromFirebase(id);
+        saveToLocalStorage();
+        renderLog();
+    } 
+}
 
 let showLogImport = false;
 function toggleLogImport() { showLogImport = !showLogImport; document.getElementById('logImportBlock').style.display = showLogImport ? 'block' : 'none'; }
 
 async function doLogImport() {
     const text = document.getElementById('logImportText').value.trim(); if (!text) return;
-    let imp = 0;
+    const newEntries = [];
     text.split('\n').filter(l => l.trim()).forEach(line => {
         const cols = line.split('\t');
         if (cols.length >= 9) {
@@ -634,13 +791,22 @@ async function doLogImport() {
             const amount = parseFloat(cols[7].replace(/[₽\s]/g,'').replace(',','.')) || 0;
             const nds = cols[9] || '22%';
             const rate = nds === '22%' ? 1.22 : 1.07;
-            logEntries.push({id:Date.now()+Math.random(),date:cols[0].split('.').reverse().join('-'),marketplace:cols[1],type:cols[2],supplier:cols[3],city:cols[4],qty,boxes:parseInt(cols[6])||0,amount,amountFull:Math.round(amount*rate*100)/100,paid:cols[8]==='Оплачен',nds,source:'Логистика'});
-            imp++;
+            const entry = { id: Date.now() + Math.random(), date: cols[0].split('.').reverse().join('-'), marketplace: cols[1], type: cols[2], supplier: cols[3], city: cols[4], qty, boxes: parseInt(cols[6])||0, amount, amountFull: Math.round(amount*rate*100)/100, paid: cols[8]==='Оплачен', nds, source: 'Логистика' };
+            newEntries.push(entry);
+            logEntries.push(entry);
         }
     });
-    await syncToFirebase();
+    
+    if (isOnline && newEntries.length > 0) {
+        const batch = db.batch();
+        newEntries.forEach(e => { const { id, ...data } = e; batch.set(db.collection('logistics').doc(String(id)), data); });
+        try { await batch.commit(); } catch (e) { console.error(e); }
+    }
+    
+    saveToLocalStorage();
     document.getElementById('logImportText').value = ''; toggleLogImport();
-    showToast(`✅ ${imp} строк`);
+    renderLog();
+    showToast(`✅ ${newEntries.length} строк`);
 }
 
 function exportLogCSV() {
@@ -751,27 +917,42 @@ function toggleWeekDetails(weekId, rowElement) {
     }
 }
 
-function renderShipments(mp) {
+function renderShipmentCards(mp) {
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
-    const tid = mp==='Wildberries'?'wbTable':'ozonTable';
-    const srt = [...arr].sort((a,b)=>b.date.localeCompare(a.date));
-    if (!srt.length) { document.getElementById(tid).innerHTML = '<div class="empty">Нет отгрузок</div>'; return; }
+    const containerId = mp === 'Wildberries' ? 'wbCards' : 'ozonCards';
+    const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date));
     
-    let html = '<table><thead><tr><th>Дата</th><th>Город</th><th class="num">Кол-во</th>';
-    if (mp==='Wildberries') html += '<th>Рейсы</th><th>Срок</th>';
-    else html += '<th>Доставка</th>';
-    html += '<th></th></tr></thead><tbody>';
+    if (!srt.length) {
+        document.getElementById(containerId).innerHTML = '<div class="empty" style="grid-column:1/-1;">Нет отгрузок</div>';
+        return;
+    }
     
+    let html = '';
     srt.forEach(e => {
-        html += `<tr><td>${e.date}</td><td>${e.city}</td><td class="num">${e.qty.toLocaleString('ru-RU')}</td>`;
-        if (mp==='Wildberries') {
-            const r = routesDB[e.city] || {schedule:'—',delivery:'—'};
-            html += `<td style="font-size:11px;">${r.schedule}</td><td><span class="badge badge-success">${r.delivery}</span></td>`;
-        } else { html += '<td><span class="badge badge-info">день в день</span></td>'; }
-        html += `<td><button class="btn btn-danger btn-sm" onclick="deleteShipment('${mp}',${e.id})">✕</button></td></tr>`;
+        const currentStatus = e.status || 'in_work';
+        const statusObj = STATUSES.find(s => s.value === currentStatus) || STATUSES[0];
+        const route = mp === 'Wildberries' ? (routesDB[e.city] || null) : null;
+        
+        html += `<div class="shipment-card">
+            <button class="card-delete" onclick="deleteShipment('${mp}',${e.id})" title="Удалить">×</button>
+            <div class="card-header">
+                <div>
+                    <div class="card-city">📍 ${e.city}</div>
+                    <div class="card-date">${e.date}</div>
+                </div>
+            </div>
+            <div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>
+            <div class="card-qty-label">единиц товара</div>
+            ${route ? `<div class="route-badge badge-info">🚚 ${route.delivery}</div>` : ''}
+            <div class="card-status">
+                <select class="${statusObj.class}" onchange="updateShipmentStatus('${mp}',${e.id},this.value)">
+                    ${STATUSES.map(s => `<option value="${s.value}" ${currentStatus === s.value ? 'selected' : ''}>${s.label}</option>`).join('')}
+                </select>
+            </div>
+        </div>`;
     });
-    html += '</tbody></table>';
-    document.getElementById(tid).innerHTML = html;
+    
+    document.getElementById(containerId).innerHTML = html;
 }
 
 function renderLog() {
@@ -814,7 +995,7 @@ function renderLog() {
     document.getElementById('logTable').innerHTML = html;
 }
 
-function renderAll() { renderSchedule(); renderShipments('Wildberries'); renderShipments('Ozon'); renderLog(); }
+function renderAll() { renderSchedule(); renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
