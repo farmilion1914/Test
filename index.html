@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogiTrack Pro — управление отгрузками</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <style>
         :root {
             --bg: #f6f7f9;
@@ -30,14 +35,75 @@
             max-width: 1400px;
             margin: 0 auto;
         }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .app-title { font-size: 18px; font-weight: 700; }
+        .sync-status {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .sync-online { background: #d1fae5; color: #065f46; }
+        .sync-offline { background: #fee2e2; color: #991b1b; }
+        .sync-loading { background: #fef3c7; color: #92400e; }
+
+        .global-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .btn {
+            padding: 7px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: #f3f4f6; }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { opacity: 0.9; }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: #fef2f2; }
+        .btn-wb { background: var(--wb); color: #fff; }
+        .btn-ozon { background: var(--ozon); color: #fff; }
+        .btn-log { background: #374151; color: #fff; }
+
         .nav {
-            display: flex; gap: 4px; background: var(--card); border-radius: var(--radius);
-            padding: 4px; margin-bottom: 16px; box-shadow: var(--shadow); flex-wrap: wrap;
+            display: flex;
+            gap: 4px;
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 4px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
         }
         .nav-btn {
-            flex: 1; min-width: 100px; padding: 10px 14px; border: none; border-radius: 8px;
-            font-size: 13px; font-weight: 600; cursor: pointer; background: transparent;
-            color: var(--sub); transition: all 0.15s; white-space: nowrap;
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: var(--sub);
+            transition: all 0.15s;
+            white-space: nowrap;
         }
         .nav-btn:hover { background: #f3f4f6; }
         .nav-btn.active { background: var(--accent); color: #fff; }
@@ -45,24 +111,11 @@
         .nav-btn.ozon-active { background: var(--ozon); color: #fff; }
         .nav-btn.log-active { background: #374151; color: #fff; }
 
-        h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 2px; }
+        h1 { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
         .subtitle { color: var(--sub); font-size: 12px; margin-bottom: 12px; }
         .page { display: none; }
         .page.active { display: block; }
         .top-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-        .btn {
-            padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px;
-            font-weight: 600; cursor: pointer; transition: all 0.15s;
-        }
-        .btn-accent { background: var(--accent); color: #fff; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .btn-outline:hover { background: #f3f4f6; }
-        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-        .btn-danger:hover { background: #fef2f2; }
-        .btn-sm { padding: 5px 10px; font-size: 11px; }
-        .btn-wb { background: var(--wb); color: #fff; }
-        .btn-ozon { background: var(--ozon); color: #fff; }
-        .btn-log { background: #374151; color: #fff; }
 
         .form-card {
             background: var(--card); border-radius: var(--radius); padding: 16px 18px;
@@ -70,9 +123,7 @@
         }
         .form-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
         .field { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 80px; }
-        .field label {
-            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--sub);
-        }
+        .field label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--sub); }
         .field input, .field select {
             padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px;
             font-size: 13px; font-family: inherit; background: #fafafa; width: 100%;
@@ -80,8 +131,7 @@
         .field input:focus, .field select:focus { outline: none; border-color: var(--accent); background: #fff; }
         .field-calc {
             background: #f0f4ff; border: 1px dashed #93a8d8; border-radius: 7px;
-            padding: 7px 9px; font-size: 13px; font-weight: 600; color: #1d4ed8;
-            min-width: 90px; text-align: right;
+            padding: 7px 9px; font-size: 13px; font-weight: 600; color: #1d4ed8; text-align: right;
         }
 
         .route-info {
@@ -92,7 +142,7 @@
         .route-info .route-title { font-weight: 700; color: #166534; margin-bottom: 4px; }
         .route-info .route-detail { color: #15803d; font-size: 11px; }
         .route-schedule { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-        .route-chip { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; }
+        .route-chip { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
 
         .import-area { margin-bottom: 14px; }
         .import-area textarea {
@@ -100,7 +150,6 @@
             font-size: 11px; padding: 8px 10px; border: 1px solid var(--border);
             border-radius: 8px; resize: vertical; background: #fafafa;
         }
-        .import-area textarea:focus { outline: none; border-color: var(--accent); }
 
         .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
         .filters select, .filters input {
@@ -118,13 +167,13 @@
         }
         table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
         th {
-            text-align: left; padding: 10px 10px; font-size: 9px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.5px; color: var(--sub);
-            border-bottom: 2px solid var(--border); white-space: nowrap; background: var(--card);
+            text-align: left; padding: 10px; font-size: 9px; font-weight: 700;
+            text-transform: uppercase; color: var(--sub); border-bottom: 2px solid var(--border);
+            background: var(--card);
         }
-        td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
         tr:hover { background: #f9fafb; }
-        .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .num { text-align: right; }
 
         .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
         .badge-wb { background: #f3e5f5; color: #6a1b9a; }
@@ -133,17 +182,14 @@
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
         .badge-info { background: #e0f2fe; color: #0369a1; }
-        .badge-log { background: #e5e7eb; color: #374151; }
         .badge-paid { background: #d1fae5; color: #065f46; cursor: pointer; }
         .badge-unpaid { background: #fef3c7; color: #92400e; cursor: pointer; }
         .badge-nds { background: #e0e7ff; color: #3730a3; }
 
         .btn-status {
             padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
-            background: #f3f4f6; color: var(--sub);
+            cursor: pointer; border: 2px solid transparent; background: #f3f4f6; color: var(--sub);
         }
-        .btn-status:hover { border-color: #93a8d8; background: #fff; }
         .btn-status.paid-active { background: #d1fae5; color: #065f46; border-color: #10b981; }
         .btn-status.unpaid-active { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
 
@@ -152,14 +198,14 @@
             background: var(--card); border-radius: var(--radius); padding: 12px 14px;
             box-shadow: var(--shadow); flex: 1; min-width: 120px;
         }
-        .summary-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--sub); }
-        .summary-item .value { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+        .summary-item .label { font-size: 10px; text-transform: uppercase; color: var(--sub); }
+        .summary-item .value { font-size: 18px; font-weight: 700; }
         .summary-item .subvalue { font-size: 11px; color: var(--sub); }
 
         .week-row { background: #f9fafb; border-left: 4px solid var(--accent); }
         .week-row-alt { background: #f3f4f6; border-left: 4px solid #93a8d8; }
-        .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; margin-top: 4px; overflow: hidden; min-width: 60px; }
-        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; }
         .progress-fill.good { background: var(--success); }
         .progress-fill.warn { background: var(--warning); }
         .progress-fill.danger { background: var(--danger); }
@@ -168,7 +214,7 @@
         .capacity-input {
             width: 80px; text-align: center; padding: 5px 8px;
             border: 2px dashed var(--border); border-radius: 6px;
-            font-size: 13px; font-weight: 700; background: #fff; transition: all 0.2s;
+            font-size: 13px; font-weight: 700; background: #fff;
         }
         .capacity-input:focus { outline: none; border-color: var(--accent); border-style: solid; }
 
@@ -181,11 +227,19 @@
         .unit-price { color: var(--sub); }
         .month-sep {
             background: #f3f4f6; font-weight: 700; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.5px; color: var(--sub); padding: 8px 10px !important;
+            text-transform: uppercase; color: var(--sub); padding: 8px 10px !important;
         }
     </style>
 </head>
 <body>
+
+<div class="header-bar">
+    <div class="app-title">📦 LogiTrack Pro</div>
+    <div class="global-actions">
+        <span class="sync-status sync-loading" id="syncStatus">🔄 Синхронизация...</span>
+        <button class="btn btn-primary btn-sm" id="btnSyncNow">🔄 Обновить</button>
+    </div>
+</div>
 
 <div class="nav">
     <button class="nav-btn active" data-page="schedule">📊 График отгрузок</button>
@@ -194,31 +248,27 @@
     <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
 </div>
 
-<!-- ==================== ГРАФИК ОТГРУЗОК ==================== -->
+<!-- ГРАФИК ОТГРУЗОК -->
 <div class="page active" id="page-schedule">
     <h1>📊 График отгрузок</h1>
-    <p class="subtitle">Сводка со всех источников: WB, Ozon и Логистика — понедельно</p>
-
+    <p class="subtitle">Сводка со всех источников — данные в облаке Firebase 🔥</p>
     <div class="top-bar">
-        <button class="btn btn-accent btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
+        <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
         <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 Экспорт CSV</button>
-        <button class="btn btn-danger btn-sm" id="btnClearSchedule">🗑 Очистить всё</button>
-        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b> | Всего строк: <b id="scheduleTotalRows">0</b></span>
+        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b> | Строк: <b id="scheduleTotalRows">0</b></span>
     </div>
-
     <div class="import-area" id="scheduleImportBlock" style="display:none;">
-        <textarea id="scheduleImportText" placeholder="Вставь строки с отгрузками (дата	МП	город	кол-во) — можно копировать из Excel"></textarea>
+        <textarea id="scheduleImportText" placeholder="Вставь строки с отгрузками (дата	МП	город	кол-во)"></textarea>
         <div style="margin-top:6px;display:flex;gap:8px;align-items:center;">
-            <button class="btn btn-accent btn-sm" id="btnDoScheduleImport">📥 Загрузить</button>
-            <span style="font-size:10px;color:var(--sub);">Формат: Дата | Маркетплейс | Город | Количество (разделитель — табуляция)</span>
+            <button class="btn btn-primary btn-sm" id="btnDoScheduleImport">📥 Загрузить</button>
+            <span style="font-size:10px;color:var(--sub);">Формат: Дата | Маркетплейс | Город | Количество</span>
         </div>
     </div>
-
     <div class="summary" id="scheduleSummary"></div>
-    <div class="table-wrap" id="scheduleTable"><div class="empty">Нет данных. Нажми «Импорт отгрузок» чтобы загрузить данные</div></div>
+    <div class="table-wrap" id="scheduleTable"><div class="empty">Загрузка данных...</div></div>
 </div>
 
-<!-- ==================== WB ==================== -->
+<!-- WB -->
 <div class="page" id="page-wb">
     <h1>🟣 Wildberries — Отгрузки</h1>
     <p class="subtitle">Планируемые отгрузки WB</p>
@@ -244,10 +294,10 @@
             <div class="route-schedule" id="routeScheduleWildberries"></div>
         </div>
     </div>
-    <div class="table-wrap" id="wbTable"><div class="empty">Нет отгрузок</div></div>
+    <div class="table-wrap" id="wbTable"><div class="empty">Загрузка...</div></div>
 </div>
 
-<!-- ==================== OZON ==================== -->
+<!-- OZON -->
 <div class="page" id="page-ozon">
     <h1>🔵 Ozon — Отгрузки</h1>
     <p class="subtitle">Планируемые отгрузки Ozon — доставка день в день</p>
@@ -268,22 +318,21 @@
             </div>
         </div>
     </div>
-    <div class="table-wrap" id="ozonTable"><div class="empty">Нет отгрузок</div></div>
+    <div class="table-wrap" id="ozonTable"><div class="empty">Загрузка...</div></div>
 </div>
 
-<!-- ==================== ЛОГИСТИКА ==================== -->
+<!-- ЛОГИСТИКА -->
 <div class="page" id="page-logistics">
     <h1>🚚 Логистика</h1>
     <p class="subtitle">Данные автоматически попадают в График отгрузок</p>
     <div class="top-bar">
         <button class="btn btn-outline btn-sm" id="btnToggleLogImport">📥 Импорт</button>
         <button class="btn btn-outline btn-sm" id="btnExportLog">📤 Экспорт CSV</button>
-        <button class="btn btn-danger btn-sm" id="btnClearLog">🗑 Очистить всё</button>
         <span style="font-size:12px;color:var(--sub);margin-left:auto;">Строк: <b id="logCount">0</b></span>
     </div>
     <div class="import-area" id="logImportBlock" style="display:none;">
         <textarea id="logImportText" placeholder="Вставь строки (дата МП тип поставщик город кол-во паллет сумма статус НДС%)"></textarea>
-        <button class="btn btn-accent btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
     </div>
     <div class="form-card">
         <div class="form-row">
@@ -310,12 +359,26 @@
         <span class="chip" id="btnResetLogFilters">✕ Сброс</span>
     </div>
     <div class="summary" id="logSummary"></div>
-    <div class="table-wrap" id="logTable"><div class="empty">Нет записей</div></div>
+    <div class="table-wrap" id="logTable"><div class="empty">Загрузка...</div></div>
 </div>
 
 <datalist id="cityList"></datalist>
 
 <script>
+// ========== FIREBASE КОНФИГ ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyBCGOXZtpRY_aWOkcUWuW34uJBsNgrgdDA",
+  authDomain: "shipments-f48c2.firebaseapp.com",
+  projectId: "shipments-f48c2",
+  storageBucket: "shipments-f48c2.firebasestorage.app",
+  messagingSenderId: "994289127760",
+  appId: "1:994289127760:web:539f3ca770a1e6d4705c55"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.settings({ merge: true });
+
 // ========== БАЗА РЕЙСОВ ==========
 const routesDB = {
     'Казань':{schedule:'В любой день',delivery:'1-2 дня'},
@@ -356,25 +419,101 @@ const routesDB = {
     'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
 };
 
-// ========== ХРАНИЛИЩЕ ==========
-const CAPACITY_KEY = 'logitrack_capacity_v2';
-const WB_KEY = 'logitrack_ship_wb';
-const OZON_KEY = 'logitrack_ship_ozon';
-const LOG_KEY = 'logitrack_log';
+// ========== СОСТОЯНИЕ ==========
+let wbShipments = [];
+let ozonShipments = [];
+let logEntries = [];
+let weekCapacities = {};
+let isOnline = false;
 
-let weekCapacities = JSON.parse(localStorage.getItem(CAPACITY_KEY) || '{}');
-let wbShipments = JSON.parse(localStorage.getItem(WB_KEY) || '[]');
-let ozonShipments = JSON.parse(localStorage.getItem(OZON_KEY) || '[]');
-let logEntries = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-
-function saveAll() {
-    localStorage.setItem(CAPACITY_KEY, JSON.stringify(weekCapacities));
-    localStorage.setItem(WB_KEY, JSON.stringify(wbShipments));
-    localStorage.setItem(OZON_KEY, JSON.stringify(ozonShipments));
-    localStorage.setItem(LOG_KEY, JSON.stringify(logEntries));
-    renderAll();
+// ========== СИНХРОНИЗАЦИЯ ==========
+function updateSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    el.className = 'sync-status';
+    if (status === 'online') { el.classList.add('sync-online'); el.textContent = '🟢 Онлайн (Firebase)'; }
+    else if (status === 'offline') { el.classList.add('sync-offline'); el.textContent = '🔴 Офлайн (localStorage)'; }
+    else { el.classList.add('sync-loading'); el.textContent = '🔄 Загрузка...'; }
 }
 
+async function loadFromFirebase() {
+    try {
+        updateSyncStatus('loading');
+        const [wbSnap, ozSnap, logSnap, capDoc] = await Promise.all([
+            db.collection('shipments_wb').orderBy('date').get(),
+            db.collection('shipments_ozon').orderBy('date').get(),
+            db.collection('logistics').orderBy('date').get(),
+            db.collection('settings').doc('capacities').get()
+        ]);
+        wbShipments = wbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        ozonShipments = ozSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
+        isOnline = true;
+        updateSyncStatus('online');
+        saveToLocalStorage();
+        renderAll();
+    } catch (e) {
+        console.error('Firebase error:', e);
+        loadFromLocalStorage();
+        isOnline = false;
+        updateSyncStatus('offline');
+        renderAll();
+    }
+}
+
+function loadFromLocalStorage() {
+    wbShipments = JSON.parse(localStorage.getItem('wb') || '[]');
+    ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]');
+    logEntries = JSON.parse(localStorage.getItem('log') || '[]');
+    weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('wb', JSON.stringify(wbShipments));
+    localStorage.setItem('ozon', JSON.stringify(ozonShipments));
+    localStorage.setItem('log', JSON.stringify(logEntries));
+    localStorage.setItem('cap', JSON.stringify(weekCapacities));
+}
+
+async function syncToFirebase() {
+    if (!isOnline) return;
+    try {
+        const batch = db.batch();
+        
+        // Очищаем коллекции
+        const [wbSnap, ozSnap, logSnap] = await Promise.all([
+            db.collection('shipments_wb').get(),
+            db.collection('shipments_ozon').get(),
+            db.collection('logistics').get()
+        ]);
+        wbSnap.docs.forEach(d => batch.delete(d.ref));
+        ozSnap.docs.forEach(d => batch.delete(d.ref));
+        logSnap.docs.forEach(d => batch.delete(d.ref));
+        
+        // Добавляем все записи
+        wbShipments.forEach(s => {
+            const { id, ...data } = s;
+            batch.set(db.collection('shipments_wb').doc(String(s.id)), data);
+        });
+        ozonShipments.forEach(s => {
+            const { id, ...data } = s;
+            batch.set(db.collection('shipments_ozon').doc(String(s.id)), data);
+        });
+        logEntries.forEach(e => {
+            const { id, ...data } = e;
+            batch.set(db.collection('logistics').doc(String(e.id)), data);
+        });
+        
+        batch.set(db.collection('settings').doc('capacities'), { capacities: weekCapacities });
+        await batch.commit();
+        saveToLocalStorage();
+    } catch (e) {
+        console.error('Sync error:', e);
+        saveToLocalStorage();
+    }
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ==========
 function getWeekKey(ds) {
     const d = new Date(ds + 'T00:00:00');
     const day = d.getDay() || 7;
@@ -385,10 +524,12 @@ function getWeekKey(ds) {
 }
 
 function downloadCSV(csv, fn) {
-    const b = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const b = new Blob(['\uFEFF'+csv], {type:'text/csv'});
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fn; a.click();
 }
+
 function fmtPrice(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+
 function monthName(d) {
     return ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][new Date(d).getMonth()];
 }
@@ -404,85 +545,56 @@ function switchPage(page) {
     if (page === 'logistics') { updateLogCalc(); renderLog(); }
 }
 
-// ========== ИМПОРТ В ГРАФИК ==========
+// ========== ИМПОРТ ==========
 let showScheduleImport = false;
 function toggleScheduleImport() {
     showScheduleImport = !showScheduleImport;
     document.getElementById('scheduleImportBlock').style.display = showScheduleImport ? 'block' : 'none';
 }
 
-function doScheduleImport() {
+async function doScheduleImport() {
     const text = document.getElementById('scheduleImportText').value.trim();
-    if (!text) return alert('Вставьте данные для импорта');
-
+    if (!text) return alert('Вставьте данные');
     const lines = text.split('\n').filter(l => l.trim());
     let impWb = 0, impOz = 0, skipped = 0;
-
+    
     lines.forEach(line => {
-        // Пробуем табуляцию
         let cols = line.split('\t');
-        // Если не получилось — пробуем запятую или точку с запятой
         if (cols.length < 4) cols = line.split(/[\t,;]/);
-
         if (cols.length >= 4) {
             let dateStr = cols[0].trim();
             const mp = cols[1].trim();
             const city = cols[2].trim();
             const qty = parseInt(cols[3].replace(/\s/g,'')) || 0;
-
-            // Пропускаем строки-разделители (месяцы)
-            if (mp === 'ФЕВРАЛЬ' || mp === 'МАРТ' || mp === 'АПРЕЛЬ' || mp === 'МАЙ' || mp === 'ИЮНЬ' || mp === 'ИЮЛЬ') return;
+            
+            if (['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp)) return;
             if (!mp || !city || qty <= 0) { skipped++; return; }
-
-            // Определяем МП
+            
             let targetMp = null;
             if (mp === 'Wildberries' || mp === 'WB' || mp === 'ВБ') targetMp = 'Wildberries';
             else if (mp === 'Ozon' || mp === 'Озон') targetMp = 'Ozon';
             else { skipped++; return; }
-
-            // Парсим дату (ожидаем ДД.ММ.ГГГГ)
+            
             const dateParts = dateStr.split('.');
-            if (dateParts.length === 3) {
-                dateStr = dateParts[2] + '-' + dateParts[1].padStart(2,'0') + '-' + dateParts[0].padStart(2,'0');
-            } else if (!dateStr.includes('-')) {
-                skipped++; return;
-            }
-
-            // Проверяем валидность даты
+            if (dateParts.length === 3) dateStr = dateParts[2] + '-' + dateParts[1].padStart(2,'0') + '-' + dateParts[0].padStart(2,'0');
+            else if (!dateStr.includes('-')) { skipped++; return; }
             if (isNaN(new Date(dateStr).getTime())) { skipped++; return; }
-
-            // Добавляем отгрузку
+            
             if (targetMp === 'Wildberries') {
-                const route = routesDB[city] || {schedule:'Нет данных',delivery:'Нет данных'};
-                wbShipments.push({id:Date.now()+Math.random(),date:dateStr,city,qty,schedule:route.schedule,delivery:route.delivery,source:'Wildberries'});
+                wbShipments.push({id: Date.now() + Math.random(), date: dateStr, city, qty, source: 'Wildberries'});
                 impWb++;
             } else {
-                ozonShipments.push({id:Date.now()+Math.random(),date:dateStr,city,qty,schedule:'Ежедневно',delivery:'день в день',source:'Ozon'});
+                ozonShipments.push({id: Date.now() + Math.random(), date: dateStr, city, qty, source: 'Ozon'});
                 impOz++;
             }
-        } else {
-            skipped++;
-        }
+        } else { skipped++; }
     });
-
-    saveAll();
+    
+    await syncToFirebase();
     document.getElementById('scheduleImportText').value = '';
     document.getElementById('scheduleImportBlock').style.display = 'none';
     showScheduleImport = false;
-
-    let msg = `Импортировано: WB — ${impWb} строк, Ozon — ${impOz} строк`;
-    if (skipped > 0) msg += `\nПропущено: ${skipped} строк (неверный формат)`;
-    alert(msg);
-}
-
-function clearAllShipments() {
-    if (confirm('Удалить ВСЕ отгрузки (WB + Ozon + Логистика) безвозвратно?')) {
-        wbShipments = [];
-        ozonShipments = [];
-        logEntries = [];
-        weekCapacities = {};
-        saveAll();
-    }
+    alert(`✅ Импортировано: WB — ${impWb}, Ozon — ${impOz}\nПропущено: ${skipped}`);
 }
 
 // ========== РЕЙСЫ ==========
@@ -499,9 +611,6 @@ function showRouteInfo() {
 }
 
 // ========== WB / OZON ==========
-function getShipments(mp) { return mp === 'Wildberries' ? wbShipments : ozonShipments; }
-function setShipments(mp, arr) { if (mp === 'Wildberries') wbShipments = arr; else ozonShipments = arr; }
-
 function addShipment(mp) {
     document.getElementById('shipmentForm' + mp).style.display = 'block';
     document.getElementById('shipDate' + mp).value = new Date().toISOString().slice(0,10);
@@ -509,49 +618,26 @@ function addShipment(mp) {
     document.getElementById('shipQty' + mp).value = '';
     if (mp === 'Wildberries') document.getElementById('routeInfoWildberries').classList.remove('show');
 }
+
 function cancelShipment(mp) { document.getElementById('shipmentForm' + mp).style.display = 'none'; }
-function saveShipment(mp) {
+
+async function saveShipment(mp) {
     const date = document.getElementById('shipDate' + mp).value;
     const city = document.getElementById('shipCity' + mp).value.trim();
     const qty = parseInt(document.getElementById('shipQty' + mp).value) || 0;
     if (!date || !city || qty <= 0) return alert('Заполните все поля');
-    const arr = getShipments(mp);
-    if (mp === 'Wildberries') {
-        const r = routesDB[city] || {schedule:'Нет данных',delivery:'Нет данных'};
-        arr.push({id:Date.now(),date,city,qty,schedule:r.schedule,delivery:r.delivery,source:mp});
-    } else {
-        arr.push({id:Date.now(),date,city,qty,schedule:'Ежедневно',delivery:'день в день',source:mp});
-    }
-    setShipments(mp, arr);
-    saveAll();
+    
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    arr.push({id: Date.now(), date, city, qty, source: mp});
+    await syncToFirebase();
     cancelShipment(mp);
 }
-function deleteShipment(mp, id) {
-    if (confirm('Удалить?')) { setShipments(mp, getShipments(mp).filter(s => s.id !== id)); saveAll(); }
-}
-function importShipmentExcel(input, mp) {
-    const file = input.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const lines = e.target.result.split('\n').filter(l => l.trim());
-        lines.shift();
-        const arr = getShipments(mp);
-        lines.forEach(line => {
-            const cols = line.split(/[\t,;]/);
-            if (cols.length >= 3) {
-                const city = cols[1].trim();
-                if (mp === 'Wildberries') {
-                    const r = routesDB[city] || {schedule:'Нет данных',delivery:'Нет данных'};
-                    arr.push({id:Date.now()+Math.random(),date:cols[0].trim(),city,qty:parseInt(cols[2])||0,schedule:r.schedule,delivery:r.delivery,source:mp});
-                } else {
-                    arr.push({id:Date.now()+Math.random(),date:cols[0].trim(),city,qty:parseInt(cols[2])||0,schedule:'Ежедневно',delivery:'день в день',source:mp});
-                }
-            }
-        });
-        setShipments(mp, arr);
-        saveAll();
-    };
-    reader.readAsText(file);
+
+async function deleteShipment(mp, id) {
+    if (!confirm('Удалить?')) return;
+    if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => s.id !== id);
+    else ozonShipments = ozonShipments.filter(s => s.id !== id);
+    await syncToFirebase();
 }
 
 // ========== ЛОГИСТИКА ==========
@@ -561,7 +647,8 @@ function updateLogCalc() {
     const rate = nds === '22%' ? 1.22 : 1.07;
     document.getElementById('logCalcFull').textContent = (Math.round(a*rate*100)/100).toLocaleString('ru-RU') + ' ₽';
 }
-function addLogEntry() {
+
+async function addLogEntry() {
     const date = document.getElementById('logDate').value;
     const mp = document.getElementById('logMP').value;
     const type = document.getElementById('logType').value;
@@ -573,19 +660,35 @@ function addLogEntry() {
     const nds = document.getElementById('logNDS').value;
     const rate = nds === '22%' ? 1.22 : 1.07;
     if (!date || !supplier || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
-    logEntries.push({id:Date.now(),date,marketplace:mp,type,supplier,city,qty,boxes,amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds,source:'Логистика'});
-    saveAll();
+    
+    logEntries.push({
+        id: Date.now(), date, marketplace: mp, type, supplier, city,
+        qty, boxes, amount, amountFull: Math.round(amount*rate*100)/100,
+        paid: false, nds, source: 'Логистика'
+    });
+    await syncToFirebase();
     ['logSupplier','logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = '');
     updateLogCalc();
 }
-function toggleLogPaid(id) { const e = logEntries.find(l => l.id === id); if (e) { e.paid = !e.paid; saveAll(); } }
-function deleteLogEntry(id) { if (confirm('Удалить?')) { logEntries = logEntries.filter(l => l.id !== id); saveAll(); } }
-function clearLogEntries() { if (confirm('Удалить все записи логистики?')) { logEntries = []; saveAll(); } }
+
+async function toggleLogPaid(id) {
+    const e = logEntries.find(l => l.id === id);
+    if (e) { e.paid = !e.paid; await syncToFirebase(); }
+}
+
+async function deleteLogEntry(id) {
+    if (confirm('Удалить?')) {
+        logEntries = logEntries.filter(l => l.id !== id);
+        await syncToFirebase();
+    }
+}
 
 let showLogImport = false;
 function toggleLogImport() { showLogImport = !showLogImport; document.getElementById('logImportBlock').style.display = showLogImport ? 'block' : 'none'; }
-function doLogImport() {
-    const text = document.getElementById('logImportText').value.trim(); if (!text) return;
+
+async function doLogImport() {
+    const text = document.getElementById('logImportText').value.trim();
+    if (!text) return;
     let imp = 0;
     text.split('\n').filter(l => l.trim()).forEach(line => {
         const cols = line.split('\t');
@@ -594,15 +697,24 @@ function doLogImport() {
             const amount = parseFloat(cols[7].replace(/[₽\s]/g,'').replace(',','.')) || 0;
             const nds = cols[9] || '22%';
             const rate = nds === '22%' ? 1.22 : 1.07;
-            logEntries.push({id:Date.now()+Math.random(),date:cols[0].split('.').reverse().join('-'),marketplace:cols[1],type:cols[2],supplier:cols[3],city:cols[4],qty,boxes:parseInt(cols[6])||0,amount,amountFull:Math.round(amount*rate*100)/100,paid:cols[8]==='Оплачен',nds,source:'Логистика'});
+            logEntries.push({
+                id: Date.now() + Math.random(),
+                date: cols[0].split('.').reverse().join('-'),
+                marketplace: cols[1], type: cols[2], supplier: cols[3], city: cols[4],
+                qty, boxes: parseInt(cols[6])||0, amount,
+                amountFull: Math.round(amount*rate*100)/100,
+                paid: cols[8]==='Оплачен', nds, source: 'Логистика'
+            });
             imp++;
         }
     });
-    saveAll();
+    await syncToFirebase();
     document.getElementById('logImportText').value = '';
-    document.getElementById('logImportBlock').style.display = 'none'; showLogImport = false;
-    alert(`Импортировано: ${imp} строк`);
+    document.getElementById('logImportBlock').style.display = 'none';
+    showLogImport = false;
+    alert(`✅ Импортировано: ${imp} строк`);
 }
+
 function exportLogCSV() {
     let csv = 'Дата\tМП\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tСумма с НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед с НДС\n';
     [...logEntries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e => {
@@ -611,6 +723,7 @@ function exportLogCSV() {
     });
     downloadCSV(csv, 'логистика.csv');
 }
+
 function resetLogFilters() {
     document.getElementById('logFilterMonth').value = '';
     document.getElementById('logFilterStatus').value = 'all';
@@ -619,21 +732,33 @@ function resetLogFilters() {
 }
 
 // ========== ПРОПУСКНАЯ СПОСОБНОСТЬ ==========
-function updateWeekCapacity(key, val) { weekCapacities[key] = parseInt(val) || 0; saveAll(); }
+async function updateWeekCapacity(key, val) {
+    weekCapacities[key] = parseInt(val) || 0;
+    await syncToFirebase();
+}
+
 function exportScheduleCSV() {
     const all = getAllShipments();
     const grp = {};
-    all.forEach(s => { const wk = getWeekKey(s.date); if (!grp[wk.key]) grp[wk.key] = {label:wk.label,wb:0,ozon:0}; if (s.marketplace==='Wildberries') grp[wk.key].wb += s.qty; else grp[wk.key].ozon += s.qty; });
+    all.forEach(s => {
+        const wk = getWeekKey(s.date);
+        if (!grp[wk.key]) grp[wk.key] = {label:wk.label,wb:0,ozon:0};
+        if (s.marketplace==='Wildberries') grp[wk.key].wb += s.qty;
+        else grp[wk.key].ozon += s.qty;
+    });
     let csv = 'Неделя\tWB\tOzon\tВсего\tПроп. сп.\tЗагрузка\n';
-    Object.keys(grp).sort().forEach(k => { const g = grp[k]; const t = g.wb+g.ozon; const cap = weekCapacities[k]||0; csv += `${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`; });
+    Object.keys(grp).sort().forEach(k => {
+        const g = grp[k], t = g.wb+g.ozon, cap = weekCapacities[k]||0;
+        csv += `${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`;
+    });
     downloadCSV(csv, 'график_отгрузок.csv');
 }
 
 function getAllShipments() {
     const all = [];
-    wbShipments.forEach(s => all.push({date:s.date,city:s.city,qty:s.qty,marketplace:'Wildberries',source:'WB'}));
-    ozonShipments.forEach(s => all.push({date:s.date,city:s.city,qty:s.qty,marketplace:'Ozon',source:'Ozon'}));
-    logEntries.forEach(e => all.push({date:e.date,city:e.city,qty:e.qty,marketplace:e.marketplace,source:'Логистика'}));
+    wbShipments.forEach(s => all.push({...s, marketplace:'Wildberries'}));
+    ozonShipments.forEach(s => all.push({...s, marketplace:'Ozon'}));
+    logEntries.forEach(e => all.push({date:e.date, city:e.city, qty:e.qty, marketplace:e.marketplace, source:'Логистика'}));
     return all;
 }
 
@@ -643,30 +768,35 @@ function renderSchedule() {
     const grp = {};
     all.forEach(s => {
         const wk = getWeekKey(s.date);
-        if (!grp[wk.key]) grp[wk.key] = {label:wk.label,wb:0,ozon:0,details:[]};
-        if (s.marketplace==='Wildberries') grp[wk.key].wb += s.qty; else grp[wk.key].ozon += s.qty;
+        if (!grp[wk.key]) grp[wk.key] = {label:wk.label, wb:0, ozon:0, details:[]};
+        if (s.marketplace==='Wildberries') grp[wk.key].wb += s.qty;
+        else grp[wk.key].ozon += s.qty;
         grp[wk.key].details.push(s);
     });
     const weeks = Object.keys(grp).sort();
     document.getElementById('scheduleWeekCount').textContent = weeks.length;
     document.getElementById('scheduleTotalRows').textContent = all.length;
-
+    
     if (!weeks.length) {
-        document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных. Нажми «📥 Импорт отгрузок» чтобы загрузить данные</div>';
+        document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных. Импортируйте отгрузки ↑</div>';
         document.getElementById('scheduleSummary').innerHTML = '';
         return;
     }
+    
     const tw = all.filter(s=>s.marketplace==='Wildberries').reduce((s,x)=>s+x.qty,0);
     const to = all.filter(s=>s.marketplace==='Ozon').reduce((s,x)=>s+x.qty,0);
     const tc = Object.values(weekCapacities).reduce((s,c)=>s+(c||0),0);
     const al = tc>0?Math.round((tw+to)/tc*100):0;
+    
     document.getElementById('scheduleSummary').innerHTML = `
         <div class="summary-item"><div class="label">Всего к отгрузке</div><div class="value">${(tw+to).toLocaleString('ru-RU')} шт</div></div>
         <div class="summary-item"><div class="label">🟣 WB</div><div class="value" style="color:#6a1b9a">${tw.toLocaleString('ru-RU')} шт</div></div>
         <div class="summary-item"><div class="label">🔵 Ozon</div><div class="value" style="color:#005bff">${to.toLocaleString('ru-RU')} шт</div></div>
         <div class="summary-item"><div class="label">Общая способность</div><div class="value">${tc.toLocaleString('ru-RU')} шт/нед</div></div>
         <div class="summary-item"><div class="label">Средняя загруженность</div><div class="value" style="color:${al>100?'#ef4444':al>80?'#f59e0b':'#10b981'}">${al||'—'}%</div></div>`;
+    
     let html = '<table><thead><tr><th>Неделя</th><th class="num">🟣 WB</th><th class="num">🔵 Ozon</th><th class="num">Всего</th><th>Пропускная способность</th><th>Загруженность</th></tr></thead><tbody>';
+    
     weeks.forEach((key,i) => {
         const g = grp[key], t = g.wb+g.ozon, cap = weekCapacities[key]||0, pct = cap>0?Math.round(t/cap*100):0;
         const bc = pct>100?'danger':pct>80?'warn':'good';
@@ -678,19 +808,24 @@ function renderSchedule() {
             <td class="capacity-cell"><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onchange="updateWeekCapacity('${key}',this.value)"></td>
             <td style="min-width:150px;"><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div>
                 <span style="font-size:11px;font-weight:600;color:${pct>100?'#ef4444':'var(--sub)'};">${cap>0?pct+'%':'—'}</span>
-                ${pct>100?'<span class="badge badge-danger" style="margin-left:4px;">Перегруз</span>':''}
-                ${pct>80&&pct<=100?'<span class="badge badge-warning" style="margin-left:4px;">Высокая</span>':''}
-                ${pct<=80&&cap>0?'<span class="badge badge-success" style="margin-left:4px;">Норма</span>':''}
+                ${pct>100?'<span class="badge badge-danger">Перегруз</span>':''}
+                ${pct>80&&pct<=100?'<span class="badge badge-warning">Высокая</span>':''}
+                ${pct<=80&&cap>0?'<span class="badge badge-success">Норма</span>':''}
             </td></tr>`;
+        
         if (g.details.length) {
             const byCity = {};
-            g.details.forEach(d => { const ck = d.city+'|'+d.marketplace+'|'+d.source; if (!byCity[ck]) byCity[ck]=0; byCity[ck]+=d.qty; });
+            g.details.forEach(d => {
+                const ck = d.city+'|'+d.marketplace+'|'+(d.source||'');
+                if (!byCity[ck]) byCity[ck]=0;
+                byCity[ck]+=d.qty;
+            });
             html += '<tr style="background:#fafafa;"><td colspan="6" style="padding:4px 10px;font-size:10px;color:var(--sub);">';
             Object.entries(byCity).forEach(([ck,qty]) => {
                 const [city,mp,src] = ck.split('|');
                 const mb = mp==='Wildberries'?'badge-wb':'badge-ozon';
-                const st = src==='WB'?'source-wb':src==='Ozon'?'source-ozon':'source-log';
-                html += `<span class="badge ${mb}" style="margin:2px;">${city}: ${qty.toLocaleString('ru-RU')} шт</span><span class="source-tag ${st}">${src}</span> `;
+                const st = src==='Wildberries'?'source-wb':src==='Ozon'?'source-ozon':'source-log';
+                html += `<span class="badge ${mb}" style="margin:2px;">${city}: ${qty.toLocaleString('ru-RU')} шт</span><span class="source-tag ${st}">${src||'импорт'}</span> `;
             });
             html += '</td></tr>';
         }
@@ -700,19 +835,27 @@ function renderSchedule() {
 }
 
 function renderShipments(mp) {
-    const arr = getShipments(mp);
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
     const tid = mp==='Wildberries'?'wbTable':'ozonTable';
     const cid = mp==='Wildberries'?'wbCount':'ozonCount';
     const srt = [...arr].sort((a,b)=>b.date.localeCompare(a.date));
     document.getElementById(cid).textContent = srt.length;
+    
     if (!srt.length) { document.getElementById(tid).innerHTML = '<div class="empty">Нет отгрузок</div>'; return; }
+    
     let html = '<table><thead><tr><th>Дата</th><th>Город</th><th class="num">Кол-во</th>';
-    if (mp==='Wildberries') html += '<th>Расписание рейсов</th><th>Срок</th>'; else html += '<th>Доставка</th>';
+    if (mp==='Wildberries') html += '<th>Расписание рейсов</th><th>Срок</th>';
+    else html += '<th>Доставка</th>';
     html += '<th></th></tr></thead><tbody>';
+    
     srt.forEach(e => {
         html += `<tr><td>${e.date}</td><td>${e.city}</td><td class="num">${e.qty.toLocaleString('ru-RU')}</td>`;
-        if (mp==='Wildberries') html += `<td style="font-size:11px;color:var(--sub);">${e.schedule||'—'}</td><td><span class="badge badge-success">${e.delivery||'—'}</span></td>`;
-        else html += '<td><span class="badge badge-info">день в день</span></td>';
+        if (mp==='Wildberries') {
+            const r = routesDB[e.city] || {schedule:'Нет данных',delivery:'Нет данных'};
+            html += `<td style="font-size:11px;color:var(--sub);">${r.schedule}</td><td><span class="badge badge-success">${r.delivery}</span></td>`;
+        } else {
+            html += '<td><span class="badge badge-info">день в день</span></td>';
+        }
         html += `<td><button class="btn btn-danger btn-sm" onclick="deleteShipment('${mp}',${e.id})">✕</button></td></tr>`;
     });
     html += '</tbody></table>';
@@ -728,30 +871,47 @@ function renderLog() {
     if (fs==='paid') fl = fl.filter(e=>e.paid);
     if (fs==='unpaid') fl = fl.filter(e=>!e.paid);
     if (fmp!=='all') fl = fl.filter(e=>e.marketplace===fmp);
+    
     const srt = fl.sort((a,b)=>a.date.localeCompare(b.date));
     document.getElementById('logCount').textContent = srt.length;
+    
     const tq = srt.reduce((s,e)=>s+e.qty,0), ta = srt.reduce((s,e)=>s+e.amount,0), taf = srt.reduce((s,e)=>s+e.amountFull,0);
     const tpd = srt.filter(e=>e.paid).reduce((s,e)=>s+e.amountFull,0), tup = srt.filter(e=>!e.paid).reduce((s,e)=>s+e.amountFull,0);
+    
     document.getElementById('logSummary').innerHTML = `
         <div class="summary-item"><div class="label">Отправок</div><div class="value">${srt.length}</div></div>
         <div class="summary-item"><div class="label">Товаров</div><div class="value">${tq.toLocaleString('ru-RU')}</div></div>
         <div class="summary-item"><div class="label">Сумма</div><div class="value">${fmtPrice(ta)}</div><div class="subvalue">Ср/ед: ${(tq>0?ta/tq:0).toFixed(2)} ₽</div></div>
         <div class="summary-item"><div class="label">С НДС</div><div class="value">${fmtPrice(taf)}</div><div class="subvalue">Ср/ед: ${(tq>0?taf/tq:0).toFixed(2)} ₽</div></div>
         <div class="summary-item"><div class="label">Оплачено / Не опл.</div><div class="value" style="font-size:15px"><span style="color:#10b981">${fmtPrice(tpd)}</span> / <span style="color:#f59e0b">${fmtPrice(tup)}</span></div></div>`;
+    
     if (!srt.length) { document.getElementById('logTable').innerHTML = '<div class="empty">Нет записей</div>'; return; }
+    
     let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th class="num">₽/ед</th><th class="num">₽/ед НДС</th><th>Статус</th><th>НДС</th><th></th></tr></thead><tbody>';
+    
     let lm = '';
     srt.forEach(e => {
         const m = monthName(e.date+'T00:00:00');
         if (m!==lm&&!fm) { lm=m; html += `<tr><td colspan="14" class="month-sep">📅 ${m} 2026</td></tr>`; }
         const up = e.qty>0?e.amount/e.qty:0, upf = e.qty>0?e.amountFull/e.qty:0;
-        html += `<tr><td>${e.date.split('-').reverse().join('.')}</td><td>${e.marketplace}</td><td>${e.type}</td><td>${e.supplier}</td><td>${e.city}</td><td class="num">${e.qty.toLocaleString('ru-RU')}</td><td class="num">${e.boxes}</td><td class="num">${fmtPrice(e.amount)}</td><td class="num">${fmtPrice(e.amountFull)}</td><td class="num unit-price">${up.toFixed(2)} ₽</td><td class="num unit-price">${upf.toFixed(2)} ₽</td><td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid(${e.id})">${e.paid?'Оплачен':'Не оплачен'}</button></td><td><span class="badge badge-nds">${e.nds}</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry(${e.id})">✕</button></td></tr>`;
+        html += `<tr><td>${e.date.split('-').reverse().join('.')}</td><td>${e.marketplace}</td><td>${e.type}</td><td>${e.supplier}</td><td>${e.city}</td>
+            <td class="num">${e.qty.toLocaleString('ru-RU')}</td><td class="num">${e.boxes}</td>
+            <td class="num">${fmtPrice(e.amount)}</td><td class="num">${fmtPrice(e.amountFull)}</td>
+            <td class="num unit-price">${up.toFixed(2)} ₽</td><td class="num unit-price">${upf.toFixed(2)} ₽</td>
+            <td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid(${e.id})">${e.paid?'Оплачен':'Не оплачен'}</button></td>
+            <td><span class="badge badge-nds">${e.nds}</span></td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry(${e.id})">✕</button></td></tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('logTable').innerHTML = html;
 }
 
-function renderAll() { renderSchedule(); renderShipments('Wildberries'); renderShipments('Ozon'); renderLog(); }
+function renderAll() {
+    renderSchedule();
+    renderShipments('Wildberries');
+    renderShipments('Ozon');
+    renderLog();
+}
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
@@ -762,11 +922,13 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', function() { switchPage(this.dataset.page); });
 });
 
-// График — импорт
+// Кнопка обновления
+document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
+
+// График
 document.getElementById('btnImportSchedule').addEventListener('click', toggleScheduleImport);
 document.getElementById('btnDoScheduleImport').addEventListener('click', doScheduleImport);
 document.getElementById('btnExportSchedule').addEventListener('click', exportScheduleCSV);
-document.getElementById('btnClearSchedule').addEventListener('click', clearAllShipments);
 
 // WB
 document.getElementById('btnAddWb').addEventListener('click', () => addShipment('Wildberries'));
@@ -783,12 +945,29 @@ document.getElementById('btnCancelOzon').addEventListener('click', () => cancelS
 document.getElementById('btnUploadOzon').addEventListener('click', () => document.getElementById('ozonUpload').click());
 document.getElementById('ozonUpload').addEventListener('change', function() { importShipmentExcel(this, 'Ozon'); });
 
+function importShipmentExcel(input, mp) {
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const lines = e.target.result.split('\n').filter(l => l.trim());
+        lines.shift();
+        const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+        lines.forEach(line => {
+            const cols = line.split(/[\t,;]/);
+            if (cols.length >= 3) {
+                arr.push({id: Date.now()+Math.random(), date: cols[0].trim(), city: cols[1].trim(), qty: parseInt(cols[2])||0, source: mp});
+            }
+        });
+        syncToFirebase();
+    };
+    reader.readAsText(file);
+}
+
 // Логистика
 document.getElementById('btnAddLog').addEventListener('click', addLogEntry);
 document.getElementById('btnToggleLogImport').addEventListener('click', toggleLogImport);
 document.getElementById('btnDoLogImport').addEventListener('click', doLogImport);
 document.getElementById('btnExportLog').addEventListener('click', exportLogCSV);
-document.getElementById('btnClearLog').addEventListener('click', clearLogEntries);
 document.getElementById('btnResetLogFilters').addEventListener('click', resetLogFilters);
 document.getElementById('logFilterMonth').addEventListener('change', renderLog);
 document.getElementById('logFilterStatus').addEventListener('change', renderLog);
@@ -796,8 +975,9 @@ document.getElementById('logFilterMP').addEventListener('change', renderLog);
 document.getElementById('logAmount').addEventListener('input', updateLogCalc);
 document.getElementById('logNDS').addEventListener('change', updateLogCalc);
 
+// Запуск
 updateLogCalc();
-renderAll();
+loadFromFirebase();
 </script>
 </body>
 </html>
