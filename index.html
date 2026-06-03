@@ -263,7 +263,7 @@
 </div>
 
 <div class="nav">
-    <button class="nav-btn active" data-page="schedule">📊 График отгрузок</button>
+    <button class="nav-btn" data-page="schedule">📊 График отгрузок</button>
     <button class="nav-btn" data-page="wb">🟣 WB Отгрузки</button>
     <button class="nav-btn" data-page="ozon">🔵 Ozon Отгрузки</button>
     <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
@@ -272,7 +272,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- ГРАФИК ОТГРУЗОК -->
-<div class="page active" id="page-schedule">
+<div class="page" id="page-schedule">
     <h1>📊 График отгрузок</h1>
     <p class="subtitle">Текущая неделя сверху — нажми на неделю чтобы увидеть города</p>
     <div class="top-bar">
@@ -442,6 +442,7 @@ let ozonShipments = [];
 let logEntries = [];
 let weekCapacities = {};
 let isOnline = false;
+let currentPage = 'schedule'; // Текущая страница по умолчанию
 
 function updateSyncStatus(status) {
     const el = document.getElementById('syncStatus');
@@ -489,6 +490,7 @@ function saveToLocalStorage() {
     localStorage.setItem('ozon', JSON.stringify(ozonShipments));
     localStorage.setItem('log', JSON.stringify(logEntries));
     localStorage.setItem('cap', JSON.stringify(weekCapacities));
+    localStorage.setItem('currentPage', currentPage);
 }
 
 // ========== ТОЧЕЧНЫЕ ОПЕРАЦИИ С FIREBASE ==========
@@ -566,6 +568,7 @@ async function saveShipment(mp) {
     await addShipmentToFirebase(mp, shipment);
     saveToLocalStorage();
     renderShipmentCards(mp);
+    renderSchedule();
     clearShipmentForm(mp);
     showToast('✅ Отгрузка сохранена: ' + city + ' — ' + qty.toLocaleString('ru-RU') + ' ед.');
 }
@@ -597,6 +600,7 @@ async function updateShipmentStatus(mp, id, status) {
         shipment.status = status;
         await updateStatusInFirebase(mp, id, status);
         saveToLocalStorage();
+        renderShipmentCards(mp);
     }
 }
 
@@ -640,6 +644,9 @@ function fmtPrice(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
 function monthName(d) { return ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][new Date(d).getMonth()]; }
 
 function switchPage(page) {
+    currentPage = page;
+    localStorage.setItem('currentPage', page);
+    
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active','wb-active','ozon-active','log-active'));
     document.getElementById('page-' + page).classList.add('active');
@@ -685,8 +692,7 @@ async function doScheduleImport() {
         }
     });
     
-    // Пакетная загрузка в Firebase
-    if (isOnline) {
+    if (isOnline && (newWb.length > 0 || newOz.length > 0)) {
         const batch = db.batch();
         newWb.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_wb').doc(String(id)), data); });
         newOz.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_ozon').doc(String(id)), data); });
@@ -704,6 +710,7 @@ async function updateWeekCapacity(key, val) {
     weekCapacities[key] = parseInt(val) || 0; 
     await saveCapacityToFirebase();
     saveToLocalStorage();
+    renderSchedule();
 }
 
 function exportScheduleCSV() {
@@ -995,13 +1002,22 @@ function renderLog() {
     document.getElementById('logTable').innerHTML = html;
 }
 
-function renderAll() { renderSchedule(); renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); }
+function renderAll() { 
+    renderSchedule(); 
+    renderShipmentCards('Wildberries'); 
+    renderShipmentCards('Ozon'); 
+    renderLog(); 
+}
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
 document.getElementById('shipDateWildberries').value = new Date().toISOString().slice(0,10);
 document.getElementById('shipDateOzon').value = new Date().toISOString().slice(0,10);
 document.getElementById('cityList').innerHTML = Object.keys(routesDB).map(c => `<option value="${c}">`).join('');
+
+// Восстанавливаем последнюю страницу
+currentPage = localStorage.getItem('currentPage') || 'schedule';
+switchPage(currentPage);
 
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', function() { switchPage(this.dataset.page); }));
 document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
