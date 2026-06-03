@@ -132,6 +132,7 @@
             background-repeat: no-repeat;
             background-position: right 10px center;
             padding-right: 30px;
+            transition: all 0.3s;
         }
         .status-work { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
         .status-wait { background: #e0e7ff; color: #3730a3; border-color: #818cf8; }
@@ -442,7 +443,7 @@ let ozonShipments = [];
 let logEntries = [];
 let weekCapacities = {};
 let isOnline = false;
-let currentPage = 'schedule'; // Текущая страница по умолчанию
+let currentPage = 'schedule';
 
 function updateSyncStatus(status) {
     const el = document.getElementById('syncStatus');
@@ -461,9 +462,18 @@ async function loadFromFirebase() {
             db.collection('logistics').orderBy('date').get(),
             db.collection('settings').doc('capacities').get()
         ]);
-        wbShipments = wbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        ozonShipments = ozSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        wbShipments = wbSnap.docs.map(d => {
+            const data = d.data();
+            return { id: d.id, ...data, status: data.status || 'in_work' };
+        });
+        ozonShipments = ozSnap.docs.map(d => {
+            const data = d.data();
+            return { id: d.id, ...data, status: data.status || 'in_work' };
+        });
+        logEntries = logSnap.docs.map(d => {
+            const data = d.data();
+            return { id: d.id, ...data, paid: data.paid || false };
+        });
         weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
         isOnline = true;
         updateSyncStatus('online');
@@ -479,9 +489,13 @@ async function loadFromFirebase() {
 }
 
 function loadFromLocalStorage() {
-    wbShipments = JSON.parse(localStorage.getItem('wb') || '[]');
-    ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]');
-    logEntries = JSON.parse(localStorage.getItem('log') || '[]');
+    const wb = JSON.parse(localStorage.getItem('wb') || '[]');
+    const oz = JSON.parse(localStorage.getItem('ozon') || '[]');
+    const log = JSON.parse(localStorage.getItem('log') || '[]');
+    
+    wbShipments = wb.map(s => ({ ...s, status: s.status || 'in_work' }));
+    ozonShipments = oz.map(s => ({ ...s, status: s.status || 'in_work' }));
+    logEntries = log.map(e => ({ ...e, paid: e.paid || false }));
     weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
 }
 
@@ -508,6 +522,7 @@ async function updateStatusInFirebase(mp, id, status) {
     try {
         const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
         await db.collection(collection).doc(String(id)).update({ status });
+        console.log('Firebase updated:', mp, id, status);
     } catch (e) { console.error('Firebase update error:', e); }
 }
 
@@ -593,14 +608,35 @@ async function deleteShipment(mp, id) {
     renderSchedule();
 }
 
-async function updateShipmentStatus(mp, id, status) {
+// Функция обновления статуса (вызывается через делегирование)
+async function handleStatusChange(event) {
+    const select = event.target;
+    if (!select.classList.contains('status-select')) return;
+    
+    const mp = select.dataset.mp;
+    const id = parseInt(select.dataset.id);
+    const status = select.value;
+    
+    console.log('Status change:', mp, id, status);
+    
+    // Обновляем данные в массиве
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
     const shipment = arr.find(s => s.id === id);
     if (shipment) {
         shipment.status = status;
-        await updateStatusInFirebase(mp, id, status);
+        
+        // Меняем цвет select мгновенно
+        const statusObj = STATUSES.find(s => s.value === status) || STATUSES[0];
+        // Удаляем все статусные классы
+        STATUSES.forEach(s => select.classList.remove(s.class));
+        // Добавляем нужный
+        select.classList.add(statusObj.class);
+        
+        console.log('Status updated:', shipment.city, status, statusObj.class);
+        
+        // Сохраняем
         saveToLocalStorage();
-        renderShipmentCards(mp);
+        await updateStatusInFirebase(mp, id, status);
     }
 }
 
@@ -941,7 +977,7 @@ function renderShipmentCards(mp) {
         const route = mp === 'Wildberries' ? (routesDB[e.city] || null) : null;
         
         html += `<div class="shipment-card">
-            <button class="card-delete" onclick="deleteShipment('${mp}',${e.id})" title="Удалить">×</button>
+            <button class="card-delete" data-mp="${mp}" data-id="${e.id}" title="Удалить">×</button>
             <div class="card-header">
                 <div>
                     <div class="card-city">📍 ${e.city}</div>
@@ -952,7 +988,7 @@ function renderShipmentCards(mp) {
             <div class="card-qty-label">единиц товара</div>
             ${route ? `<div class="route-badge badge-info">🚚 ${route.delivery}</div>` : ''}
             <div class="card-status">
-                <select class="${statusObj.class}" onchange="updateShipmentStatus('${mp}',${e.id},this.value)">
+                <select class="status-select ${statusObj.class}" data-mp="${mp}" data-id="${e.id}">
                     ${STATUSES.map(s => `<option value="${s.value}" ${currentStatus === s.value ? 'selected' : ''}>${s.label}</option>`).join('')}
                 </select>
             </div>
@@ -1019,8 +1055,29 @@ document.getElementById('cityList').innerHTML = Object.keys(routesDB).map(c => `
 currentPage = localStorage.getItem('currentPage') || 'schedule';
 switchPage(currentPage);
 
+// Навигация
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', function() { switchPage(this.dataset.page); }));
 document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
+
+// Делегирование событий для карточек WB и Ozon
+document.getElementById('wbCards').addEventListener('change', handleStatusChange);
+document.getElementById('ozonCards').addEventListener('change', handleStatusChange);
+
+document.getElementById('wbCards').addEventListener('click', function(e) {
+    if (e.target.classList.contains('card-delete')) {
+        const mp = e.target.dataset.mp;
+        const id = parseInt(e.target.dataset.id);
+        deleteShipment(mp, id);
+    }
+});
+
+document.getElementById('ozonCards').addEventListener('click', function(e) {
+    if (e.target.classList.contains('card-delete')) {
+        const mp = e.target.dataset.mp;
+        const id = parseInt(e.target.dataset.id);
+        deleteShipment(mp, id);
+    }
+});
 
 // График
 document.getElementById('btnImportSchedule').addEventListener('click', toggleScheduleImport);
