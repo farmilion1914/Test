@@ -497,6 +497,8 @@ function loadFromLocalStorage() {
     ozonShipments = oz.map(s => ({ ...s, status: s.status || 'in_work' }));
     logEntries = log.map(e => ({ ...e, paid: e.paid || false }));
     weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
+    
+    console.log('📂 Загружено из localStorage:', 'WB:', wbShipments.length, 'Ozon:', ozonShipments.length);
 }
 
 function saveToLocalStorage() {
@@ -505,6 +507,7 @@ function saveToLocalStorage() {
     localStorage.setItem('log', JSON.stringify(logEntries));
     localStorage.setItem('cap', JSON.stringify(weekCapacities));
     localStorage.setItem('currentPage', currentPage);
+    console.log('💾 Данные сохранены в localStorage');
 }
 
 // ========== ТОЧЕЧНЫЕ ОПЕРАЦИИ С FIREBASE ==========
@@ -514,10 +517,9 @@ async function addShipmentToFirebase(mp, shipment) {
         const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
         const { id, ...data } = shipment;
         await db.collection(collection).doc(String(id)).set(data);
+        console.log('📤 Отгрузка добавлена в Firebase:', mp, shipment.city);
     } catch (e) { 
         console.error('Firebase add error:', e);
-        isOnline = false;
-        updateSyncStatus('offline');
     }
 }
 
@@ -525,17 +527,22 @@ async function updateStatusInFirebase(mp, id, status) {
     const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
     const docRef = db.collection(collection).doc(String(id));
     
-    const doc = await docRef.get();
-    if (doc.exists) {
-        await docRef.update({ status: status });
-        console.log('📤 Firebase обновлён:', mp, id, status);
-    } else {
-        const shipment = (mp === 'Wildberries' ? wbShipments : ozonShipments).find(s => s.id === id);
-        if (shipment) {
-            const { id: sid, ...data } = shipment;
-            await docRef.set(data);
-            console.log('📤 Создан новый документ в Firebase:', mp, id);
+    try {
+        const doc = await docRef.get();
+        if (doc.exists) {
+            await docRef.update({ status: status });
+            console.log('📤 Firebase обновлён:', mp, id, status);
+        } else {
+            const shipment = (mp === 'Wildberries' ? wbShipments : ozonShipments).find(s => String(s.id) === String(id));
+            if (shipment) {
+                const { id: sid, ...data } = shipment;
+                await docRef.set(data);
+                console.log('📤 Создан новый документ в Firebase:', mp, id);
+            }
         }
+    } catch (e) {
+        console.error('Firebase update error:', e);
+        throw e;
     }
 }
 
@@ -612,8 +619,8 @@ function clearShipmentForm(mp) {
 
 async function deleteShipment(mp, id) {
     if (!confirm('Удалить отгрузку?')) return;
-    if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => s.id !== id);
-    else ozonShipments = ozonShipments.filter(s => s.id !== id);
+    if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => String(s.id) !== String(id));
+    else ozonShipments = ozonShipments.filter(s => String(s.id) !== String(id));
     
     await deleteFromFirebase(mp, id);
     saveToLocalStorage();
@@ -624,36 +631,37 @@ async function deleteShipment(mp, id) {
 // Функция обновления статуса — перерисовывает карточки
 function handleStatusChange(event) {
     const select = event.target;
+    if (!select.classList.contains('status-select')) return;
     
     const mp = select.dataset.mp;
-    const id = parseInt(select.dataset.id);
+    const id = select.dataset.id;
     const status = select.value;
     
     console.log('🔄 Меняем статус:', mp, id, status);
     
-    // Обновляем данные в массиве
+    // Обновляем данные в массиве — ищем по строке
     const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
-    const shipment = arr.find(s => s.id === id);
+    const shipment = arr.find(s => String(s.id) === String(id));
     
     if (shipment) {
         shipment.status = status;
+        console.log('✅ Статус обновлён:', shipment.city);
         
-        // Сохраняем в localStorage СРАЗУ
+        // Сохраняем в localStorage
         saveToLocalStorage();
         
-        // Пробуем Firebase (без await чтобы не блокировать)
+        // Пробуем Firebase
         if (isOnline) {
             updateStatusInFirebase(mp, id, status).catch(e => {
                 console.warn('Firebase update failed:', e);
             });
         }
         
-        // ПЕРЕРИСОВЫВАЕМ ВСЕ КАРТОЧКИ для этого МП
+        // Перерисовываем карточки
         renderShipmentCards(mp);
-        
-        console.log('✅ Статус обновлён и карточки перерисованы:', shipment.city);
     } else {
-        console.error('❌ Отгрузка не найдена:', id);
+        console.error('❌ Отгрузка не найдена. Ищем:', id, 'тип:', typeof id);
+        console.error('Доступные ID:', arr.map(s => ({ id: s.id, type: typeof s.id })));
     }
 }
 
@@ -1013,6 +1021,7 @@ function renderShipmentCards(mp) {
     });
     
     document.getElementById(containerId).innerHTML = html;
+    console.log('🎨 Карточки перерисованы:', mp, srt.length);
 }
 
 function renderLog() {
@@ -1086,7 +1095,7 @@ document.addEventListener('change', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('card-delete')) {
         const mp = e.target.dataset.mp;
-        const id = parseInt(e.target.dataset.id);
+        const id = e.target.dataset.id;
         if (id) deleteShipment(mp, id);
     }
 });
