@@ -2,1680 +2,1246 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <title>GQbox | Складской учёт</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>График отгрузок</title>
     
-    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GQbox%22%2C%22short_name%22%3A%22GQbox%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI%2BPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MCIgZmlsbD0iIzBmMWEyZSIvPjx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNzAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HUTwvdGV4dD48L3N2Zz4%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI%2BPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMDAiIGZpbGw9IiMwZjFhMmUiLz48dGV4dCB4PSIyNTYiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxODAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HUTwvdGV4dD48L3N2Zz4%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%22%7D%5D%7D">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MCIgZmlsbD0iIzBmMWEyZSIvPjx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNzAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HUTwvdGV4dD48L3N2Zz4=">
-    
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     
     <style>
-        * { box-sizing: border-box; margin: 0; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; }
-        body { 
-            background: #f2f2f7; min-height: 100vh; min-height: 100dvh; display: flex; 
-            flex-direction: column; align-items: center; padding: 0.75rem; 
-            padding-top: env(safe-area-inset-top, 0.75rem);
-            padding-bottom: 120px;
-            -webkit-tap-highlight-color: transparent; width: 100%; transition: background 0.3s; 
+        :root {
+            --bg: #f6f7f9; --card: #ffffff; --text: #1a1e25; --sub: #6b7280;
+            --border: #e5e7eb; --accent: #2563eb; --wb: #6a1b9a; --ozon: #005bff;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --radius: 10px; --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
         }
-        body.dark-theme { background: #000; }
-        
-        .login-screen { max-width: 420px; width: 100%; margin: 0 auto; padding-top: max(10vh, env(safe-area-inset-top, 0px)); }
-        .login-card { background: #fff; border-radius: 20px; padding: 2.5rem 1.8rem; box-shadow: 0 2px 16px rgba(0,0,0,0.06); text-align: center; }
-        body.dark-theme .login-card { background: #1c1c1e; box-shadow: 0 2px 16px rgba(0,0,0,0.5); }
-        .logo-container { margin-bottom: 20px; }
-        .logo-oval { background: #000; display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: 12px; }
-        .logo-text { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; color: #fff; }
-        body.dark-theme .logo-oval { background: #3a3a3c; }
-        
-        .input-group-login { margin-bottom: 14px; text-align: left; }
-        .input-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #6b7280; margin-bottom: 5px; letter-spacing: 0.5px; }
-        body.dark-theme .input-label { color: #8e8e93; }
-        .login-input { width: 100%; padding: 12px 14px; font-size: 0.95rem; border: 1.5px solid #e5e7eb; border-radius: 10px; background: #f9fafb; transition: all 0.2s; outline: none; color: #111827; }
-        .login-input:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); background: #fff; }
-        body.dark-theme .login-input { background: #2c2c2e; border-color: #3a3a3c; color: #fff; }
-        body.dark-theme .login-input:focus { border-color: #0a84ff; background: #2c2c2e; }
-        .login-btn { width: 100%; padding: 13px; font-size: 0.95rem; font-weight: 600; border: none; border-radius: 10px; background: #000; color: #fff; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
-        .login-btn:active { transform: scale(0.98); }
-        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        body.dark-theme .login-btn { background: #0a84ff; }
-        
-        .reg-toggle { font-size: 0.8rem; color: #6b7280; cursor: pointer; margin-top: 16px; text-decoration: underline; text-underline-offset: 3px; }
-        .reg-toggle:hover { color: #000; }
-        body.dark-theme .reg-toggle { color: #8e8e93; }
-        body.dark-theme .reg-toggle:hover { color: #fff; }
-        .reg-block { display: none; margin-top: 14px; text-align: left; }
-        .reg-block.show { display: block; }
-        .reg-btn { width: 100%; padding: 13px; font-size: 0.95rem; font-weight: 600; border: 2px solid #000; border-radius: 10px; background: transparent; color: #000; cursor: pointer; margin-top: 8px; }
-        body.dark-theme .reg-btn { border-color: #8e8e93; color: #fff; }
-        
-        .error-msg { background: #fef2f2; color: #991b1b; padding: 10px 14px; border-radius: 10px; margin-top: 10px; font-size: 0.8rem; display: none; }
-        .success-msg { background: #f0fdf4; color: #166534; padding: 10px 14px; border-radius: 10px; margin-top: 10px; font-size: 0.8rem; display: none; }
-        body.dark-theme .error-msg { background: #450a0a; color: #fca5a5; }
-        body.dark-theme .success-msg { background: #052e16; color: #86efac; }
-        
-        .dashboard { width: 100%; max-width: 800px; display: none; }
-        .dashboard.active { display: block; }
-        
-        .employee-header { background: #000; color: #fff; border-radius: 14px; margin-bottom: 0.75rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        body.dark-theme .employee-header { background: #1c1c1e; }
-        .header-main { padding: 0.7rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-        .user-avatar { width: 36px; height: 36px; background: rgba(255,255,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; color: #fff; }
-        .user-info { min-width: 0; }
-        .user-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
-        .user-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 8px; background: rgba(255,255,255,0.15); margin-left: 6px; color: rgba(255,255,255,0.9); }
-        .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .btn-icon { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s; padding: 0; }
-        .btn-icon:hover { background: rgba(255,255,255,0.2); }
-        .btn-icon.logout { background: rgba(255,59,48,0.3); }
-        .btn-icon.logout:hover { background: rgba(255,59,48,0.5); }
-        
-        .warehouse-switch-bar { 
-            padding: 0.5rem 1rem 0.7rem 1rem; 
-            border-top: 1px solid rgba(255,255,255,0.1); 
-            display: flex; 
-            justify-content: center;
-            align-items: center;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.5;
+            padding: 16px; max-width: 1400px; margin: 0 auto;
         }
-        .warehouse-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: rgba(255,255,255,0.5);
-            font-size: 0.7rem;
-            user-select: none;
+
+        .header-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
         }
-        .warehouse-indicator .swipe-hint {
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.65rem;
+        .app-title { font-size: 18px; font-weight: 700; }
+        .sync-status {
+            font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 500;
         }
-        .warehouse-indicator .swipe-hint.show {
-            opacity: 1;
+        .sync-online { background: #d1fae5; color: #065f46; }
+        .sync-offline { background: #fee2e2; color: #991b1b; }
+        .sync-loading { background: #fef3c7; color: #92400e; }
+        .global-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+        .btn {
+            padding: 7px 12px; border: none; border-radius: 8px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 4px;
         }
-        .swipe-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-wb { background: var(--wb); color: #fff; }
+        .btn-ozon { background: var(--ozon); color: #fff; }
+        .btn-log { background: #374151; color: #fff; }
+
+        .nav {
+            display: flex; gap: 4px; background: var(--card); border-radius: var(--radius);
+            padding: 4px; margin-bottom: 16px; box-shadow: var(--shadow); flex-wrap: wrap;
+        }
+        .nav-btn {
+            flex: 1; min-width: 100px; padding: 10px 14px; border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 600; cursor: pointer; background: transparent;
+            color: var(--sub); transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-btn:hover { background: #f3f4f6; }
+        .nav-btn.active { background: var(--accent); color: #fff; }
+        .nav-btn.wb-active { background: var(--wb); color: #fff; }
+        .nav-btn.ozon-active { background: var(--ozon); color: #fff; }
+        .nav-btn.log-active { background: #374151; color: #fff; }
+
+        h1 { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
+        .subtitle { color: var(--sub); font-size: 12px; margin-bottom: 12px; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .top-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+
+        .form-card {
+            background: var(--card); border-radius: var(--radius); padding: 20px;
+            box-shadow: var(--shadow); margin-bottom: 14px;
+        }
+        .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .field { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 100px; }
+        .field label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--sub); }
+        .field input, .field select {
+            padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px;
+            font-size: 13px; font-family: inherit; background: #fafafa; width: 100%;
+        }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--accent); background: #fff; }
+
+        .route-info {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+            padding: 10px 14px; margin-top: 8px; font-size: 12px; display: none;
+        }
+        .route-info.show { display: block; }
+        .route-info .route-title { font-weight: 700; color: #166534; }
+        .route-info .route-detail { color: #15803d; font-size: 11px; }
+        .route-schedule { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .route-chip { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .shipment-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+            position: relative;
+        }
+        .shipment-card:hover { border-color: #93a8d8; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .shipment-card .card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .shipment-card .card-city { font-size: 16px; font-weight: 700; color: var(--text); }
+        .shipment-card .card-date { font-size: 11px; color: var(--sub); }
+        .shipment-card .card-qty { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .shipment-card .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--sub); margin-bottom: 12px; }
+        .shipment-card .card-status { margin-top: 8px; }
+        .shipment-card .card-status select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
             transition: all 0.3s;
         }
-        .swipe-dot.active {
-            background: #fff;
-            width: 18px;
-            border-radius: 3px;
+        .status-work { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+        .status-wait { background: #e0e7ff; color: #3730a3; border-color: #818cf8; }
+        .status-reject { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+        .status-sent { background: #d1fae5; color: #065f46; border-color: #34d399; }
+        .status-ready { background: #dbeafe; color: #1e40af; border-color: #60a5fa; }
+        .shipment-card .card-delete {
+            position: absolute;
+            top: 8px; right: 8px;
+            background: none; border: none;
+            color: var(--sub); cursor: pointer;
+            font-size: 16px; padding: 4px 8px;
+            border-radius: 6px; transition: all 0.15s;
         }
-        
-        .user-view, .admin-view { display: none; width: 100%; }
-        .user-view.active, .admin-view.active { display: block; }
-        
-        /* ========== TAB CONTENT CONTAINERS ========== */
-        .tab-content {
-            display: none;
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1), transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        .shipment-card .card-delete:hover { background: #fee2e2; color: var(--danger); }
+        .shipment-card .route-badge {
+            display: inline-block;
+            font-size: 10px; padding: 2px 6px;
+            border-radius: 10px; margin-top: 6px;
         }
-        .tab-content.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
+
+        .import-area { margin-bottom: 14px; }
+        .import-area textarea {
+            width: 100%; height: 120px; font-family: 'SF Mono', monospace;
+            font-size: 11px; padding: 8px 10px; border: 1px solid var(--border);
+            border-radius: 8px; resize: vertical; background: #fafafa;
         }
-        .tab-content.exiting {
-            opacity: 0;
-            transform: translateY(-8px);
-            transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+        .filters select, .filters input {
+            padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; font-size: 12px; background: #fff;
         }
-        
-        .warehouse-container { 
-            display: none; 
-            opacity: 0; 
-            transform: translateX(20px); 
-            transition: opacity 0.3s ease, transform 0.3s ease; 
+        .chip {
+            display: inline-flex; align-items: center; gap: 4px; background: #f3f4f6;
+            padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+            cursor: pointer; user-select: none; border: 1px solid transparent;
         }
-        .warehouse-container.active { 
-            display: block; 
-            opacity: 1; 
-            transform: translateX(0); 
+
+        .table-wrap {
+            background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+            overflow-x: auto; margin-bottom: 14px;
         }
-        .warehouse-container.swipe-left {
-            opacity: 0;
-            transform: translateX(-20px);
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1000px; }
+        th {
+            text-align: left; padding: 10px; font-size: 9px; font-weight: 700;
+            text-transform: uppercase; color: var(--sub); border-bottom: 2px solid var(--border);
+            background: var(--card);
         }
-        .warehouse-container.swipe-right {
-            opacity: 0;
-            transform: translateX(20px);
+        td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+        tr:hover { background: #f9fafb; }
+        .num { text-align: right; }
+
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+        .badge-wb { background: #f3e5f5; color: #6a1b9a; }
+        .badge-ozon { background: #e3f2fd; color: #005bff; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-paid { background: #d1fae5; color: #065f46; cursor: pointer; }
+        .badge-unpaid { background: #fef3c7; color: #92400e; cursor: pointer; }
+
+        .btn-status {
+            padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            cursor: pointer; border: 2px solid transparent; background: #f3f4f6; color: var(--sub);
         }
-        
-        /* ========== iOS 26 STYLE FLOATING TAB BAR ========== */
-        .ios-tab-bar {
-            position: fixed;
-            bottom: 24px;
-            bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 22px;
-            padding: 4px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06);
-            transition: background 0.3s, box-shadow 0.3s;
+        .btn-status.paid-active { background: #d1fae5; color: #065f46; border-color: #10b981; }
+        .btn-status.unpaid-active { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+
+        .summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .summary-item {
+            background: var(--card); border-radius: var(--radius); padding: 12px 14px;
+            box-shadow: var(--shadow); flex: 1; min-width: 120px;
         }
-        body.dark-theme .ios-tab-bar {
-            background: rgba(28, 28, 30, 0.72);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.08);
+        .summary-item .label { font-size: 10px; text-transform: uppercase; color: var(--sub); }
+        .summary-item .value { font-size: 18px; font-weight: 700; }
+        .summary-item.current-week { border: 2px solid var(--accent); background: #f0f4ff; }
+
+        .week-row { background: #f9fafb; border-left: 4px solid var(--accent); cursor: pointer; }
+        .week-row-alt { background: #f3f4f6; border-left: 4px solid #93a8d8; cursor: pointer; }
+        .week-row.current { background: #f0f4ff; border-left: 4px solid var(--accent); font-weight: 600; }
+        .week-row:hover, .week-row-alt:hover { background: #e8edf5; }
+        .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; }
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+
+        .capacity-cell { text-align: center; }
+        .capacity-input {
+            width: 80px; text-align: center; padding: 5px 8px;
+            border: 2px dashed var(--border); border-radius: 6px;
+            font-size: 13px; font-weight: 700; background: #fff;
         }
-        
-        .ios-tab-item {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px 16px;
-            border-radius: 18px;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-            white-space: nowrap;
-            color: #8e8e93;
-            font-size: 0.78rem;
-            font-weight: 500;
-        }
-        body.dark-theme .ios-tab-item {
-            color: #636366;
-        }
-        
-        .ios-tab-item.active {
-            background: #fff;
-            color: #000;
-            font-weight: 590;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.04);
-        }
-        body.dark-theme .ios-tab-item.active {
-            background: #3a3a3c;
-            color: #fff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.1);
-        }
-        
-        .ios-tab-item svg {
-            width: 22px;
-            height: 22px;
-            flex-shrink: 0;
-            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .ios-tab-item:not(.active) svg {
-            opacity: 0.55;
-        }
-        .ios-tab-item.active svg {
-            opacity: 1;
-        }
-        
-        .ios-tab-label {
-            transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1), max-width 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-            overflow: hidden;
-            max-width: 0;
-            opacity: 0;
-            font-size: 0.75rem;
-        }
-        .ios-tab-item.active .ios-tab-label {
-            max-width: 60px;
-            opacity: 1;
-            margin-left: 2px;
-        }
-        
-        .toast-container {
-            position: fixed;
-            top: env(safe-area-inset-top, 20px);
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            pointer-events: none;
-            width: 90%;
-            max-width: 400px;
-            padding-top: 50px;
-        }
-        @media screen and (max-height: 812px) {
-            .toast-container {
-                padding-top: 10px;
-            }
+
+        .empty { text-align: center; color: var(--sub); padding: 40px; font-size: 13px; }
+        .month-sep {
+            background: #f3f4f6; font-weight: 700; font-size: 11px;
+            text-transform: uppercase; color: var(--sub); padding: 8px 10px !important;
         }
         .toast {
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: #333;
-            color: #fff;
-            font-size: 0.85rem;
-            font-weight: 500;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-            pointer-events: auto;
-            backdrop-filter: blur(10px);
+            position: fixed; bottom: 20px; right: 20px;
+            background: #1a1e25; color: #fff; padding: 10px 18px;
+            border-radius: 8px; font-size: 13px; font-weight: 500;
+            z-index: 1000; opacity: 0; transform: translateY(10px);
+            transition: all 0.3s;
         }
-        .toast.success { background: rgba(52,199,89,0.95); }
-        .toast.error { background: rgba(255,59,48,0.95); }
-        .toast.warning { background: rgba(255,149,0,0.95); }
-        .toast.info { background: rgba(0,122,255,0.95); }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-20px); } }
-        
-        .loading-spinner {
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .field-calc {
+            background: #f0f4ff; border: 1px dashed #93a8d8; border-radius: 7px;
+            padding: 7px 9px; font-size: 13px; font-weight: 600; color: #1d4ed8; text-align: right;
+        }
+        .toggle-icon {
+            display: inline-block; transition: transform 0.2s;
+            font-size: 10px; margin-left: 4px;
+        }
+        .toggle-icon.open { transform: rotate(180deg); }
+
+        .truck-alert {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .truck-alert h3 { color: #856404; margin-bottom: 8px; font-size: 14px; }
+        .truck-alert .truck-item {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .work-day-card { 
-            background: #fff; border-radius: 16px; padding: 0.9rem 1rem; margin-bottom: 16px; 
-            border: 1px solid #dce3e9; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-        }
-        body.dark-theme .work-day-card { background: #1c1c1e; border-color: #2c2c2e; box-shadow: none; }
-        .work-day-card span { color: #374151; font-size: 0.85rem; }
-        body.dark-theme .work-day-card span { color: #d1d5db; }
-        
-        .accordion-item {
-            background: #fff; border-radius: 16px; margin-bottom: 12px;
-            border: 1px solid #dce3e9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;
-        }
-        body.dark-theme .accordion-item { background: #1c1c1e; border-color: #2c2c2e; box-shadow: none; }
-        .accordion-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0.9rem 1rem; cursor: pointer; user-select: none; transition: background 0.2s ease;
-        }
-        .accordion-header:hover { background: rgba(0,0,0,0.02); }
-        body.dark-theme .accordion-header:hover { background: rgba(255,255,255,0.03); }
-        .accordion-header h3 { font-weight: 500; font-size: 0.9rem; color: #374151; margin: 0; }
-        body.dark-theme .accordion-header h3 { color: #e5e7eb; }
-        .accordion-icon { font-size: 0.7rem; color: #9ca3af; transition: transform 0.25s ease; }
-        .accordion-item.open .accordion-icon { transform: rotate(90deg); }
-        .accordion-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease-out; }
-        .accordion-item.open .accordion-content { grid-template-rows: 1fr; }
-        .accordion-content > div { overflow: hidden; }
-        
-        .op-card {
-            background: #f8f9fb; border-radius: 14px; padding: 0.9rem;
-            border: 1px solid #e8edf2; margin: 0 1rem 1rem 1rem;
-        }
-        body.dark-theme .op-card { background: #2c2c2e; border-color: #3a3a3c; }
-        
-        .photo-card { 
-            background: #fff; border-radius: 16px; padding: 1rem; margin-bottom: 16px; 
-            border: 1px solid #dce3e9; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        body.dark-theme .photo-card { background: #1c1c1e; border-color: #2c2c2e; box-shadow: none; }
-        .photo-card .photo-title { font-weight: 500; font-size: 0.9rem; color: #d97706; margin-bottom: 0.8rem; }
-        
-        .history-section { 
-            background: #fff; border-radius: 16px; padding: 1rem;
-            border: 1px solid #dce3e9; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        body.dark-theme .history-section { background: #1c1c1e; border-color: #2c2c2e; box-shadow: none; }
-        .history-header { 
-            display: flex; align-items: center; justify-content: space-between; 
-            margin-bottom: 0.8rem; flex-wrap: wrap; gap: 10px; 
-        }
-        .history-header h3 { 
-            color: #111827; font-size: 0.9rem; font-weight: 500; 
-            margin: 0; flex-shrink: 0;
-        }
-        body.dark-theme .history-header h3 { color: #f3f4f6; }
-        .date-selector { 
-            display: flex; align-items: center; gap: 8px; 
-            background: #f8f9fb; padding: 6px 10px; border-radius: 12px; 
-            border: 1px solid #dce3e9; flex-shrink: 0;
-        }
-        body.dark-theme .date-selector { background: #2c2c2e; border-color: #3a3a3c; }
-        .date-nav { display: flex; gap: 4px; }
-        .date-selector input[type="date"] { 
-            border: none; background: transparent; font-size: 0.75rem; 
-            padding: 5px 4px; outline: none; width: 105px; color: #111827;
-            text-align: center;
-        }
-        body.dark-theme .date-selector input[type="date"] { color: #f3f4f6; }
-        .date-nav-btn { 
-            background: #fff; border: 1px solid #dce3e9; padding: 5px 10px; 
-            border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.7rem; 
-            transition: all 0.2s; color: #374151; display: flex; align-items: center; 
-            justify-content: center; min-width: 30px;
-        }
-        body.dark-theme .date-nav-btn { background: #3a3a3c; border-color: #48484a; color: #d1d5db; }
-        
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 0;
-        }
-        .pagination button {
-            background: #f8f9fb;
-            border: 1px solid #dce3e9;
-            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid #ffc107;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #374151;
-            transition: all 0.2s;
-            min-width: 32px;
+            padding: 8px 12px;
+            margin: 4px;
+            font-size: 12px;
         }
-        body.dark-theme .pagination button { background: #2c2c2e; border-color: #3a3a3c; color: #d1d5db; }
-        .pagination button.active { background: #000; color: #fff; border-color: #000; }
-        body.dark-theme .pagination button.active { background: #0a84ff; border-color: #0a84ff; }
-        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
-        .pagination .page-info {
-            font-size: 0.7rem;
-            color: #8e8e93;
-            padding: 0 4px;
+        .log-edit-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            background: #fff;
         }
-        
-        .history-cards { display: flex; flex-direction: column; gap: 8px; }
-        .history-card {
-            background: #f8f9fb; border-radius: 12px; padding: 10px 12px;
-            border: 1px solid #e8edf2; transition: all 0.2s;
-            animation: cardIn 0.3s ease;
+        .log-edit-input:focus { outline: none; border-color: var(--accent); }
+        .log-select {
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            background: #fff;
+            font-family: inherit;
         }
-        @keyframes cardIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        body.dark-theme .history-card { background: #2c2c2e; border-color: #3a3a3c; }
-        .history-card-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
-        .history-time { font-size: 0.65rem; color: #6b7280; font-weight: 500; }
-        body.dark-theme .history-time { color: #8e8e93; }
-        .history-warehouse { font-size: 0.65rem; background: #e8edf2; padding: 2px 8px; border-radius: 20px; color: #374151; }
-        body.dark-theme .history-warehouse { background: #3a3a3c; color: #e5e7eb; }
-        .history-action { font-weight: 600; font-size: 0.8rem; color: #111827; margin-bottom: 4px; }
-        body.dark-theme .history-action { color: #f3f4f6; }
-        .history-details { font-size: 0.7rem; color: #6b7280; word-break: break-word; }
-        body.dark-theme .history-details { color: #8e8e93; }
-        .empty-history { text-align: center; padding: 30px; color: #9ca3af; font-size: 0.8rem; }
-        
-        .btn-work { background: #059669; border: none; color: #fff; font-weight: 600; font-size: 0.85rem; padding: 7px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-        .btn-work:active { transform: scale(0.97); }
-        
-        .counter-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #fff; padding: 6px 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        body.dark-theme .counter-row { background: #1c1c1e; border-color: #3a3a3c; }
-        .counter-row span:first-child { color: #6b7280; }
-        body.dark-theme .counter-row span:first-child { color: #8e8e93; }
-        .counter-value { font-size: 1.3rem; font-weight: 700; color: #111827; }
-        body.dark-theme .counter-value { color: #f3f4f6; }
-        
-        .adjust-buttons { display: flex; gap: 6px; margin-bottom: 8px; }
-        .btn-adjust { flex: 1; background: #fff; border: 1px solid #e2e8f0; color: #374151; font-size: 1.1rem; font-weight: 700; padding: 6px 0; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
-        body.dark-theme .btn-adjust { background: #1c1c1e; border-color: #3a3a3c; color: #d1d5db; }
-        
-        .btn-ok { background: #059669; border: none; color: #fff; font-weight: 600; font-size: 0.85rem; padding: 10px; border-radius: 12px; width: 100%; cursor: pointer; margin-top: 6px; transition: all 0.2s; }
-        .btn-ok:active { transform: scale(0.97); }
-        .btn-ok.orange { background: #d97706; }
-        .btn-ok.blue { background: #2563eb; }
-        .btn-ok.purple { background: #7c3aed; }
-        .btn-ok.teal { background: #0d9488; }
-        .btn-ok.green { background: #059669; }
-        
-        .input-field { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.85rem; width: 100%; margin-bottom: 8px; background: #fff; color: #111827; transition: all 0.2s; }
-        .input-field:focus { border-color: #000; outline: none; background: #fff; }
-        body.dark-theme .input-field { background: #1c1c1e; border-color: #3a3a3c; color: #f3f4f6; }
-        body.dark-theme .input-field:focus { border-color: #0a84ff; background: #1c1c1e; }
-        .input-field::placeholder { color: #9ca3af; }
-        
-        .reset-btn { background: none; border: 1px solid #e2e8f0; padding: 5px 10px; border-radius: 10px; color: #9ca3af; font-size: 0.6rem; cursor: pointer; margin-top: 6px; width: 100%; transition: all 0.2s; }
-        body.dark-theme .reset-btn { border-color: #3a3a3c; color: #8e8e93; }
-        
-        .manual-input-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-        .manual-input-row .input-field { margin-bottom: 0; text-align: center; flex: 1; }
-        .btn-set { background: #2563eb; border: none; color: #fff; font-weight: 600; font-size: 0.75rem; padding: 10px 12px; border-radius: 12px; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
-        .btn-set:active { transform: scale(0.97); }
-        
-        .photo-slots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
-        @media (min-width: 480px) { .photo-slots { grid-template-columns: repeat(4, 1fr); } }
-        .photo-slot { aspect-ratio: 1; border: 2px dashed #dce3e9; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafbfc; overflow: hidden; position: relative; min-height: 70px; transition: all 0.2s; }
-        body.dark-theme .photo-slot { background: #2c2c2e; border-color: #3a3a3c; }
-        .photo-slot.has-photo { border-style: solid; border-color: #059669; background: #fff; }
-        body.dark-theme .photo-slot.has-photo { background: #1c1c1e; }
-        .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-slot .slot-number { font-size: 1.8rem; color: #cbd5e1; font-weight: 700; }
-        body.dark-theme .photo-slot .slot-number { color: #48484a; }
-        .photo-slot .remove-photo { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: #fff; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 0.65rem; cursor: pointer; display: none; align-items: center; justify-content: center; }
-        .photo-slot.has-photo:hover .remove-photo { display: flex; }
-        
-        .photo-form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: flex-end; }
-        .photo-form-row .input-field-wrap { flex: 1; min-width: 100px; }
-        .date-picker-wrap { position: relative; min-width: 100px; }
-        .date-picker-label { display: block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: #6b7280; margin-bottom: 3px; letter-spacing: 0.3px; }
-        body.dark-theme .date-picker-label { color: #8e8e93; }
-        .date-picker-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        .date-value { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.8rem; background: #f8f9fb; color: #111827; text-align: center; }
-        body.dark-theme .date-value { background: #2c2c2e; border-color: #3a3a3c; color: #f3f4f6; }
-        
-        .ip-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .ip-row { display: flex; align-items: center; gap: 10px; background: #f8f9fb; padding: 8px 14px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        body.dark-theme .ip-row { background: #2c2c2e; border-color: #3a3a3c; }
-        .ip-row .ip-name { font-weight: 700; font-size: 0.85rem; color: #111827; min-width: 45px; }
-        body.dark-theme .ip-row .ip-name { color: #f3f4f6; }
-        .ip-row .ip-qty-input { width: 70px; padding: 8px 10px; border: 1px solid #dce3e9; border-radius: 10px; font-size: 0.85rem; text-align: center; background: #fff; color: #111827; }
-        body.dark-theme .ip-row .ip-qty-input { background: #1c1c1e; border-color: #3a3a3c; color: #f3f4f6; }
-        .ip-row .ip-unit { font-size: 0.7rem; color: #6b7280; }
-        body.dark-theme .ip-row .ip-unit { color: #8e8e93; }
-        
-        .btn-photo { background: #d97706; border: none; color: #fff; font-weight: 600; font-size: 0.85rem; padding: 12px; border-radius: 12px; cursor: pointer; width: 100%; margin-top: 6px; transition: all 0.2s; }
-        .btn-photo:active { transform: scale(0.97); }
-        .btn-photo:disabled { opacity: 0.5; cursor: not-allowed; }
-        .photo-counter { text-align: center; font-size: 0.7rem; color: #6b7280; margin-top: 6px; }
-        body.dark-theme .photo-counter { color: #8e8e93; }
-        
-        .photo-gallery-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1002; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
-        .photo-gallery-overlay .gallery-main { max-width: 95%; max-height: 70vh; border-radius: 12px; object-fit: contain; }
-        .photo-gallery-overlay .gallery-counter { color: #fff; font-size: 0.8rem; margin: 10px 0; }
-        .photo-gallery-overlay .gallery-nav { display: flex; gap: 20px; }
-        .photo-gallery-overlay .gallery-nav button { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; }
-        .photo-gallery-overlay .gallery-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
-        .photo-gallery-overlay .gallery-info { color: #8e8e93; text-align: center; margin-top: 8px; font-size: 0.75rem; }
-
-        .ios-segmented-control {
-            display: flex; gap: 0; margin-bottom: 1rem;
-            background: rgba(118,118,128,0.12); border-radius: 8.93px;
-            padding: 2px; backdrop-filter: blur(10px);
-        }
-        body.dark-theme .ios-segmented-control { background: rgba(118,118,128,0.24); }
-        .ios-segment {
-            flex: 1; text-align: center; padding: 6px 0; font-size: 0.77rem;
-            font-weight: 500; color: #000; border-radius: 7px; cursor: pointer;
-            transition: all 0.2s ease; background: transparent; border: none;
-            white-space: nowrap; letter-spacing: -0.2px;
-        }
-        body.dark-theme .ios-segment { color: #fff; }
-        .ios-segment.active {
-            background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
-            font-weight: 590;
-        }
-        body.dark-theme .ios-segment.active {
-            background: #636366; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-
-        .ios-list {
-            display: flex; flex-direction: column; gap: 0;
-            background: #fff; border-radius: 12px;
-            overflow: hidden; margin-bottom: 16px;
-        }
-        body.dark-theme .ios-list { background: #1c1c1e; }
-        .ios-list-header {
-            font-size: 0.7rem; text-transform: uppercase; color: #6d6d72;
-            padding: 8px 16px 4px; letter-spacing: 0.5px; font-weight: 500;
-        }
-        body.dark-theme .ios-list-header { color: #8e8e93; }
-        .ios-list-item {
-            display: flex; align-items: center; padding: 11px 16px;
-            border-bottom: 0.5px solid rgba(60,60,67,0.08);
-            cursor: default; transition: background 0.15s; gap: 12px;
-            min-height: 44px;
-        }
-        body.dark-theme .ios-list-item { border-bottom-color: rgba(84,84,88,0.65); }
-        .ios-list-item:last-child { border-bottom: none; }
-        .ios-list-item:active { background: rgba(60,60,67,0.06); }
-        body.dark-theme .ios-list-item:active { background: rgba(84,84,88,0.3); }
-        
-        .ios-list-item .item-leading {
-            width: 36px; height: 36px; border-radius: 9px; display: flex;
-            align-items: center; justify-content: center; font-weight: 600;
-            font-size: 0.85rem; flex-shrink: 0;
-        }
-        .ios-list-item .item-body { flex: 1; min-width: 0; }
-        .ios-list-item .item-title { font-size: 0.9rem; font-weight: 500; color: #000; }
-        body.dark-theme .ios-list-item .item-title { color: #fff; }
-        .ios-list-item .item-subtitle { font-size: 0.7rem; color: #8e8e93; margin-top: 1px; }
-        .ios-list-item .item-trailing {
-            font-size: 0.7rem; color: #8e8e93; text-align: right; flex-shrink: 0;
-        }
-        .ios-list-item .item-chevron { color: #c7c7cc; font-size: 0.8rem; margin-left: 4px; }
-
-        .ios-badge {
-            font-size: 0.6rem; padding: 3px 10px; border-radius: 12px; font-weight: 500;
-            display: inline-block;
-        }
-        .ios-badge.active { background: rgba(52,199,89,0.15); color: #34c759; }
-        .ios-badge.inactive { background: rgba(255,59,48,0.1); color: #ff3b30; }
-        body.dark-theme .ios-badge.active { background: rgba(52,199,89,0.2); }
-        body.dark-theme .ios-badge.inactive { background: rgba(255,59,48,0.2); }
-
-        .ios-delete-btn {
-            background: none; border: none; color: #ff3b30; font-size: 0.75rem;
-            padding: 6px 12px; cursor: pointer; font-weight: 500;
-            border-radius: 8px; transition: background 0.15s;
-        }
-        .ios-delete-btn:active { background: rgba(255,59,48,0.1); }
-
-        .ios-log-item .item-leading {
-            font-size: 0.65rem; color: #8e8e93; font-weight: 500; background: transparent;
-            width: auto; height: auto; min-width: 48px; justify-content: flex-start;
-        }
-        .ios-log-item .log-warehouse-tag {
-            font-size: 0.55rem; background: rgba(60,60,67,0.08); padding: 2px 8px;
-            border-radius: 10px; color: #6d6d72; font-weight: 500; display: inline-block;
-        }
-        body.dark-theme .ios-log-item .log-warehouse-tag { background: rgba(84,84,88,0.4); color: #d1d5db; }
-
-        .ios-tile-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
-        }
-        @media (min-width: 480px) { .ios-tile-grid { grid-template-columns: repeat(3, 1fr); } }
-        .ios-tile {
-            background: #fff; border-radius: 12px; padding: 14px 12px;
-            text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        }
-        body.dark-theme .ios-tile { background: #1c1c1e; }
-        .ios-tile .tile-value {
-            font-size: 1.8rem; font-weight: 700; color: #000; letter-spacing: -0.5px;
-        }
-        body.dark-theme .ios-tile .tile-value { color: #fff; }
-        .ios-tile .tile-label {
-            font-size: 0.65rem; color: #8e8e93; margin-top: 4px; line-height: 1.3;
-        }
-
-        .city-section { margin-bottom: 12px; }
-        .city-section-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 6px 16px; cursor: pointer; user-select: none;
-            transition: background 0.15s; border-radius: 10px; margin-bottom: 4px;
-        }
-        .city-section-header:active { background: rgba(60,60,67,0.06); }
-        body.dark-theme .city-section-header:active { background: rgba(84,84,88,0.3); }
-        .city-section-title {
-            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
-            color: #6d6d72; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;
-        }
-        body.dark-theme .city-section-title { color: #8e8e93; }
-        .city-section-count {
-            font-size: 0.65rem; color: #8e8e93; font-weight: 500;
-        }
-        .city-section-chevron {
-            font-size: 0.6rem; color: #c7c7cc; transition: transform 0.2s ease;
-        }
-        .city-section .city-section-chevron { transform: rotate(-90deg); }
-        .city-section .city-section-body {
-            display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease-out;
-        }
-        .city-section.expanded .city-section-chevron { transform: rotate(0deg); }
-        .city-section.expanded .city-section-body { grid-template-rows: 1fr; }
-        .city-section-body > div { overflow: hidden; }
-        .city-accent { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
-        
-        .city-delete-btn {
-            background: none; border: none; color: #ff3b30; font-size: 0.7rem;
-            padding: 4px 8px; cursor: pointer; font-weight: 500;
-            border-radius: 6px; transition: background 0.15s; margin-left: 4px;
-        }
-        .city-delete-btn:active { background: rgba(255,59,48,0.1); }
-        
-        .ios-photo-strip {
-            display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 8px 16px;
-            -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
-        }
-        .ios-photo-card {
-            flex: 0 0 auto; width: 160px; background: #fff; border-radius: 12px;
-            overflow: hidden; scroll-snap-align: start; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            cursor: pointer;
-        }
-        body.dark-theme .ios-photo-card { background: #1c1c1e; }
-        .ios-photo-card .photo-thumb-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 8px 8px 0;
-        }
-        .ios-photo-card .photo-thumb-grid img {
-            width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;
-        }
-        .ios-photo-card .photo-thumb-grid .thumb-more {
-            position: relative; aspect-ratio: 1; border-radius: 6px;
-            background: rgba(0,0,0,0.5); display: flex; align-items: center;
-            justify-content: center; color: #fff; font-weight: 600; font-size: 0.8rem;
-        }
-        .ios-photo-card .photo-info {
-            padding: 8px 10px; font-size: 0.65rem; color: #8e8e93; line-height: 1.4;
-        }
-        .ios-photo-card .photo-info strong { color: #000; font-weight: 500; }
-        body.dark-theme .ios-photo-card .photo-info strong { color: #fff; }
-
-        .ios-filters {
-            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; align-items: center;
-        }
-        .ios-filter-input, .ios-filter-select {
-            padding: 8px 12px; border-radius: 10px; border: none;
-            background: rgba(118,118,128,0.08); font-size: 0.8rem; color: #000;
-            outline: none; -webkit-appearance: none;
-        }
-        body.dark-theme .ios-filter-input, body.dark-theme .ios-filter-select {
-            background: rgba(118,118,128,0.2); color: #fff;
-        }
-        .ios-filter-btn {
-            padding: 8px 14px; border-radius: 10px; border: none; font-weight: 590;
-            font-size: 0.8rem; cursor: pointer; background: #007aff; color: #fff;
-            transition: all 0.15s;
-        }
-        .ios-filter-btn:active { opacity: 0.7; }
-        .ios-filter-btn.secondary {
-            background: rgba(118,118,128,0.12); color: #000;
-        }
-        body.dark-theme .ios-filter-btn.secondary { background: rgba(118,118,128,0.24); color: #fff; }
-        
-        .ios-archive-btn {
-            background: none; border: none; color: #ff3b30; font-size: 0.8rem;
-            padding: 8px 14px; cursor: pointer; font-weight: 500;
-            border-radius: 10px; transition: background 0.15s;
-        }
-        .ios-archive-btn:active { background: rgba(255,59,48,0.1); }
-        .ios-add-btn {
-            background: #007aff; border: none; color: #fff; padding: 8px 16px;
-            border-radius: 10px; font-weight: 590; font-size: 0.85rem; cursor: pointer;
-            transition: all 0.15s;
-        }
-        .ios-add-btn:active { opacity: 0.7; }
-
-        .loading { text-align: center; padding: 30px; color: #8e8e93; font-size: 0.85rem; }
-        .loading .loading-spinner { margin-right: 8px; border-top-color: #8e8e93; border-color: rgba(142,142,147,0.3); border-top-color: #8e8e93; vertical-align: middle; }
-
-        .install-banner { display: none; background: #000; color: #fff; text-align: center; padding: 12px 16px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
-        .install-banner.show { display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .ios-install-hint { display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 12px 16px; margin-bottom: 12px; font-size: 0.8rem; color: #92400e; text-align: center; }
-        .ios-install-hint.show { display: block; }
-        body.dark-theme .ios-install-hint { background: #451a03; border-color: #78350f; color: #fbbf24; }
-        
-        .my-photo-history { margin-top: 16px; }
-        .my-photo-history .section-title { font-size: 0.8rem; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding: 0 4px; }
     </style>
 </head>
 <body>
-    <div id="toastContainer" class="toast-container"></div>
+
+<div class="header-bar">
+    <div class="app-title">📦 График отгрузок</div>
+    <div class="global-actions">
+        <span class="sync-status sync-loading" id="syncStatus">🔄 Синхронизация...</span>
+        <button class="btn btn-primary btn-sm" id="btnSyncNow">🔄 Обновить</button>
+    </div>
+</div>
+
+<div class="nav">
+    <button class="nav-btn" data-page="schedule">📊 Сводная</button>
+    <button class="nav-btn" data-page="wb">🟣 WB Отгрузки</button>
+    <button class="nav-btn" data-page="ozon">🔵 Ozon Отгрузки</button>
+    <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- СВОДНАЯ -->
+<div class="page" id="page-schedule">
+    <h1>📊 Сводная</h1>
+    <p class="subtitle">Сводная таблица по неделям — нажми на неделю чтобы увидеть города</p>
+    <div class="top-bar">
+        <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
+        <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 Экспорт CSV</button>
+        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Всего недель: <b id="scheduleWeekCount">0</b> | Строк: <b id="scheduleTotalRows">0</b></span>
+    </div>
+    <div class="import-area" id="scheduleImportBlock" style="display:none;">
+        <textarea id="scheduleImportText" placeholder="Вставь строки (дата	МП	город	кол-во)"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoScheduleImport">📥 Загрузить</button>
+    </div>
+    <div class="summary" id="scheduleSummary"></div>
+    <div class="table-wrap" id="scheduleTable"><div class="empty">Загрузка...</div></div>
+</div>
+
+<!-- WB -->
+<div class="page" id="page-wb">
+    <h1>🟣 Wildberries — Отгрузки</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
     
-    <div id="loginScreen" class="login-screen">
-        <div class="login-card">
-            <div class="logo-container"><div class="logo-oval"><span class="logo-text">GQbox</span></div></div>
-            <div id="installBanner" class="install-banner"></div>
-            <div id="iosInstallHint" class="ios-install-hint"></div>
-            <div class="input-group-login"><div class="input-label">Логин</div><input type="text" id="loginUser" class="login-input" placeholder="Введите ваш логин"></div>
-            <div class="input-group-login"><div class="input-label">Пароль</div><input type="password" id="loginPass" class="login-input" placeholder="Введите ваш пароль"></div>
-            <button id="doLogin" class="login-btn">Войти</button>
-            <div id="loginError" class="error-msg"></div>
-            <div class="reg-toggle" id="regToggle">Регистрация нового сотрудника</div>
-            <div class="reg-block" id="regBlock">
-                <div class="input-group-login"><div class="input-label">Логин</div><input type="text" id="regLogin" class="login-input" placeholder="Придумайте логин"></div>
-                <div class="input-group-login"><div class="input-label">Пароль</div><input type="password" id="regPass" class="login-input" placeholder="Придумайте пароль"></div>
-                <div class="input-group-login"><div class="input-label">Имя</div><input type="text" id="regName" class="login-input" placeholder="Как вас называть?"></div>
-                <button id="doRegister" class="reg-btn">Зарегистрироваться</button>
-                <div id="regError" class="error-msg"></div>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата отгрузки</label><input type="date" id="shipDateWildberries"></div>
+            <div class="field"><label>Город</label><input type="text" id="shipCityWildberries" placeholder="Начните вводить город" list="cityList" oninput="showRouteInfo()"></div>
+            <div class="field" style="max-width:110px"><label>Кол-во товаров</label><input type="number" id="shipQtyWildberries" min="1" placeholder="Всего единиц"></div>
+            <div class="field" style="justify-content:flex-end">
+                <button class="btn btn-wb btn-sm" id="btnSaveWb" style="padding:10px 24px;">✅ Сохранить отгрузку</button>
+                <button class="btn btn-outline btn-sm" id="btnClearWb">🗑 Очистить</button>
+            </div>
+        </div>
+        <div class="route-info" id="routeInfoWildberries">
+            <div class="route-title" id="routeTitleWildberries"></div>
+            <div class="route-detail" id="routeDetailWildberries"></div>
+            <div class="route-schedule" id="routeScheduleWildberries"></div>
+        </div>
+    </div>
+
+    <div class="cards-grid" id="wbCards"><div class="empty" style="grid-column:1/-1;">Загрузка...</div></div>
+</div>
+
+<!-- OZON -->
+<div class="page" id="page-ozon">
+    <h1>🔵 Ozon — Отгрузки</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
+    
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата отгрузки</label><input type="date" id="shipDateOzon"></div>
+            <div class="field"><label>Город</label><input type="text" id="shipCityOzon" placeholder="Начните вводить город" list="cityList"></div>
+            <div class="field" style="max-width:110px"><label>Кол-во товаров</label><input type="number" id="shipQtyOzon" min="1" placeholder="Всего единиц"></div>
+            <div class="field" style="justify-content:flex-end">
+                <button class="btn btn-ozon btn-sm" id="btnSaveOzon" style="padding:10px 24px;">✅ Сохранить отгрузку</button>
+                <button class="btn btn-outline btn-sm" id="btnClearOzon">🗑 Очистить</button>
             </div>
         </div>
     </div>
 
-    <div id="dashboard" class="dashboard">
-        <div class="employee-header">
-            <div class="header-main">
-                <div class="header-left">
-                    <div class="user-avatar" id="userAvatar"></div>
-                    <div class="user-info">
-                        <span class="user-name" id="userName"></span>
-                        <span class="user-tag" id="adminTag" style="display:none;">админ</span>
-                        <span class="user-tag" id="superadminTag" style="display:none;background:rgba(255,59,48,0.3);">суперадмин</span>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button class="btn-icon" id="themeToggleFixed" title="Тема"></button>
-                    <button class="btn-icon logout" id="logoutBtn" title="Выйти">🚪</button>
-                </div>
-            </div>
-            <div class="warehouse-switch-bar" id="warehouseSwitchBar">
-                <div class="warehouse-indicator" id="warehouseIndicator">
-                    <span class="swipe-hint" id="swipeHint">← Свайп →</span>
-                    <span class="swipe-dot active" data-wh="Москва"></span>
-                    <span class="swipe-dot" data-wh="Пушкино"></span>
-                    <span style="font-size:0.75rem;color:rgba(255,255,255,0.8);" id="currentWhLabel">Москва</span>
-                </div>
-            </div>
-        </div>
-        <div id="userView" class="user-view"></div>
-        <div id="adminView" class="admin-view"></div>
-        
-        <!-- iOS 26 Floating Tab Bar -->
-        <div class="ios-tab-bar" id="iosTabBar">
-            <div class="ios-tab-item active" data-tab="operations">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                    <line x1="12" y1="22.08" x2="12" y2="12"/>
-                </svg>
-                <span class="ios-tab-label">Операции</span>
-            </div>
-            <div class="ios-tab-item" data-tab="photos">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="13" r="3"/>
-                    <path d="M9 3h6l2 4h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l2-4z"/>
-                </svg>
-                <span class="ios-tab-label">Фото</span>
-            </div>
-            <div class="ios-tab-item" data-tab="history">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                </svg>
-                <span class="ios-tab-label">История</span>
+    <div class="cards-grid" id="ozonCards"><div class="empty" style="grid-column:1/-1;">Загрузка...</div></div>
+</div>
+
+<!-- ЛОГИСТИКА -->
+<div class="page" id="page-logistics">
+    <h1>🚚 Логистика</h1>
+    <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты</p>
+    
+    <div class="truck-alert" id="truckAlert" style="display:none;">
+        <h3>🚛 На завтра нужно заказать машины:</h3>
+        <div id="truckList"></div>
+    </div>
+    
+    <div class="top-bar">
+        <button class="btn btn-outline btn-sm" id="btnToggleLogImport">📥 Импорт</button>
+        <button class="btn btn-outline btn-sm" id="btnExportLog">📤 Экспорт CSV</button>
+        <span style="font-size:12px;color:var(--sub);margin-left:auto;">Строк: <b id="logCount">0</b></span>
+    </div>
+    <div class="import-area" id="logImportBlock" style="display:none;">
+        <textarea id="logImportText" placeholder="Вставь строки (дата МП тип поставщик город кол-во паллет сумма статус НДС%)"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
+    </div>
+    
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="logDate"></div>
+            <div class="field"><label>МП</label><select id="logMP"><option>Wildberries</option><option>Ozon</option></select></div>
+            <div class="field"><label>Тип</label><select id="logType"><option>FBO</option><option>FBS</option></select></div>
+            <div class="field"><label>Поставщик</label><select id="logSupplier"><option value="">—</option><option>Большие Амбиции</option><option>ИП Орищенко</option><option>НордТрансСклад</option><option>Тессар</option></select></div>
+            <div class="field"><label>Город</label><input type="text" id="logCity" placeholder="Краснодар" list="cityList"></div>
+            <div class="field" style="max-width:80px"><label>Кол-во</label><input type="number" id="logQty" min="1"></div>
+            <div class="field" style="max-width:70px"><label>Паллет</label><input type="number" id="logBoxes" min="1"></div>
+            <div class="field" style="max-width:100px"><label>Сумма, ₽</label><input type="number" id="logAmount" step="0.01"></div>
+            <div class="field" style="max-width:80px"><label>НДС</label><select id="logNDS"><option value="22%">22%</option><option value="7%">7%</option></select></div>
+            <div class="field" style="max-width:115px"><label>Сумма с НДС</label><div class="field-calc" id="logCalcFull">0 ₽</div></div>
+            <div class="field" style="justify-content:flex-end">
+                <button class="btn btn-log btn-sm" style="height:34px;" id="btnAddLog">+ Добавить</button>
             </div>
         </div>
     </div>
+    
+    <div class="filters">
+        <input type="month" id="logFilterMonth" style="width:130px;">
+        <select id="logFilterStatus"><option value="all">Все статусы</option><option value="paid">Оплачен</option><option value="unpaid">Не оплачен</option></select>
+        <select id="logFilterMP"><option value="all">Все МП</option><option>Wildberries</option><option>Ozon</option></select>
+        <span class="chip" id="btnResetLogFilters">✕ Сброс</span>
+    </div>
+    <div class="summary" id="logSummary"></div>
+    <div class="table-wrap" id="logTable"><div class="empty">Загрузка...</div></div>
+</div>
+
+<datalist id="cityList"></datalist>
 
 <script>
-// ==================== SERVICE WORKER ====================
-if ('serviceWorker' in navigator) {
-    var swCode = "const CACHE_NAME='gqbox-warehouse-v16';const ASSETS=['./','https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js'];self.addEventListener('install',function(e){e.waitUntil(caches.open(CACHE_NAME).then(function(c){return c.addAll(ASSETS).catch(function(){})}));self.skipWaiting()});self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k!==CACHE_NAME}).map(function(k){return caches.delete(k)}))}));self.clients.claim()});self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(function(cached){var fetched=fetch(e.request).then(function(response){if(response&&response.status===200){var clone=response.clone();caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,clone)})}return response}).catch(function(){return cached});return cached||fetched}))});";
-    var swBlob = new Blob([swCode], { type: 'application/javascript' }); var swUrl = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl).then(function(reg) {});
+// ========== FIREBASE ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyBCGOXZtpRY_aWOkcUWuW34uJBsNgrgdDA",
+  authDomain: "shipments-f48c2.firebaseapp.com",
+  projectId: "shipments-f48c2",
+  storageBucket: "shipments-f48c2.firebasestorage.app",
+  messagingSenderId: "994289127760",
+  appId: "1:994289127760:web:539f3ca770a1e6d4705c55"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ========== БАЗА РЕЙСОВ ==========
+const routesDB = {
+    'Казань':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Краснодар':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
+    'Невинномысск':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
+    'Екатеринбург':{schedule:'Ср-Сб, Сб-Вт, Вт-Пт',delivery:'2-3 дня'},
+    'Санкт-Петербург':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Челябинск':{schedule:'Ср-Сб, Сб-Вт',delivery:'2-3 дня'},
+    'Минск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Тула':{schedule:'В любой день',delivery:'день в день'},
+    'Коледино':{schedule:'В любой день',delivery:'день в день'},
+    'Электросталь':{schedule:'В любой день',delivery:'день в день'},
+    'Волгоград':{schedule:'Ср-Пт',delivery:'2-3 дня'},
+    'Владимир':{schedule:'В любой день',delivery:'2 дня'},
+    'Рязань':{schedule:'В любой день',delivery:'день в день'},
+    'Воронеж':{schedule:'Пн-Чт, Ср-Сб, Пт-Пн',delivery:'3-4 дня'},
+    'Новосибирск':{schedule:'Пн-Сб, Пт-Ср',delivery:'5-6 дней'},
+    'Сарапул':{schedule:'Пн-Чт',delivery:'4 дня'},
+    'Котовск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Питер':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Шушары':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Чехов':{schedule:'В любой день',delivery:'день в день'},
+    'Чехов 1':{schedule:'В любой день',delivery:'день в день'},
+    'Чехов 2':{schedule:'В любой день',delivery:'день в день'},
+    'Хоругвино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Петровское':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Радумля':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Ногинск':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Фреш':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино 1':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино 2':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Жуковский':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Домодедово':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Софьино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Гривно':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Ватутинки':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+};
+
+const STATUSES = [
+    { value: 'in_work', label: '⚙️ В работе', class: 'status-work' },
+    { value: 'waiting', label: '⏳ Ожидает', class: 'status-wait' },
+    { value: 'rejected', label: '🚫 Не принят в работу', class: 'status-reject' },
+    { value: 'sent', label: '📦 Отправлено', class: 'status-sent' },
+    { value: 'ready', label: '✅ Готово, ожидает отправки', class: 'status-ready' }
+];
+
+const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
+
+// ========== СОСТОЯНИЕ ==========
+let wbShipments = [];
+let ozonShipments = [];
+let logEntries = [];
+let weekCapacities = {};
+let isOnline = false;
+let currentPage = 'schedule';
+
+function updateSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    el.className = 'sync-status';
+    if (status === 'online') { el.classList.add('sync-online'); el.textContent = '🟢 Онлайн'; }
+    else if (status === 'offline') { el.classList.add('sync-offline'); el.textContent = '🔴 Офлайн'; }
+    else { el.classList.add('sync-loading'); el.textContent = '🔄 Загрузка...'; }
 }
 
-// ==================== FIREBASE ====================
-const firebaseConfig = { apiKey: "AIzaSyComSAJzMrarnUBATsTlNs60w6CDe2NTj0", authDomain: "warehouse-b6b75.firebaseapp.com", projectId: "warehouse-b6b75", storageBucket: "warehouse-b6b75.firebasestorage.app", messagingSenderId: "399929411326", appId: "1:399929411326:web:c3c84828ad31b8810b47af" };
-firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
-db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {});
-
-// ==================== TOAST СИСТЕМА ====================
-function showToast(message, type) {
-    type = type || 'info';
-    var container = document.getElementById('toastContainer');
-    if (!container) return;
-    var toast = document.createElement('div');
-    toast.className = 'toast ' + type;
-    toast.textContent = message;
-    container.appendChild(toast);
-    setTimeout(function() {
-        if (toast.parentNode) toast.parentNode.removeChild(toast);
-    }, 3000);
-}
-
-// ==================== УТИЛИТЫ ====================
-var SESSION_KEY = "warehouse_session";
-function saveSession(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
-function getSession() { var r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; }
-function clearSession() { localStorage.removeItem(SESSION_KEY); }
-function getTodayStr() { var d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function formatDateForInput(d) { if (!d || isNaN(d.getTime())) return getTodayStr(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function formatDateForDisplay(s) { if(!s) return '—'; var p = s.split('-'); return p[2]+'.'+p[1]+'.'+p[0]; }
-function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }); }
-
-// ==================== ТЕМА ====================
-function initTheme() {
-    var s = localStorage.getItem('warehouse_theme');
-    var t = document.getElementById('themeToggleFixed');
-    if (s === 'dark') { document.body.classList.add('dark-theme'); t.textContent = '\u2600\uFE0F'; }
-    else { t.textContent = '\uD83C\uDF19'; }
-    t.addEventListener('click', function() { document.body.classList.toggle('dark-theme'); localStorage.setItem('warehouse_theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light'); t.textContent = document.body.classList.contains('dark-theme') ? '\u2600\uFE0F' : '\uD83C\uDF19'; });
-}
-
-// ==================== TAB SWITCHING ====================
-var currentTab = 'operations';
-function switchTab(tabName) {
-    if (currentTab === tabName || isAdmin) return;
-    
-    var oldContent = document.getElementById('tab-' + currentTab);
-    var newContent = document.getElementById('tab-' + tabName);
-    var tabItems = document.querySelectorAll('.ios-tab-item');
-    
-    if (!oldContent || !newContent) return;
-    
-    oldContent.classList.add('exiting');
-    oldContent.classList.remove('active');
-    
-    setTimeout(function() {
-        oldContent.classList.remove('exiting');
-        oldContent.style.display = 'none';
-        
-        newContent.style.display = 'block';
-        newContent.offsetHeight;
-        newContent.classList.add('active');
-    }, 200);
-    
-    tabItems.forEach(function(item) {
-        item.classList.toggle('active', item.dataset.tab === tabName);
-    });
-    
-    currentTab = tabName;
-    
-    if (tabName === 'history') {
-        currentHistoryDate = new Date();
-        var inp = document.getElementById('historyDateInput');
-        if (inp) inp.value = formatDateForInput(currentHistoryDate);
-        loadHistoryForDate(formatDateForInput(currentHistoryDate));
-    }
-    if (tabName === 'photos') {
-        loadMyPalletPhotos();
-    }
-}
-
-// ==================== КЕШИРОВАНИЕ СОТРУДНИКОВ С TTL ====================
-var _employeesCache = { data: null, timestamp: 0, ttl: 5 * 60 * 1000 };
-
-async function getEmployees(forceRefresh) { 
-    var now = Date.now();
-    if (!forceRefresh && _employeesCache.data && (now - _employeesCache.timestamp) < _employeesCache.ttl) {
-        employees = _employeesCache.data;
-        return _employeesCache.data;
-    }
-    var s = await db.collection('employees').orderBy('name').get(); 
-    var e = s.docs.map(function(d) { return { id: d.id, name: d.data().name, login: d.data().login, role: d.data().role, active: d.data().active }; }); 
-    if (e.length === 0) { 
-        await createInitialEmployees(); 
-        var s2 = await db.collection('employees').orderBy('name').get(); 
-        e = s2.docs.map(function(d) { return { id: d.id, name: d.data().name, login: d.data().login, role: d.data().role, active: d.data().active }; }); 
-    } 
-    _employeesCache.data = e; _employeesCache.timestamp = now;
-    employees = e; return e; 
-}
-
-async function createInitialEmployees() { 
-    var list = [ 
-        { login: 'popov', password: 'admin0111', name: 'Попов А.', role: 'superadmin', active: true }, 
-        { login: 'sazonov', password: 'admin0111', name: 'Сазонов М.', role: 'admin', active: true }, 
-        { login: 'roman', password: '123', name: 'Роман', role: 'user', active: true }, 
-        { login: 'yakimov', password: '123', name: 'Якимов', role: 'user', active: true }, 
-        { login: 'varivcev', password: '123', name: 'Варивцев', role: 'user', active: true }, 
-        { login: 'goncharov', password: '123', name: 'Гончаров', role: 'user', active: true } 
-    ]; 
-    var batch = db.batch();
-    list.forEach(function(item) { batch.set(db.collection('employees').doc(), item); });
-    await batch.commit();
-    _employeesCache.data = null; _employeesCache.timestamp = 0;
-}
-
-// ==================== АУТЕНТИФИКАЦИЯ ====================
-async function loginUser(l, p) { 
-    await getEmployees();
-    var s = await db.collection('employees').where('login', '==', l).where('password', '==', p).get(); 
-    if (s.empty) return null; 
-    var d = s.docs[0]; 
-    return { id: d.id, name: d.data().name, login: d.data().login, role: d.data().role, active: d.data().active }; 
-}
-
-async function registerUser(l, p, n) { 
-    if (!l || !p || !n) return { success: false, error: 'Заполните все поля' }; 
-    var s = await db.collection('employees').where('login', '==', l).get(); 
-    if (!s.empty) return { success: false, error: 'Логин уже существует' }; 
-    await db.collection('employees').add({ login: l.trim(), password: p, name: n.trim(), role: 'user', active: true }); 
-    _employeesCache.data = null; _employeesCache.timestamp = 0;
-    return { success: true }; 
-}
-
-// ==================== СКЛАДСКИЕ ОПЕРАЦИИ ====================
-var counters = { moscowReceived: 0, moscowCollected: 0, moscowShipped: 0, moscowInvoiceTotal: 0, pushkinoAccepted: 0, pushkinoAcceptedTotal: 0, pushkinoShipped: 0, pushkinoShippedTotal: 0, pushkinoUnloaded: 0, pushkinoUnloadedTotal: 0, pushkinoReworked: 0, pushkinoReworkedTotal: 0 };
-var moscowLastArticle = '—';
-
-async function loadUserData() { 
-    if (!currentUser) return; 
-    var s = await db.collection('user_totals').where('userId', '==', currentUser.id).get(); 
-    s.docs.forEach(function(d) { 
-        var dt = d.data(); 
-        if (dt.type === 'pushkino_accepted') counters.pushkinoAcceptedTotal = dt.total || 0; 
-        if (dt.type === 'pushkino_shipped') counters.pushkinoShippedTotal = dt.total || 0; 
-        if (dt.type === 'pushkino_unloaded') counters.pushkinoUnloadedTotal = dt.total || 0; 
-        if (dt.type === 'pushkino_reworked') counters.pushkinoReworkedTotal = dt.total || 0; 
-        if (dt.type === 'moscow_invoice') counters.moscowInvoiceTotal = dt.total || 0; 
-    }); 
-    updateAllCounters(); 
-}
-
-function updateAllCounters() { 
-    var ids = ['moscowReceived','moscowCollected','moscowShipped','moscowInvoiceTotal','pushkinoAccepted','pushkinoAcceptedTotal','pushkinoShipped','pushkinoShippedTotal','pushkinoUnloaded','pushkinoUnloadedTotal','pushkinoReworked','pushkinoReworkedTotal','moscowLastArticle']; 
-    ids.forEach(function(id) { 
-        var el = document.getElementById(id); 
-        if (el) { if (id === 'moscowLastArticle') el.textContent = moscowLastArticle; else el.textContent = counters[id] || 0; } 
-    }); 
-}
-
-async function updateTotal(ty, inc) { 
-    if (!currentUser) return; 
-    var dId = currentUser.id+'_'+ty; 
+async function loadFromFirebase() {
     try {
-        await db.runTransaction(async function(t) { 
-            var r = db.collection('user_totals').doc(dId); 
-            var d = await t.get(r); 
-            var nt = inc; 
-            if (d.exists) nt = (d.data().total || 0) + inc; 
-            t.set(r, { userId: currentUser.id, userName: currentUser.name, type: ty, total: nt, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); 
-        }); 
-    } catch(e) {}
-    if (ty === 'pushkino_accepted') counters.pushkinoAcceptedTotal += inc; 
-    if (ty === 'pushkino_shipped') counters.pushkinoShippedTotal += inc; 
-    if (ty === 'pushkino_unloaded') counters.pushkinoUnloadedTotal += inc; 
-    if (ty === 'pushkino_reworked') counters.pushkinoReworkedTotal += inc; 
-    if (ty === 'moscow_invoice') counters.moscowInvoiceTotal += inc; 
-    updateAllCounters(); 
+        updateSyncStatus('loading');
+        const [wbSnap, ozSnap, logSnap, capDoc] = await Promise.all([
+            db.collection('shipments_wb').orderBy('date').get(),
+            db.collection('shipments_ozon').orderBy('date').get(),
+            db.collection('logistics').orderBy('date').get(),
+            db.collection('settings').doc('capacities').get()
+        ]);
+        wbShipments = wbSnap.docs.map(d => {
+            const data = d.data();
+            return { id: d.id, ...data, status: data.status || 'in_work' };
+        });
+        ozonShipments = ozSnap.docs.map(d => {
+            const data = d.data();
+            return { id: d.id, ...data, status: data.status || 'in_work' };
+        });
+        logEntries = logSnap.docs.map(d => {
+            const data = d.data();
+            return { id: d.id, ...data, paid: data.paid || false };
+        });
+        weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
+        isOnline = true;
+        updateSyncStatus('online');
+        saveToLocalStorage();
+        renderAll();
+    } catch (e) {
+        console.error('Firebase error:', e);
+        loadFromLocalStorage();
+        isOnline = false;
+        updateSyncStatus('offline');
+        renderAll();
+    }
 }
 
-async function addLog(w, a, d, q) { 
-    if (!currentUser) return; 
-    var t = getTodayStr(); 
+function loadFromLocalStorage() {
+    const wb = JSON.parse(localStorage.getItem('wb') || '[]');
+    const oz = JSON.parse(localStorage.getItem('ozon') || '[]');
+    const log = JSON.parse(localStorage.getItem('log') || '[]');
+    
+    wbShipments = wb.map(s => ({ ...s, status: s.status || 'in_work' }));
+    ozonShipments = oz.map(s => ({ ...s, status: s.status || 'in_work' }));
+    logEntries = log.map(e => ({ ...e, paid: e.paid || false }));
+    weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('wb', JSON.stringify(wbShipments));
+    localStorage.setItem('ozon', JSON.stringify(ozonShipments));
+    localStorage.setItem('log', JSON.stringify(logEntries));
+    localStorage.setItem('cap', JSON.stringify(weekCapacities));
+    localStorage.setItem('currentPage', currentPage);
+}
+
+async function addShipmentToFirebase(mp, shipment) {
+    if (!isOnline) return;
     try {
-        await db.collection('work_logs').add({ userId: currentUser.id, userName: currentUser.name, warehouse: w, action: a, details: d, quantity: q || null, timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: t });
-    } catch(e) {
-        showToast('Ошибка сохранения записи', 'error');
+        const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+        const { id, ...data } = shipment;
+        await db.collection(collection).doc(String(id)).set(data);
+    } catch (e) { console.error('Firebase add error:', e); }
+}
+
+async function updateStatusInFirebase(mp, id, status) {
+    const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+    const docRef = db.collection(collection).doc(String(id));
+    try {
+        const doc = await docRef.get();
+        if (doc.exists) {
+            await docRef.update({ status: status });
+        } else {
+            const shipment = (mp === 'Wildberries' ? wbShipments : ozonShipments).find(s => String(s.id) === String(id));
+            if (shipment) {
+                const { id: sid, ...data } = shipment;
+                await docRef.set(data);
+            }
+        }
+    } catch (e) { console.error('Firebase update error:', e); }
+}
+
+async function deleteFromFirebase(mp, id) {
+    if (!isOnline) return;
+    try {
+        const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+        await db.collection(collection).doc(String(id)).delete();
+    } catch (e) { console.error('Firebase delete error:', e); }
+}
+
+async function addLogToFirebase(entry) {
+    if (!isOnline) return;
+    try {
+        const { id, ...data } = entry;
+        await db.collection('logistics').doc(String(id)).set(data);
+    } catch (e) { console.error(e); }
+}
+
+async function updateLogFieldInFirebase(id, field, value) {
+    if (!isOnline) return;
+    try {
+        await db.collection('logistics').doc(String(id)).update({ [field]: value });
+    } catch (e) { console.error(e); }
+}
+
+async function deleteLogFromFirebase(id) {
+    if (!isOnline) return;
+    try {
+        await db.collection('logistics').doc(String(id)).delete();
+    } catch (e) { console.error(e); }
+}
+
+async function saveCapacityToFirebase() {
+    if (!isOnline) return;
+    try {
+        await db.collection('settings').doc('capacities').set({ capacities: weekCapacities }, { merge: true });
+    } catch (e) { console.error(e); }
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function updateLogSupplier(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.supplier = value;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'supplier', value);
+    }
+}
+
+function updateLogPallets(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.boxes = parseInt(value) || 0;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'boxes', entry.boxes);
+    }
+}
+
+function updateLogAmount(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        const amount = parseFloat(value) || 0;
+        const rate = (entry.nds === '22%') ? 1.22 : 1.07;
+        entry.amount = amount;
+        entry.amountFull = Math.round(amount * rate * 100) / 100;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'amount', entry.amount);
+        updateLogFieldInFirebase(id, 'amountFull', entry.amountFull);
+        renderLog();
+    }
+}
+
+function updateLogNds(id, value) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.nds = value;
+        const rate = value === '22%' ? 1.22 : 1.07;
+        entry.amountFull = Math.round((entry.amount || 0) * rate * 100) / 100;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'nds', value);
+        updateLogFieldInFirebase(id, 'amountFull', entry.amountFull);
+        renderLog();
+    }
+}
+
+function toggleLogPaid(id) {
+    const entry = logEntries.find(e => String(e.id) === String(id));
+    if (entry) {
+        entry.paid = !entry.paid;
+        saveToLocalStorage();
+        updateLogFieldInFirebase(id, 'paid', entry.paid);
+        renderLog();
+    }
+}
+
+function checkTrucksForTomorrow() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    
+    const tomorrowShipments = [...wbShipments, ...ozonShipments].filter(s => s.date === tomorrowStr);
+    
+    const truckAlert = document.getElementById('truckAlert');
+    const truckList = document.getElementById('truckList');
+    
+    if (tomorrowShipments.length === 0) {
+        truckAlert.style.display = 'none';
         return;
     }
-    _historyCache = {};
-    if (formatDateForInput(currentHistoryDate) === t) loadHistoryForDate(t);
-    if (isAdmin) loadAdminLogs();
-}
-
-async function handleAction(a) { 
-    if (a === 'receive' && counters.moscowReceived) { await addLog('Москва', 'Принял коробов', counters.moscowReceived+' кор.', counters.moscowReceived); showToast('Принято: '+counters.moscowReceived+' кор.', 'success'); counters.moscowReceived = 0; } 
-    if (a === 'collect' && counters.moscowCollected) { await addLog('Москва', 'Собрал паллеты', counters.moscowCollected+' шт.', counters.moscowCollected); showToast('Собрано: '+counters.moscowCollected+' палл.', 'success'); counters.moscowCollected = 0; } 
-    if (a === 'ship' && counters.moscowShipped) { await addLog('Москва', 'Отгрузил паллеты', counters.moscowShipped+' шт.', counters.moscowShipped); showToast('Отгружено: '+counters.moscowShipped+' палл.', 'success'); counters.moscowShipped = 0; } 
-    if (a === 'lay') { var artEl=document.getElementById('moscowArticle'), qtyEl=document.getElementById('moscowQuantity'); var art=artEl?.value.trim(), qty=parseInt(qtyEl?.value); if(!art){showToast('Укажите артикул','warning');return;} if(!qty || qty<1){showToast('Укажите количество','warning');return;} moscowLastArticle=art; await addLog('Москва','Выкладка товара','арт. '+art+', '+qty+' шт.',qty); showToast('Выкладка: '+art+' - '+qty+' шт.','success'); if(artEl)artEl.value=''; if(qtyEl)qtyEl.value=''; } 
-    if (a === 'invoice') { var invEl=document.getElementById('moscowInvoiceNumber'), qtyEl=document.getElementById('moscowInvoiceQuantity'); var inv=invEl?.value.trim(), qty=parseInt(qtyEl?.value); if(!inv){showToast('Укажите накладную','warning');return;} if(!qty || qty<1){showToast('Укажите количество','warning');return;} await addLog('Москва','Сборка по накладной','накл. '+inv+', '+qty+' шт.',qty); await updateTotal('moscow_invoice',qty); showToast('Накладная '+inv+': '+qty+' шт.','success'); if(invEl)invEl.value=''; if(qtyEl)qtyEl.value=''; } 
-    if (a === 'accept' && counters.pushkinoAccepted) { await addLog('Пушкино','Принял с осн. склада',counters.pushkinoAccepted+' кор.',counters.pushkinoAccepted); await updateTotal('pushkino_accepted',counters.pushkinoAccepted); showToast('Принято с осн.: '+counters.pushkinoAccepted+' кор.','success'); counters.pushkinoAccepted=0; } 
-    if (a === 'shipPushkino' && counters.pushkinoShipped) { await addLog('Пушкино','Отгрузил на осн. склад',counters.pushkinoShipped+' кор.',counters.pushkinoShipped); await updateTotal('pushkino_shipped',counters.pushkinoShipped); showToast('Отгружено на осн.: '+counters.pushkinoShipped+' кор.','success'); counters.pushkinoShipped=0; } 
-    if (a === 'unload' && counters.pushkinoUnloaded) { await addLog('Пушкино','Выгрузка фуры',counters.pushkinoUnloaded+' кор.',counters.pushkinoUnloaded); await updateTotal('pushkino_unloaded',counters.pushkinoUnloaded); showToast('Выгружено: '+counters.pushkinoUnloaded+' кор.','success'); counters.pushkinoUnloaded=0; } 
-    if (a === 'rework' && counters.pushkinoReworked) { await addLog('Пушкино','Перебрал паллеты',counters.pushkinoReworked+' кор.',counters.pushkinoReworked); await updateTotal('pushkino_reworked',counters.pushkinoReworked); showToast('Перебрано: '+counters.pushkinoReworked+' кор.','success'); counters.pushkinoReworked=0; } 
-    updateAllCounters(); 
-}
-
-// ==================== ПОСЕЩАЕМОСТЬ ====================
-async function checkTodayAttendance() { 
-    if (!currentUser) return; 
-    var t = getTodayStr(); 
-    var m = await db.collection('attendance').where('userId', '==', currentUser.id).where('warehouse', '==', 'Москва').where('date', '==', t).get(); 
-    var mE = document.getElementById('moscowWorkedToday'); 
-    if(mE) { mE.textContent = m.empty ? 'Не отмечено' : 'Отмечено'; mE.style.color = m.empty ? '#6b7280' : '#059669'; } 
-    var p = await db.collection('attendance').where('userId', '==', currentUser.id).where('warehouse', '==', 'Пушкино').where('date', '==', t).get(); 
-    var pE = document.getElementById('pushkinoWorkedToday'); 
-    if(pE) { pE.textContent = p.empty ? 'Не отмечено' : 'Отмечено'; pE.style.color = p.empty ? '#6b7280' : '#059669'; } 
-}
-
-async function markAttendance(w) { 
-    if (!currentUser) return; 
-    var t = getTodayStr(); 
-    var s = await db.collection('attendance').where('userId', '==', currentUser.id).where('warehouse', '==', w).where('date', '==', t).get(); 
-    if (!s.empty) { showToast('Уже отмечены на '+w, 'warning'); return; } 
-    await db.collection('attendance').add({ userId: currentUser.id, userName: currentUser.name, warehouse: w, date: t, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); 
-    await db.collection('work_logs').add({ userId: currentUser.id, userName: currentUser.name, warehouse: w, action: 'Работал на складе', details: 'Присутствие на складе '+w, timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: t }); 
-    showToast('Отмечено присутствие на '+w, 'success');
-    _historyCache = {};
-    await checkTodayAttendance(); 
-    if (formatDateForInput(currentHistoryDate) === t) await loadHistoryForDate(t); 
-    if (isAdmin) await loadAdminLogs(); 
-}
-
-// ==================== ИСТОРИЯ С ПАГИНАЦИЕЙ ====================
-var _historyCache = {};
-var _historyPageSize = 15;
-var currentHistoryDate = new Date();
-var _currentHistoryPage = 1;
-var _historyTotalDocs = 0;
-
-async function loadHistoryForDate(ds, page) { 
-    if (!currentUser) return; 
-    var container = document.getElementById('myHistoryContainer'); 
-    if(!container) return;
-    page = page || 1;
-    _currentHistoryPage = page;
     
-    var cacheKey = currentUser.id + '_' + ds + '_' + page;
-    if (_historyCache[cacheKey]) { container.innerHTML = _historyCache[cacheKey]; renderPagination(); return; }
+    truckAlert.style.display = 'block';
     
-    container.innerHTML = '<div class="loading"><span class="loading-spinner"></span> Загрузка...</div>'; 
+    const byCity = {};
+    tomorrowShipments.forEach(s => {
+        const key = s.city;
+        if (!byCity[key]) byCity[key] = { city: s.city, mp: s.source, qty: 0 };
+        byCity[key].qty += s.qty;
+    });
     
-    try {
-        var s = await db.collection('work_logs')
-            .where('userId', '==', currentUser.id)
-            .where('date', '==', ds)
-            .orderBy('timestamp', 'desc')
-            .get();
+    truckList.innerHTML = Object.values(byCity).map(item => 
+        `<div class="truck-item">
+            🚛 <b>${item.city}</b> — ${item.qty.toLocaleString('ru-RU')} ед. 
+            <span class="badge ${item.mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon'}">${item.mp === 'Wildberries' ? 'WB' : 'Ozon'}</span>
+            ${routesDB[item.city] ? ' — ' + routesDB[item.city].delivery : ''}
+        </div>`
+    ).join('');
+}
+
+async function saveShipment(mp) {
+    const date = document.getElementById('shipDate' + mp).value;
+    const city = document.getElementById('shipCity' + mp).value.trim();
+    const qty = parseInt(document.getElementById('shipQty' + mp).value) || 0;
+    if (!date || !city || qty <= 0) return alert('Заполните дату, город и количество');
+    
+    const shipment = { id: Date.now(), date, city, qty, source: mp, status: 'in_work' };
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    arr.push(shipment);
+    
+    await addShipmentToFirebase(mp, shipment);
+    saveToLocalStorage();
+    renderShipmentCards(mp);
+    renderSchedule();
+    clearShipmentForm(mp);
+    showToast('✅ Отгрузка сохранена: ' + city + ' — ' + qty.toLocaleString('ru-RU') + ' ед.');
+}
+
+function clearShipmentForm(mp) {
+    document.getElementById('shipDate' + mp).value = new Date().toISOString().slice(0,10);
+    document.getElementById('shipCity' + mp).value = '';
+    document.getElementById('shipQty' + mp).value = '';
+    if (mp === 'Wildberries') {
+        document.getElementById('routeInfoWildberries').classList.remove('show');
+    }
+}
+
+async function deleteShipment(mp, id) {
+    if (!confirm('Удалить отгрузку?')) return;
+    if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => String(s.id) !== String(id));
+    else ozonShipments = ozonShipments.filter(s => String(s.id) !== String(id));
+    
+    await deleteFromFirebase(mp, id);
+    saveToLocalStorage();
+    renderShipmentCards(mp);
+    renderSchedule();
+}
+
+function handleStatusChange(event) {
+    const select = event.target;
+    if (!select.classList.contains('status-select')) return;
+    
+    const mp = select.dataset.mp;
+    const id = select.dataset.id;
+    const status = select.value;
+    
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    const shipment = arr.find(s => String(s.id) === String(id));
+    
+    if (shipment) {
+        shipment.status = status;
+        saveToLocalStorage();
+        if (isOnline) {
+            updateStatusInFirebase(mp, id, status).catch(e => console.warn('Firebase update failed:', e));
+        }
+        renderShipmentCards(mp);
+    }
+}
+
+function showRouteInfo() {
+    const city = document.getElementById('shipCityWildberries').value.trim();
+    const route = routesDB[city];
+    const info = document.getElementById('routeInfoWildberries');
+    if (route) {
+        info.classList.add('show');
+        document.getElementById('routeTitleWildberries').textContent = '🚛 ' + city;
+        document.getElementById('routeDetailWildberries').textContent = 'Срок: ' + route.delivery;
+        document.getElementById('routeScheduleWildberries').innerHTML = route.schedule.split(', ').map(s => `<span class="route-chip">${s}</span>`).join('');
+    } else { info.classList.remove('show'); }
+}
+
+function getWeekKey(ds) {
+    if (!ds || typeof ds !== 'string') return { key: 'unknown-' + Math.random(), label: 'Без даты' };
+    const d = new Date(ds + 'T00:00:00');
+    if (isNaN(d.getTime())) return { key: 'unknown-' + Math.random(), label: 'Без даты' };
+    const day = d.getDay() || 7;
+    const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const fmt = dt => dt.getDate().toString().padStart(2,'0') + '.' + (dt.getMonth()+1).toString().padStart(2,'0');
+    return { key: mon.toISOString().slice(0,10), label: fmt(mon) + '-' + fmt(sun) };
+}
+
+function getCurrentWeekKey() {
+    const now = new Date();
+    const day = now.getDay() || 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - day + 1);
+    return mon.toISOString().slice(0,10);
+}
+
+function downloadCSV(csv, fn) {
+    const b = new Blob(['\uFEFF'+csv], {type:'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fn; a.click();
+}
+
+function fmtPrice(n) { return n ? n.toLocaleString('ru-RU') + ' ₽' : '0 ₽'; }
+function monthName(d) { return ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][new Date(d).getMonth()]; }
+
+function switchPage(page) {
+    currentPage = page;
+    localStorage.setItem('currentPage', page);
+    
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active','wb-active','ozon-active','log-active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const map = {schedule:0, wb:1, ozon:2, logistics:3};
+    const cls = ['active','wb-active','ozon-active','log-active'];
+    document.querySelectorAll('.nav-btn')[map[page]].classList.add(cls[map[page]]);
+    
+    if (page === 'logistics') { 
+        updateLogCalc(); 
+        renderLog(); 
+        checkTrucksForTomorrow();
+    }
+}
+
+let showScheduleImport = false;
+function toggleScheduleImport() {
+    showScheduleImport = !showScheduleImport;
+    document.getElementById('scheduleImportBlock').style.display = showScheduleImport ? 'block' : 'none';
+}
+
+async function doScheduleImport() {
+    const text = document.getElementById('scheduleImportText').value.trim();
+    if (!text) return;
+    let impWb = 0, impOz = 0;
+    const newWb = [], newOz = [];
+    
+    text.split('\n').filter(l => l.trim()).forEach(line => {
+        let cols = line.split('\t');
+        if (cols.length < 4) cols = line.split(/[\t,;]/);
+        if (cols.length >= 4) {
+            let dateStr = cols[0].trim();
+            const mp = cols[1].trim();
+            const city = cols[2].trim();
+            const qty = parseInt(cols[3].replace(/\s/g,'')) || 0;
+            if (['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp)) return;
+            if (!mp || !city || qty <= 0) return;
+            let target = null;
+            if (['Wildberries','WB','ВБ'].includes(mp)) target = 'Wildberries';
+            else if (['Ozon','Озон'].includes(mp)) target = 'Ozon';
+            else return;
+            const dp = dateStr.split('.');
+            if (dp.length === 3) dateStr = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
+            if (isNaN(new Date(dateStr).getTime())) return;
+            const shipment = { id: Date.now() + Math.random(), date: dateStr, city, qty, source: target, status: 'in_work' };
+            if (target === 'Wildberries') { newWb.push(shipment); wbShipments.push(shipment); impWb++; }
+            else { newOz.push(shipment); ozonShipments.push(shipment); impOz++; }
+        }
+    });
+    
+    if (isOnline && (newWb.length > 0 || newOz.length > 0)) {
+        const batch = db.batch();
+        newWb.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_wb').doc(String(id)), data); });
+        newOz.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_ozon').doc(String(id)), data); });
+        try { await batch.commit(); } catch (e) { console.error(e); }
+    }
+    
+    saveToLocalStorage();
+    document.getElementById('scheduleImportText').value = '';
+    toggleScheduleImport();
+    renderAll();
+    showToast(`✅ WB: ${impWb}, Ozon: ${impOz}`);
+}
+
+async function updateWeekCapacity(key, val) { 
+    weekCapacities[key] = parseInt(val) || 0; 
+    await saveCapacityToFirebase();
+    saveToLocalStorage();
+    renderSchedule();
+}
+
+function exportScheduleCSV() {
+    const all = getAllShipments();
+    const grp = {};
+    all.forEach(s => {
+        const wk = getWeekKey(s.date);
+        if (!grp[wk.key]) grp[wk.key] = {label:wk.label,wb:0,ozon:0};
+        if (s.marketplace==='Wildberries') grp[wk.key].wb+=s.qty; else grp[wk.key].ozon+=s.qty;
+    });
+    let csv = 'Неделя\tWB\tOzon\tВсего\tПроп. сп.\tЗагрузка\n';
+    Object.keys(grp).filter(k => !k.startsWith('unknown')).sort().reverse().forEach(k => {
+        const g=grp[k], t=g.wb+g.ozon, cap=weekCapacities[k]||0;
+        csv += `${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`;
+    });
+    downloadCSV(csv, 'сводная.csv');
+}
+
+function getAllShipments() {
+    const all = [];
+    wbShipments.forEach(s => all.push({...s, marketplace:'Wildberries'}));
+    ozonShipments.forEach(s => all.push({...s, marketplace:'Ozon'}));
+    return all.filter(s => s.date && typeof s.date === 'string' && !isNaN(new Date(s.date + 'T00:00:00').getTime()));
+}
+
+function updateLogCalc() {
+    const a = parseFloat(document.getElementById('logAmount').value) || 0;
+    const rate = document.getElementById('logNDS').value === '22%' ? 1.22 : 1.07;
+    document.getElementById('logCalcFull').textContent = (Math.round(a*rate*100)/100).toLocaleString('ru-RU') + ' ₽';
+}
+
+async function addLogEntry() {
+    const date = document.getElementById('logDate').value;
+    const mp = document.getElementById('logMP').value;
+    const type = document.getElementById('logType').value;
+    const supplier = document.getElementById('logSupplier').value;
+    const city = document.getElementById('logCity').value.trim();
+    const qty = parseInt(document.getElementById('logQty').value) || 0;
+    const boxes = parseInt(document.getElementById('logBoxes').value) || 0;
+    const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+    const nds = document.getElementById('logNDS').value;
+    const rate = nds === '22%' ? 1.22 : 1.07;
+    if (!date || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
+    
+    const entry = { id: Date.now(), date, marketplace: mp, type, supplier, city, qty, boxes, amount, amountFull: Math.round(amount*rate*100)/100, paid: false, nds, source: 'Логистика' };
+    logEntries.push(entry);
+    
+    await addLogToFirebase(entry);
+    saveToLocalStorage();
+    ['logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = '');
+    updateLogCalc();
+    renderLog();
+}
+
+async function deleteLogEntry(id) { 
+    if (confirm('Удалить?')) { 
+        logEntries = logEntries.filter(l => l.id !== id); 
+        await deleteLogFromFirebase(id);
+        saveToLocalStorage();
+        renderLog();
+    } 
+}
+
+let showLogImport = false;
+function toggleLogImport() { showLogImport = !showLogImport; document.getElementById('logImportBlock').style.display = showLogImport ? 'block' : 'none'; }
+
+async function doLogImport() {
+    const text = document.getElementById('logImportText').value.trim(); if (!text) return;
+    const newEntries = [];
+    text.split('\n').filter(l => l.trim()).forEach(line => {
+        const cols = line.split('\t');
+        if (cols.length >= 9) {
+            const qty = parseInt(cols[5].replace(/\s/g,'')) || 0;
+            const amount = parseFloat(cols[7].replace(/[₽\s]/g,'').replace(',','.')) || 0;
+            const nds = cols[9] || '22%';
+            const rate = nds === '22%' ? 1.22 : 1.07;
+            const entry = { id: Date.now() + Math.random(), date: cols[0].split('.').reverse().join('-'), marketplace: cols[1], type: cols[2], supplier: cols[3], city: cols[4], qty, boxes: parseInt(cols[6])||0, amount, amountFull: Math.round(amount*rate*100)/100, paid: cols[8]==='Оплачен', nds, source: 'Логистика' };
+            newEntries.push(entry);
+            logEntries.push(entry);
+        }
+    });
+    
+    if (isOnline && newEntries.length > 0) {
+        const batch = db.batch();
+        newEntries.forEach(e => { const { id, ...data } = e; batch.set(db.collection('logistics').doc(String(id)), data); });
+        try { await batch.commit(); } catch (e) { console.error(e); }
+    }
+    
+    saveToLocalStorage();
+    document.getElementById('logImportText').value = ''; toggleLogImport();
+    renderLog();
+    showToast(`✅ ${newEntries.length} строк`);
+}
+
+function exportLogCSV() {
+    let csv = 'Дата\tМП\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tСумма с НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед с НДС\n';
+    [...logEntries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e => {
+        const up = e.qty>0?e.amount/e.qty:0, upf = e.qty>0?e.amountFull/e.qty:0;
+        csv += `${e.date.split('-').reverse().join('.')}\t${e.marketplace}\t${e.type}\t${e.supplier||''}\t${e.city}\t${e.qty}\t${e.boxes}\t${e.amount}\t${e.amountFull}\t${e.paid?'Оплачен':'Не оплачен'}\t${e.nds}\t${up.toFixed(2)}\t${upf.toFixed(2)}\n`;
+    });
+    downloadCSV(csv, 'логистика.csv');
+}
+
+function resetLogFilters() {
+    document.getElementById('logFilterMonth').value = '';
+    document.getElementById('logFilterStatus').value = 'all';
+    document.getElementById('logFilterMP').value = 'all';
+    renderLog();
+}
+
+function renderSchedule() {
+    const all = getAllShipments();
+    const grp = {};
+    all.forEach(s => {
+        const wk = getWeekKey(s.date);
+        if (!grp[wk.key]) grp[wk.key] = {label:wk.label, wb:0, ozon:0, details:[]};
+        if (s.marketplace==='Wildberries') grp[wk.key].wb += s.qty;
+        else grp[wk.key].ozon += s.qty;
+        grp[wk.key].details.push(s);
+    });
+    
+    const weeks = Object.keys(grp).sort().reverse();
+    const currentWeekKey = getCurrentWeekKey();
+    
+    document.getElementById('scheduleWeekCount').textContent = weeks.filter(k => !k.startsWith('unknown')).length;
+    document.getElementById('scheduleTotalRows').textContent = all.length;
+    
+    if (!weeks.length) {
+        document.getElementById('scheduleTable').innerHTML = '<div class="empty">Нет данных</div>';
+        document.getElementById('scheduleSummary').innerHTML = '';
+        return;
+    }
+    
+    const currentData = grp[currentWeekKey] || (weeks.length > 0 ? grp[weeks[0]] : { wb: 0, ozon: 0 });
+    const currentLabel = grp[currentWeekKey] ? grp[currentWeekKey].label : (weeks.length > 0 ? grp[weeks[0]].label : 'Нет данных');
+    const isCurrentWeekData = !!grp[currentWeekKey];
+    
+    const currentTotal = currentData.wb + currentData.ozon;
+    const currentCap = weekCapacities[currentWeekKey] || 0;
+    const currentLoad = currentCap > 0 ? Math.round(currentTotal / currentCap * 100) : 0;
+    const loadColor = currentLoad > 100 ? '#ef4444' : currentLoad > 80 ? '#f59e0b' : '#10b981';
+    
+    document.getElementById('scheduleSummary').innerHTML = `
+        <div class="summary-item current-week"><div class="label">📅 Текущая неделя</div><div class="value" style="font-size:14px;">${currentLabel}${!isCurrentWeekData ? ' (данных нет)' : ''}</div></div>
+        <div class="summary-item current-week"><div class="label">Всего к отгрузке</div><div class="value">${currentTotal.toLocaleString('ru-RU')} шт</div></div>
+        <div class="summary-item current-week"><div class="label">🟣 WB</div><div class="value" style="color:#6a1b9a">${currentData.wb.toLocaleString('ru-RU')} шт</div></div>
+        <div class="summary-item current-week"><div class="label">🔵 Ozon</div><div class="value" style="color:#005bff">${currentData.ozon.toLocaleString('ru-RU')} шт</div></div>
+        <div class="summary-item current-week"><div class="label">Способность</div><div class="value">${currentCap.toLocaleString('ru-RU')} шт/нед</div></div>
+        <div class="summary-item current-week"><div class="label">Загруженность</div><div class="value" style="color:${loadColor}">${currentCap > 0 ? currentLoad + '%' : '—'}</div></div>`;
+    
+    let html = '<table><thead><tr><th>Неделя</th><th class="num">🟣 WB</th><th class="num">🔵 Ozon</th><th class="num">Всего</th><th>Пропускная способность</th><th>Загруженность</th></tr></thead><tbody>';
+    
+    weeks.forEach((key, i) => {
+        const g = grp[key], t = g.wb + g.ozon, cap = weekCapacities[key] || 0;
+        const pct = cap > 0 ? Math.round(t / cap * 100) : 0;
+        const bc = pct > 100 ? 'danger' : pct > 80 ? 'warn' : 'good';
+        const isCurrent = key === currentWeekKey;
+        const rowClass = isCurrent ? 'week-row current' : (i % 2 === 0 ? 'week-row' : 'week-row-alt');
+        const hasDetails = g.details.length > 0;
+        const weekId = 'week-' + key.replace(/[^a-zA-Z0-9]/g, '-');
         
-        var allLogs = s.docs.map(function(d) { return d.data(); });
-        _historyTotalDocs = allLogs.length;
-        var totalPages = Math.ceil(allLogs.length / _historyPageSize);
-        if (page > totalPages && totalPages > 0) page = totalPages;
-        if (page < 1) page = 1;
-        _currentHistoryPage = page;
+        html += `<tr class="${rowClass}" onclick="toggleWeekDetails('${weekId}', this)">
+            <td><b>📅 ${g.label}</b>${isCurrent ? ' <span class="badge badge-info">текущая</span>' : ''}${hasDetails ? '<span class="toggle-icon" id="icon-' + weekId + '">▼</span>' : ''}</td>
+            <td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td>
+            <td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td>
+            <td class="num"><b>${t.toLocaleString('ru-RU')}</b></td>
+            <td class="capacity-cell"><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onclick="event.stopPropagation()" onchange="updateWeekCapacity('${key}',this.value)"></td>
+            <td style="min-width:150px;"><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-weight:600;">${cap>0?pct+'%':'—'}</span>${pct>100?' <span class="badge badge-danger">Перегруз</span>':''}${pct>80&&pct<=100?' <span class="badge badge-warning">Высокая</span>':''}${pct<=80&&cap>0?' <span class="badge badge-success">Норма</span>':''}</td>
+        </tr>`;
         
-        var startIdx = (page - 1) * _historyPageSize;
-        var pageLogs = allLogs.slice(startIdx, startIdx + _historyPageSize);
-        
-        var html;
-        if (pageLogs.length === 0) { 
-            html = '<div class="empty-history">'+(ds===getTodayStr()?'Нет записей за сегодня':'Нет записей за '+formatDateForDisplay(ds))+'</div>'; 
+        if (hasDetails) {
+            const byCity = {};
+            g.details.forEach(d => { const ck = d.city + '|' + d.marketplace; if (!byCity[ck]) byCity[ck] = 0; byCity[ck] += d.qty; });
+            html += `<tr id="${weekId}" class="week-details" style="display:none;background:#fafafa;"><td colspan="6" style="padding:8px 12px;font-size:10px;color:var(--sub);">`;
+            Object.entries(byCity).forEach(([ck, qty]) => {
+                const [city, mp] = ck.split('|');
+                const mb = mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon';
+                html += `<span class="badge ${mb}" style="margin:2px;">${city}: ${qty.toLocaleString('ru-RU')} шт</span> `;
+            });
+            html += '</td></tr>';
+        }
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('scheduleTable').innerHTML = html;
+}
+
+function toggleWeekDetails(weekId, rowElement) {
+    const el = document.getElementById(weekId);
+    const icon = document.getElementById('icon-' + weekId);
+    if (el) {
+        if (el.style.display === 'none' || el.style.display === '') {
+            el.style.display = 'table-row';
+            if (icon) icon.classList.add('open');
         } else {
-            html = '<div class="history-cards">'; 
-            pageLogs.forEach(function(l) { 
-                var time = l.timestamp ? new Date(l.timestamp.toDate()).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) : '—'; 
-                var warehouse = l.warehouse === 'Фото' ? 'Фото' : (l.warehouse || '—'); 
-                html += '<div class="history-card"><div class="history-card-header"><span class="history-time">'+time+'</span><span class="history-warehouse">'+warehouse+'</span></div><div class="history-action">'+(l.action || '—')+'</div><div class="history-details">'+(l.details || '—')+'</div></div>'; 
-            }); 
-            html += '</div>'; 
+            el.style.display = 'none';
+            if (icon) icon.classList.remove('open');
         }
+    }
+}
+
+function renderShipmentCards(mp) {
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    const containerId = mp === 'Wildberries' ? 'wbCards' : 'ozonCards';
+    const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date));
+    
+    if (!srt.length) {
+        document.getElementById(containerId).innerHTML = '<div class="empty" style="grid-column:1/-1;">Нет отгрузок</div>';
+        return;
+    }
+    
+    let html = '';
+    srt.forEach(e => {
+        const currentStatus = e.status || 'in_work';
+        const statusObj = STATUSES.find(s => s.value === currentStatus) || STATUSES[0];
+        const route = mp === 'Wildberries' ? (routesDB[e.city] || null) : null;
         
-        _historyCache[cacheKey] = html;
-        container.innerHTML = html;
-        renderPagination();
-    } catch(e) {
-        container.innerHTML = '<div class="empty-history">Ошибка загрузки истории</div>';
-    }
-}
-
-function renderPagination() {
-    var container = document.getElementById('myHistoryContainer');
-    if (!container) return;
-    var totalPages = Math.ceil(_historyTotalDocs / _historyPageSize);
-    if (totalPages <= 1) return;
-    
-    var paginationHtml = '<div class="pagination">';
-    paginationHtml += '<button data-page="1" ' + (_currentHistoryPage === 1 ? 'disabled' : '') + '>&#x23EE;</button>';
-    paginationHtml += '<button data-page="' + (_currentHistoryPage - 1) + '" ' + (_currentHistoryPage === 1 ? 'disabled' : '') + '>&#x2039;</button>';
-    paginationHtml += '<span class="page-info">' + _currentHistoryPage + ' / ' + totalPages + '</span>';
-    paginationHtml += '<button data-page="' + (_currentHistoryPage + 1) + '" ' + (_currentHistoryPage === totalPages ? 'disabled' : '') + '>&#x203A;</button>';
-    paginationHtml += '<button data-page="' + totalPages + '" ' + (_currentHistoryPage === totalPages ? 'disabled' : '') + '>&#x23ED;</button>';
-    paginationHtml += '</div>';
-    
-    container.insertAdjacentHTML('beforeend', paginationHtml);
-    
-    container.querySelectorAll('.pagination button:not([disabled])').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var page = parseInt(this.dataset.page);
-            var ds = formatDateForInput(currentHistoryDate);
-            loadHistoryForDate(ds, page);
-        });
-    });
-}
-
-// ==================== ФОТО ПАЛЛЕТ ====================
-var photoSlots = [null, null, null, null], photoPreviewUrls = [null, null, null, null];
-var MAX_PHOTOS = 4, MAX_PHOTO_SIZE = 400 * 1024;
-var IP_LIST = ["КЮА","КАА","БМС","ДЕВ"];
-var _cityCache = null;
-var _photoDataStore = {};
-var _photoIdCounter = 0;
-
-function compressImage(file, maxSize) { return new Promise(function(resolve, reject) { var reader = new FileReader(); reader.onload = function(e) { var img = new Image(); img.onload = function() { var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxW = 900, maxH = 900; var w = img.width, h = img.height; if (w > maxW || h > maxH) { var ratio = Math.min(maxW/w, maxH/h); w = Math.round(w * ratio); h = Math.round(h * ratio); } canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h); var quality = 0.55; var result = canvas.toDataURL('image/jpeg', quality); while (result.length > maxSize * 1.37 && quality > 0.2) { quality -= 0.1; result = canvas.toDataURL('image/jpeg', quality); } resolve(result); }; img.onerror = reject; img.src = e.target.result; }; reader.onerror = reject; reader.readAsDataURL(file); }); }
-
-function clearAllPhotoPreviews() { for (var i = 0; i < MAX_PHOTOS; i++) { if (photoPreviewUrls[i]) { URL.revokeObjectURL(photoPreviewUrls[i]); photoPreviewUrls[i] = null; } photoSlots[i] = null; } }
-
-window.triggerPhotoCapture = function(si) { var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'; input.onchange = function(e) { var file = e.target.files[0]; if (!file) return; if (file.size > 20*1024*1024) { showToast('Фото слишком большое','error'); return; } if (photoPreviewUrls[si]) URL.revokeObjectURL(photoPreviewUrls[si]); photoSlots[si] = file; photoPreviewUrls[si] = URL.createObjectURL(file); updatePhotoSlotDisplay(si); updatePhotoCounter(); }; input.click(); };
-window.removePhotoFromSlot = function(si) { if (photoPreviewUrls[si]) URL.revokeObjectURL(photoPreviewUrls[si]); photoSlots[si] = null; photoPreviewUrls[si] = null; updatePhotoSlotDisplay(si); updatePhotoCounter(); };
-function updatePhotoSlotDisplay(idx) { var slot = document.getElementById('photoSlot'+idx); if (!slot) return; if (photoPreviewUrls[idx]) { slot.classList.add('has-photo'); slot.innerHTML = '<img src="'+photoPreviewUrls[idx]+'" alt="Фото '+(idx+1)+'"><button class="remove-photo" onclick="event.stopPropagation();window.removePhotoFromSlot('+idx+')">&#x2715;</button>'; } else { slot.classList.remove('has-photo'); slot.innerHTML = '<span class="slot-number">'+(idx+1)+'</span>'; } }
-function updatePhotoCounter() { var filled = photoSlots.filter(function(f) { return f !== null; }).length; var counter = document.getElementById('photoCounter'); if (counter) counter.textContent = 'Заполнено: '+filled+' / '+MAX_PHOTOS; }
-
-async function getCityList() { if (_cityCache) return _cityCache; var snap = await db.collection('pallet_photos').orderBy('city').get(); var cities = new Set(); snap.docs.forEach(function(d) { var c = (d.data().city || '').trim(); if (c) cities.add(c); }); _cityCache = Array.from(cities).sort(); return _cityCache; }
-
-window.savePhotos = async function() { 
-    var cityEl = document.getElementById('photoCity'), dateEl = document.getElementById('photoDate'); 
-    var btn = document.getElementById('savePhotoBtn'); 
-    var city = cityEl ? cityEl.value.trim() : ''; 
-    var date = dateEl ? dateEl.value : getTodayStr(); 
-    if (!city) { showToast('Укажите город','warning'); return; } 
-    var ipData = []; 
-    IP_LIST.forEach(function(ip) { var qtyEl = document.getElementById('ipQty_'+ip); var qty = qtyEl ? (parseInt(qtyEl.value) || 0) : 0; if (qty > 0) ipData.push({ ip: ip, quantity: qty }); }); 
-    if (ipData.length === 0) { showToast('Укажите количество коробов','warning'); return; } 
-    var filledSlots = []; 
-    for (var i = 0; i < MAX_PHOTOS; i++) { if (photoSlots[i] !== null) filledSlots.push({file: photoSlots[i], slot: i}); } 
-    if (filledSlots.length === 0) { showToast('Сделайте хотя бы одно фото','warning'); return; } 
-    btn.disabled = true; btn.textContent = 'Сжатие...'; 
-    var totalQty = ipData.reduce(function(s, item) { return s + item.quantity; }, 0); 
-    var ipDisplay = ipData.map(function(item) { return item.ip + ' — ' + item.quantity + ' кор.'; }).join(', '); 
-    try { 
-        var photosData = []; 
-        for (var j = 0; j < filledSlots.length; j++) { 
-            var item = filledSlots[j]; btn.textContent = 'Фото '+(j+1)+'/'+filledSlots.length; 
-            var base64 = await compressImage(item.file, MAX_PHOTO_SIZE); 
-            photosData.push({ slot: item.slot + 1, data: base64 }); 
-        } 
-        btn.textContent = 'Сохранение...'; 
-        await db.collection('pallet_photos').add({ 
-            userId: currentUser.id, userName: currentUser.name, city: city, ipData: ipData, 
-            ipDisplay: ipDisplay, totalQuantity: totalQty, date: date, 
-            photoCount: photosData.length, photos: photosData, 
-            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-        }); 
-        _cityCache = null;
-        await addLog('Фото', 'Сохранил паллету', 'г.'+city+', '+ipDisplay+', фото: '+photosData.length+' шт.', totalQty);
-        showToast('Сохранено: '+ipDisplay+' | Фото: '+photosData.length, 'success');
-        clearAllPhotoPreviews();
-        for (var k = 0; k < MAX_PHOTOS; k++) updatePhotoSlotDisplay(k); 
-        updatePhotoCounter(); if (cityEl) cityEl.value = ''; 
-        IP_LIST.forEach(function(ip) { var qtyEl = document.getElementById('ipQty_'+ip); if (qtyEl) qtyEl.value = ''; }); 
-        if (dateEl) { dateEl.value = getTodayStr(); } 
-        var dv = document.getElementById('dateDisplayValue'); if (dv) dv.textContent = formatDateForDisplay(getTodayStr()); 
-        updateCityDatalist();
-        loadMyPalletPhotos();
-    } catch (error) { showToast('Ошибка: ' + (error.message || 'Неизвестная'), 'error'); } 
-    btn.disabled = false; btn.textContent = 'Сохранить паллету'; 
-};
-
-async function updateCityDatalist() { var datalist = document.getElementById('citySuggestions'); if (!datalist) return; var cities = await getCityList(); datalist.innerHTML = ''; cities.forEach(function(c) { var opt = document.createElement('option'); opt.value = c; datalist.appendChild(opt); }); }
-
-async function loadMyPalletPhotos() {
-    var container = document.getElementById('myPhotoHistoryContainer');
-    if (!container || !currentUser) return;
-    container.innerHTML = '<div class="loading"><span class="loading-spinner"></span> Загрузка...</div>';
-    _photoDataStore = {}; _photoIdCounter = 0;
-    
-    try {
-        var snapshot = await db.collection('pallet_photos')
-            .where('userId', '==', currentUser.id)
-            .orderBy('timestamp', 'desc')
-            .limit(50)
-            .get();
-        
-        if (snapshot.empty) {
-            container.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;font-size:0.8rem;">Нет сохранённых паллет</div>';
-            return;
-        }
-        
-        var docs = snapshot.docs;
-        var html = '<div class="ios-photo-strip" style="flex-wrap:wrap;justify-content:flex-start;">';
-        docs.forEach(function(doc) {
-            var d = doc.data();
-            if (!d.photos || d.photos.length === 0) return;
-            
-            var gridHtml = '<div class="photo-thumb-grid">'; var maxShow = 4;
-            for (var i = 0; i < Math.min(d.photos.length, maxShow); i++) {
-                gridHtml += '<img src="'+d.photos[i].data+'" alt="Фото">';
-            }
-            if (d.photos.length > maxShow) {
-                gridHtml += '<div class="thumb-more">+'+(d.photos.length - maxShow)+'</div>';
-            }
-            gridHtml += '</div>';
-            
-            var photoDataId = 'pd_' + (_photoIdCounter++);
-            _photoDataStore[photoDataId] = {
-                photos: d.photos,
-                city: d.city,
-                ipDisplay: d.ipDisplay,
-                userName: d.userName,
-                date: d.date,
-                totalQuantity: d.totalQuantity
-            };
-            
-            html += '<div class="ios-photo-card" onclick="window.showPhotoGallery(\''+photoDataId+'\')">'+
-                gridHtml+
-                '<div class="photo-info"><strong>'+escapeHtml(d.city || '—')+'</strong><br>'+
-                formatDateForDisplay(d.date)+'<br>'+
-                escapeHtml(d.ipDisplay || '—')+'<br>'+
-                (d.totalQuantity || 0)+' кор. &bull; '+d.photos.length+' фото</div>'+
-                '<button class="ios-delete-btn" onclick="event.stopPropagation();window.deleteMyPallet(\''+doc.id+'\')" style="margin:0 8px 8px;width:calc(100% - 16px);">Удалить</button>'+
-                '</div>';
-        });
-        html += '</div>';
-        container.innerHTML = html;
-    } catch(e) {
-        container.innerHTML = '<div style="text-align:center;padding:20px;color:#ff3b30;">Ошибка загрузки</div>';
-    }
-}
-
-window.deleteMyPallet = async function(pid) {
-    if (!confirm('Удалить паллету и все фото?')) return;
-    try {
-        await db.collection('pallet_photos').doc(pid).delete();
-        _cityCache = null;
-        showToast('Паллета удалена', 'success');
-        loadMyPalletPhotos();
-    } catch(e) {
-        showToast('Ошибка удаления', 'error');
-    }
-};
-
-window.showPhotoGallery = function(photoDataId) {
-    var docData = _photoDataStore[photoDataId];
-    if (!docData) return;
-    
-    var existing = document.querySelector('.photo-gallery-overlay'); if (existing) existing.remove();
-    var photos = docData.photos || []; if (photos.length === 0) return;
-    var currentIdx = 0;
-    var modal = document.createElement('div'); modal.className = 'photo-gallery-overlay';
-    modal.innerHTML = '<button class="gallery-close">&#x2715;</button><img src="'+photos[0].data+'" class="gallery-main" alt="Фото"><div class="gallery-counter">1 / '+photos.length+'</div><div class="gallery-nav"><button class="gallery-prev" '+(photos.length<=1?'style="visibility:hidden"':'')+'>&#x25C0;</button><button class="gallery-next" '+(photos.length<=1?'style="visibility:hidden"':'')+'>&#x25B6;</button></div><div class="gallery-info">'+escapeHtml(docData.city || '—')+' &bull; '+escapeHtml(docData.userName || '—')+' &bull; '+formatDateForDisplay(docData.date)+'<br>'+escapeHtml(docData.ipDisplay || '—')+' &bull; '+(docData.totalQuantity || 0)+' кор.</div>';
-    document.body.appendChild(modal);
-    var mainImg = modal.querySelector('.gallery-main'); var counter = modal.querySelector('.gallery-counter');
-    function updateImage() { mainImg.src = photos[currentIdx].data; counter.textContent = (currentIdx+1)+' / '+photos.length; }
-    modal.querySelector('.gallery-prev').addEventListener('click', function(e) { e.stopPropagation(); if (currentIdx > 0) { currentIdx--; updateImage(); } });
-    modal.querySelector('.gallery-next').addEventListener('click', function(e) { e.stopPropagation(); if (currentIdx < photos.length-1) { currentIdx++; updateImage(); } });
-    modal.querySelector('.gallery-close').addEventListener('click', function() { modal.remove(); });
-    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
-    var touchStartX = 0;
-    modal.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
-    modal.addEventListener('touchend', function(e) { var diff = touchStartX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) { if (diff > 0 && currentIdx < photos.length-1) { currentIdx++; updateImage(); } else if (diff < 0 && currentIdx > 0) { currentIdx--; updateImage(); } } });
-};
-
-var cityColors = ['#007aff','#34c759','#ff9500','#ff3b30','#af52de','#5ac8fa','#ff2d55','#5856d6','#00c7be','#ff6482'];
-var _cityColorMap = {};
-function getCityColor(city) { if (_cityColorMap[city]) return _cityColorMap[city]; var idx = Object.keys(_cityColorMap).length % cityColors.length; _cityColorMap[city] = cityColors[idx]; return _cityColorMap[city]; }
-
-async function deleteCityPallets(city, palletIds) {
-    if (!confirm('Удалить все ' + palletIds.length + ' паллет из города "' + city + '"?\n\nЭто действие нельзя отменить.')) return;
-    var deletedCount = 0;
-    for (var i = 0; i < palletIds.length; i += 100) { var batch = db.batch(); var chunk = palletIds.slice(i, i + 100); chunk.forEach(function(id) { batch.delete(db.collection('pallet_photos').doc(id)); }); await batch.commit(); deletedCount += chunk.length; }
-    _cityCache = null; showToast('Удалено ' + deletedCount + ' паллет из города "' + city + '"', 'success'); await loadPalletPhotos();
-}
-
-async function loadPalletPhotos(filters) { 
-    filters = filters || {}; var container = document.getElementById('palletPhotosContainer'); 
-    if (!container) return; container.innerHTML = '<div class="loading"><span class="loading-spinner"></span> Загрузка...</div>'; 
-    _photoDataStore = {}; _photoIdCounter = 0;
-    var query = db.collection('pallet_photos'); 
-    if (filters.userId) query = query.where('userId', '==', filters.userId); 
-    if (filters.date) query = query.where('date', '==', filters.date); 
-    if (filters.city) query = query.where('city', '==', filters.city); 
-    try { 
-        var snapshot = await query.orderBy('timestamp', 'desc').limit(200).get(); 
-        var docs = snapshot.docs; 
-        if (filters.ip) { docs = docs.filter(function(doc) { var ipData = doc.data().ipData || []; return ipData.some(function(item) { return item.ip === filters.ip; }); }); } 
-        if (docs.length === 0) { container.innerHTML = '<div style="text-align:center;padding:30px;color:#8e8e93;">Фото не найдены</div>'; return; } 
-        var grouped = {};
-        docs.forEach(function(doc) { var d = doc.data(); var city = (d.city || '').trim() || 'Без города'; if (!grouped[city]) grouped[city] = []; grouped[city].push({ id: doc.id, data: d }); });
-        var cityNames = Object.keys(grouped).sort(function(a, b) { if (a === 'Без города') return 1; if (b === 'Без города') return -1; return a.localeCompare(b); });
-        var html = '';
-        cityNames.forEach(function(city) {
-            var pallets = grouped[city]; var color = city === 'Без города' ? '#8e8e93' : getCityColor(city); var palletIds = pallets.map(function(p) { return p.id; });
-            html += '<div class="city-section"><div class="city-section-header" onclick="var s=this.parentElement;s.classList.toggle(\'expanded\')"><div class="city-section-title"><span class="city-accent" style="background:'+color+'"></span>'+escapeHtml(city)+'</div><div style="display:flex;align-items:center;gap:8px;"><button class="city-delete-btn" onclick="event.stopPropagation();deleteCityPallets(\''+escapeHtml(city).replace(/'/g,"\\'")+'\','+JSON.stringify(palletIds)+')">Удалить город</button><span class="city-section-count">'+pallets.length+' палл.</span><span class="city-section-chevron">&#x25BC;</span></div></div><div class="city-section-body"><div><div class="ios-photo-strip">';
-            pallets.forEach(function(p) {
-                var d = p.data; if (!d.photos || d.photos.length === 0) return;
-                var gridHtml = '<div class="photo-thumb-grid">'; var maxShow = 4;
-                for (var i = 0; i < Math.min(d.photos.length, maxShow); i++) { gridHtml += '<img src="'+d.photos[i].data+'" alt="Фото">'; }
-                if (d.photos.length > maxShow) { gridHtml += '<div class="thumb-more">+'+(d.photos.length - maxShow)+'</div>'; }
-                gridHtml += '</div>';
-                
-                var photoDataId = 'pd_' + (_photoIdCounter++);
-                _photoDataStore[photoDataId] = {
-                    photos: d.photos,
-                    city: d.city,
-                    ipDisplay: d.ipDisplay,
-                    userName: d.userName,
-                    date: d.date,
-                    totalQuantity: d.totalQuantity
-                };
-                
-                html += '<div class="ios-photo-card" onclick="window.showPhotoGallery(\''+photoDataId+'\')">'+gridHtml+'<div class="photo-info"><strong>'+escapeHtml(d.city || '—')+'</strong><br>'+escapeHtml(d.userName || '—')+' &bull; '+formatDateForDisplay(d.date)+'<br>'+escapeHtml(d.ipDisplay || '—')+'<br>'+(d.totalQuantity || 0)+' кор. &bull; '+d.photos.length+' фото</div><button class="ios-delete-btn" onclick="event.stopPropagation();window.deletePallet(\''+p.id+'\')" style="margin:0 8px 8px;width:calc(100% - 16px);">Удалить</button></div>';
-            });
-            html += '</div></div></div></div>';
-        });
-        container.innerHTML = html; 
-    } catch (error) { container.innerHTML = '<div style="text-align:center;padding:20px;color:#ff3b30;">Ошибка загрузки</div>'; } 
-}
-window.deletePallet = async function(pid) { if (!confirm('Удалить паллету и все фото?')) return; try { await db.collection('pallet_photos').doc(pid).delete(); _cityCache = null; await loadPalletPhotos(); showToast('Паллета удалена','success'); } catch (error) { showToast('Ошибка удаления','error'); } };
-
-async function archiveOldPhotos(monthsOld) { 
-    var cutoffDate = new Date(); cutoffDate.setMonth(cutoffDate.getMonth() - monthsOld); var cutoffStr = cutoffDate.toISOString().slice(0,10); 
-    var countSnap = await db.collection('pallet_photos').where('date', '<=', cutoffStr).get(); var count = countSnap.size; 
-    if (count === 0) { showToast('Нет фото старше ' + monthsOld + ' мес.','info'); return; } 
-    if (!confirm('Найдено ' + count + ' паллет старше указанной даты.\n\nУдалить?')) return; 
-    var deletedCount = 0; 
-    for (var i = 0; i < countSnap.docs.length; i += 100) { var batch = db.batch(); var chunk = countSnap.docs.slice(i, i + 100); chunk.forEach(function(doc) { batch.delete(doc.ref); }); await batch.commit(); deletedCount += chunk.length; } 
-    showToast('Удалено ' + deletedCount + ' паллет.','success'); _cityCache = null; await loadPalletPhotos(); await loadAdminEmployees(); 
-}
-
-// ==================== АДМИН-ПАНЕЛЬ ====================
-function chunkArray(arr, size) { var result = []; for (var i = 0; i < arr.length; i += size) { result.push(arr.slice(i, i + size)); } return result; }
-async function queryByUserChunks(collection, empIds) { if (empIds.length === 0) return []; var chunks = chunkArray(empIds, 10); var allDocs = []; for (var i = 0; i < chunks.length; i++) { var snap = await db.collection(collection).where('userId', 'in', chunks[i]).get(); snap.docs.forEach(function(d) { allDocs.push(d); }); } return allDocs; }
-
-var _adminLogsPageSize = 15;
-var _adminLogsCurrentPage = 1;
-var _adminLogsTotalDocs = 0;
-var _adminLogsAllDocs = [];
-
-async function loadAdminLogs(page) { 
-    if (!isAdmin) return; var container = document.getElementById('adminLogsContainer'); if(!container) return; 
-    page = page || 1;
-    _adminLogsCurrentPage = page;
-    container.innerHTML = '<div class="loading"><span class="loading-spinner"></span> Загрузка...</div>'; 
-    var eid = document.getElementById('adminFilterEmployee')?.value; var fd = document.getElementById('adminFilterDate')?.value; 
-    var q = db.collection('work_logs'); if (eid) q = q.where('userId', '==', eid); if (fd) q = q.where('date', '==', fd); 
-    try {
-        var s = await q.orderBy('timestamp', 'desc').get(); 
-        _adminLogsAllDocs = s.docs;
-        _adminLogsTotalDocs = s.docs.length;
-        var totalPages = Math.ceil(_adminLogsTotalDocs / _adminLogsPageSize);
-        if (page > totalPages && totalPages > 0) page = totalPages;
-        if (page < 1) page = 1;
-        _adminLogsCurrentPage = page;
-        
-        var startIdx = (page - 1) * _adminLogsPageSize;
-        var pageDocs = _adminLogsAllDocs.slice(startIdx, startIdx + _adminLogsPageSize);
-        
-        if (s.empty) { container.innerHTML = '<div class="empty-history">Нет записей</div>'; return; } 
-        var html = '<div class="ios-list">'; 
-        pageDocs.forEach(function(d) { 
-            var l = d.data(); var time = l.timestamp ? new Date(l.timestamp.toDate()).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'; 
-            var wClass = l.warehouse === 'Москва' ? '#007aff' : (l.warehouse === 'Пушкино' ? '#34c759' : '#ff9500');
-            html += '<div class="ios-list-item ios-log-item"><div class="item-leading">'+time+'</div><div class="item-body"><div class="item-title">'+escapeHtml(l.userName || '—')+' <span class="log-warehouse-tag" style="color:'+wClass+'">'+escapeHtml(l.warehouse || '—')+'</span></div><div class="item-subtitle">'+escapeHtml(l.action || '—')+' &bull; '+escapeHtml(l.details || '—')+'</div></div><button class="ios-delete-btn" data-id="'+d.id+'">Удалить</button></div>'; 
-        }); 
-        html += '</div>'; 
-        if (totalPages > 1) {
-            html += '<div class="pagination">';
-            html += '<button data-admin-page="1" ' + (_adminLogsCurrentPage === 1 ? 'disabled' : '') + '>&#x23EE;</button>';
-            html += '<button data-admin-page="' + (_adminLogsCurrentPage - 1) + '" ' + (_adminLogsCurrentPage === 1 ? 'disabled' : '') + '>&#x2039;</button>';
-            html += '<span class="page-info">' + _adminLogsCurrentPage + ' / ' + totalPages + '</span>';
-            html += '<button data-admin-page="' + (_adminLogsCurrentPage + 1) + '" ' + (_adminLogsCurrentPage === totalPages ? 'disabled' : '') + '>&#x203A;</button>';
-            html += '<button data-admin-page="' + totalPages + '" ' + (_adminLogsCurrentPage === totalPages ? 'disabled' : '') + '>&#x23ED;</button>';
-            html += '</div>';
-        }
-        container.innerHTML = html; 
-        container.querySelectorAll('.ios-delete-btn').forEach(function(b) { b.addEventListener('click', async function() { if (confirm('Удалить запись?')) { await db.collection('work_logs').doc(b.dataset.id).delete(); _historyCache = {}; showToast('Запись удалена','success'); await loadAdminLogs(_adminLogsCurrentPage); } }); }); 
-        container.querySelectorAll('.pagination button:not([disabled])').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                loadAdminLogs(parseInt(this.dataset.adminPage));
-            });
-        });
-    } catch(e) {
-        container.innerHTML = '<div style="text-align:center;padding:20px;color:#ff3b30;">Ошибка загрузки</div>';
-    }
-}
-
-async function loadAdminEmployees() { 
-    if (!isAdmin) return; var container = document.getElementById('adminEmployeesContainer'); if(!container) return; 
-    container.innerHTML = '<div class="loading"><span class="loading-spinner"></span> Загрузка...</div>'; 
-    try {
-        var s = await db.collection('employees').orderBy('name').get(); 
-        var allEmps = s.docs.map(function(d) { return { id: d.id, name: d.data().name, login: d.data().login, role: d.data().role }; }); 
-        var empIds = allEmps.map(function(e) { return e.id; });
-        var [workDocs, photoDocs, attendDocs] = await Promise.all([queryByUserChunks('work_logs', empIds), queryByUserChunks('pallet_photos', empIds), queryByUserChunks('attendance', empIds)]);
-        var workSet = new Set(); workDocs.forEach(function(d) { workSet.add(d.data().userId); });
-        var photoSet = new Set(); photoDocs.forEach(function(d) { photoSet.add(d.data().userId); });
-        var attendSet = new Set(); attendDocs.forEach(function(d) { attendSet.add(d.data().userId); });
-        var roleColors = { superadmin: '#ff3b30', admin: '#ff9500', user: '#007aff' };
-        var html = '<div class="ios-list">'; 
-        s.docs.forEach(function(d) { 
-            var e = d.data(); var rt = e.role==='superadmin'?'Суперадмин':(e.role==='admin'?'Админ':'Сотрудник'); 
-            var active = workSet.has(d.id) || photoSet.has(d.id) || attendSet.has(d.id); 
-            var initials = e.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2); 
-            var roleColor = roleColors[e.role] || '#8e8e93';
-            html += '<div class="ios-list-item"><div class="item-leading" style="background:'+roleColor+'20;color:'+roleColor+'">'+initials+'</div><div class="item-body"><div class="item-title">'+escapeHtml(e.name)+'</div><div class="item-subtitle">'+rt+'</div></div><span class="ios-badge '+(active?'active':'inactive')+'">'+(active?'Активен':'Без записей')+'</span>'+(e.role!=='superadmin'?'<button class="ios-delete-btn" data-id="'+d.id+'" data-name="'+escapeHtml(e.name)+'" data-role="'+e.role+'">Удалить</button>':'<span class="item-trailing">—</span>')+'</div>'; 
-        }); 
-        html += '</div>'; container.innerHTML = html; 
-        container.querySelectorAll('.ios-delete-btn').forEach(function(b) { b.addEventListener('click', async function() { 
-            var n = b.dataset.name, r = b.dataset.role, id = b.dataset.id; 
-            if (r === 'superadmin') { showToast('Невозможно удалить суперадмина','warning'); return; } 
-            if (r === 'admin' && !isSuperAdmin) { showToast('Только суперадмин может удалять админов','warning'); return; } 
-            if (n === currentUser.name) { showToast('Нельзя удалить себя','warning'); return; } 
-            if (confirm('Удалить '+n+'?')) { 
-                var ba = db.batch(); var ls = await db.collection('work_logs').where('userId', '==', id).get(); ls.docs.forEach(function(d) { ba.delete(d.ref); }); ba.delete(db.collection('employees').doc(id)); 
-                await ba.commit(); _employeesCache.data = null; _employeesCache.timestamp = 0; _historyCache = {}; 
-                showToast(n + ' удалён','success'); await loadAdminEmployees(); await getEmployees(true); updateFilterEmployeeSelect(); updatePhotoFilterEmployees(); 
-            } 
-        }); }); 
-    } catch(e) {
-        container.innerHTML = '<div style="text-align:center;padding:20px;color:#ff3b30;">Ошибка загрузки</div>';
-    }
-}
-
-async function cleanInactiveEmployees() { 
-    if (!confirm('Удалить всех сотрудников без записей?')) return; 
-    var allEmps = await getEmployees(); var empIds = allEmps.map(function(e) { return e.id; });
-    var [workDocs, photoDocs, attendDocs] = await Promise.all([queryByUserChunks('work_logs', empIds), queryByUserChunks('pallet_photos', empIds), queryByUserChunks('attendance', empIds)]);
-    var workSet = new Set(); workDocs.forEach(function(d) { workSet.add(d.data().userId); });
-    var photoSet = new Set(); photoDocs.forEach(function(d) { photoSet.add(d.data().userId); });
-    var attendSet = new Set(); attendDocs.forEach(function(d) { attendSet.add(d.data().userId); });
-    var inactiveList = []; allEmps.forEach(function(emp) { if (emp.role === 'admin' || emp.role === 'superadmin' || emp.id === currentUser.id) return; if (!workSet.has(emp.id) && !photoSet.has(emp.id) && !attendSet.has(emp.id)) inactiveList.push({ id: emp.id, name: emp.name, login: emp.login }); });
-    if (inactiveList.length === 0) { showToast('Все активны!','info'); return; } 
-    if (!confirm('Найдено '+inactiveList.length+':\n\n'+inactiveList.map(function(e) { return e.name + ' (' + e.login + ')'; }).join('\n')+'\n\nУдалить?')) return; 
-    var batch = db.batch(); inactiveList.forEach(function(emp) { batch.delete(db.collection('employees').doc(emp.id)); }); await batch.commit(); 
-    showToast('Удалено '+inactiveList.length+'!','success'); _employeesCache.data = null; _employeesCache.timestamp = 0; _historyCache = {}; await getEmployees(true); await loadAdminEmployees(); updateFilterEmployeeSelect(); updatePhotoFilterEmployees(); 
-}
-
-async function addEmployee(n) { if (!n) return; await db.collection('employees').add({ login: n.toLowerCase().replace(/\s/g,''), password: '123', name: n.trim(), role: 'user', active: true }); _employeesCache.data = null; _employeesCache.timestamp = 0; showToast('Сотрудник добавлен','success'); await getEmployees(true); await loadAdminEmployees(); updateFilterEmployeeSelect(); updatePhotoFilterEmployees(); }
-
-function updateFilterEmployeeSelect() { var s = document.getElementById('adminFilterEmployee'); if (!s) return; s.innerHTML = '<option value="">Все сотрудники</option>'; employees.filter(function(e) { return e.active !== false; }).forEach(function(e) { var o = document.createElement('option'); o.value = e.id; o.textContent = e.name; s.appendChild(o); }); }
-function updatePhotoFilterEmployees() { var s = document.getElementById('photoFilterEmployee'); if (!s) return; s.innerHTML = '<option value="">Все сотрудники</option>'; employees.filter(function(e) { return e.active !== false; }).forEach(function(e) { var o = document.createElement('option'); o.value = e.id; o.textContent = e.name; s.appendChild(o); }); }
-async function updateReportEmployeeSelect() { var s = document.getElementById('reportEmployeeSelect'); if(!s) return; s.innerHTML = '<option value="">Все сотрудники</option>'; employees.filter(function(e) { return e.active; }).forEach(function(e) { var o = document.createElement('option'); o.value = e.id; o.textContent = e.name; s.appendChild(o); }); }
-
-async function generateAdminReport() { 
-    var eid = document.getElementById('reportEmployeeSelect')?.value; var start = document.getElementById('reportStartDate')?.value; var end = document.getElementById('reportEndDate')?.value; 
-    if (!start || !end) { showToast('Выберите даты','warning'); return; } 
-    var container = document.getElementById('adminReportResult'); if(!container) return; 
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;"><span class="loading-spinner"></span> Загрузка...</div>'; 
-    var q = db.collection('work_logs').where('date', '>=', start).where('date', '<=', end); if (eid) q = q.where('userId', '==', eid); 
-    var s = await q.get(); 
-    var st = { received:0, collected:0, shipped:0, laid:0, invoice:0, accepted:0, shippedPush:0, unloaded:0, reworked:0, daysM:new Set(), daysP:new Set() }; 
-    s.docs.forEach(function(doc) { var l = doc.data(); if (l.action === 'Работал на складе') { if (l.warehouse === 'Москва') st.daysM.add(l.date); else st.daysP.add(l.date); } var qty = l.quantity || 0; if (l.action.indexOf('Принял коробов') >= 0) st.received += qty; if (l.action.indexOf('Собрал паллеты') >= 0) st.collected += qty; if (l.action.indexOf('Отгрузил паллеты') >= 0) st.shipped += qty; if (l.action.indexOf('Выкладка товара') >= 0) st.laid += qty; if (l.action.indexOf('Сборка по накладной') >= 0) st.invoice += qty; if (l.action.indexOf('Принял с осн. склада') >= 0) st.accepted += qty; if (l.action.indexOf('Отгрузил на осн. склад') >= 0) st.shippedPush += qty; if (l.action.indexOf('Выгрузка фуры') >= 0) st.unloaded += qty; if (l.action.indexOf('Перебрал паллеты') >= 0) st.reworked += qty; }); 
-    var cards = [{val: st.daysM.size, lbl: 'Дней в Москве'}, {val: st.daysP.size, lbl: 'Дней в Пушкино'}, {val: st.received, lbl: 'Принято коробов'}, {val: st.collected, lbl: 'Собрано паллет'}, {val: st.shipped, lbl: 'Отгружено паллет'}, {val: st.laid, lbl: 'Выкладка (шт)'}, {val: st.invoice, lbl: 'По накладным'}, {val: st.accepted, lbl: 'Принято с осн. (кор)'}, {val: st.shippedPush, lbl: 'Отгруж. на осн. (кор)'}, {val: st.unloaded, lbl: 'Выгрузка фуры (кор)'}, {val: st.reworked, lbl: 'Перебрано (кор)'}];
-    var html = '<div class="ios-tile-grid">'; cards.forEach(function(c) { html += '<div class="ios-tile"><div class="tile-value">'+c.val+'</div><div class="tile-label">'+c.lbl+'</div></div>'; }); html += '</div>'; container.innerHTML = html; 
-}
-
-// ==================== UI РЕНДЕРИНГ ====================
-var currentUser = null, isAdmin = false, isSuperAdmin = false, currentWarehouse = 'Москва', employees = [];
-
-async function renderAdminPanel() {
-    var ipOptions = IP_LIST.map(function(ip){return '<option value="'+ip+'">'+ip+'</option>';}).join('');
-    return '<div class="admin-panel"><div class="ios-segmented-control"><button class="ios-segment active" data-tab="logs">Записи</button><button class="ios-segment" data-tab="employees">Сотрудники</button><button class="ios-segment" data-tab="reports">Отчёты</button><button class="ios-segment" data-tab="photos">Фото</button></div><div id="tabLogs"><div class="ios-filters"><select id="adminFilterEmployee" class="ios-filter-select"><option value="">Все сотрудники</option></select><input type="date" id="adminFilterDate" class="ios-filter-input"><button class="ios-filter-btn" data-admin-action="applyAdminFilter">Поиск</button><button class="ios-filter-btn secondary" data-admin-action="clearAdminFilter">Сброс</button></div><div id="adminLogsContainer"><div class="loading">Загрузка...</div></div></div><div id="tabEmployees" style="display:none;"><div style="display:flex;gap:8px;margin-bottom:12px;"><button class="ios-add-btn" data-admin-action="addEmployee">Добавить</button><button class="ios-filter-btn secondary" data-admin-action="cleanInactive" style="font-size:0.75rem;">Очистить</button></div><div id="adminEmployeesContainer"><div class="loading">Загрузка...</div></div></div><div id="tabReports" style="display:none;"><div class="ios-filters"><select id="reportEmployeeSelect" class="ios-filter-select"><option value="">Все сотрудники</option></select><input type="date" id="reportStartDate" class="ios-filter-input"><input type="date" id="reportEndDate" class="ios-filter-input"><button class="ios-filter-btn" data-admin-action="generateReport">Сформировать</button></div><div id="adminReportResult"></div></div><div id="tabPhotos" style="display:none;"><div class="ios-filters"><select id="photoFilterEmployee" class="ios-filter-select"><option value="">Все сотрудники</option></select><input type="date" id="photoFilterDate" class="ios-filter-input"><select id="photoFilterIP" class="ios-filter-select"><option value="">Все ИП</option>'+ipOptions+'</select><input type="text" id="photoFilterCityInput" class="ios-filter-input" placeholder="Город" style="width:80px;"><button class="ios-filter-btn" data-admin-action="applyPhotoFilter">Поиск</button><button class="ios-filter-btn secondary" data-admin-action="clearPhotoFilter">Сброс</button></div><div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="ios-archive-btn" data-admin-action="archivePhotos">Архив старых фото</button></div><div id="palletPhotosContainer"><div class="loading">Загрузка...</div></div></div></div>';
-}
-
-async function completeLogin(u) {
-    currentUser = u; isAdmin = (u.role === 'admin' || u.role === 'superadmin'); isSuperAdmin = (u.role === 'superadmin');
-    document.getElementById('userName').textContent = u.name;
-    document.getElementById('userAvatar').textContent = u.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2);
-    if (isSuperAdmin) { document.getElementById('superadminTag').style.display = 'inline'; document.getElementById('adminTag').style.display = 'none'; }
-    else if (isAdmin) { document.getElementById('adminTag').style.display = 'inline'; document.getElementById('superadminTag').style.display = 'none'; }
-    else { document.getElementById('adminTag').style.display = 'none'; document.getElementById('superadminTag').style.display = 'none'; }
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').classList.add('active');
-    _historyCache = {};
-    
-    var tabBar = document.getElementById('iosTabBar');
-    var wsBar = document.getElementById('warehouseSwitchBar');
-    
-    if (isAdmin) { 
-        tabBar.style.display = 'none';
-        wsBar.style.display = 'none';
-        document.getElementById('userView').classList.remove('active'); document.getElementById('adminView').classList.add('active'); 
-        document.getElementById('adminView').innerHTML = await renderAdminPanel(); 
-        document.getElementById('adminFilterDate').value = getTodayStr(); 
-        await updateFilterEmployeeSelect(); await updatePhotoFilterEmployees(); 
-        Promise.all([loadAdminLogs(), loadAdminEmployees(), updateReportEmployeeSelect(), loadPalletPhotos()]).catch(function(){});
-    } else { 
-        tabBar.style.display = 'flex';
-        wsBar.style.display = 'flex';
-        document.getElementById('userView').classList.add('active'); document.getElementById('adminView').classList.remove('active'); 
-        clearAllPhotoPreviews();
-        document.getElementById('userView').innerHTML = await renderUserPanel(); 
-        updateCityDatalist();
-        Promise.all([loadUserData(), checkTodayAttendance()]).catch(function(){});
-        currentHistoryDate = new Date(); 
-        document.getElementById('historyDateInput').value = formatDateForInput(currentHistoryDate); 
-        loadHistoryForDate(formatDateForInput(currentHistoryDate)); 
-        showInstallPrompt(); 
-        currentTab = 'operations';
-        document.querySelector('.ios-tab-item[data-tab="operations"]').classList.add('active');
-        document.querySelector('.ios-tab-item[data-tab="photos"]').classList.remove('active');
-        document.querySelector('.ios-tab-item[data-tab="history"]').classList.remove('active');
-    }
-}
-
-async function renderUserPanel() {
-    var slotsHtml = '';
-    for (var i = 0; i < MAX_PHOTOS; i++) { slotsHtml += '<div class="photo-slot" id="photoSlot'+i+'" onclick="window.triggerPhotoCapture('+i+')"><span class="slot-number">'+(i+1)+'</span></div>'; }
-    var ipRowsHtml = '<div class="ip-rows">';
-    IP_LIST.forEach(function(ip) { ipRowsHtml += '<div class="ip-row"><span class="ip-name">'+ip+'</span><input type="number" id="ipQty_'+ip+'" class="ip-qty-input" placeholder="0" min="0"><span class="ip-unit">кор.</span></div>'; });
-    ipRowsHtml += '</div>';
-    var todayStr = getTodayStr(), todayDisplay = formatDateForDisplay(todayStr);
-    
-    var moscowContent = '<div class="work-day-card"><div><span>Отметить присутствие</span></div><div style="display:flex;align-items:center;gap:8px;"><span id="moscowWorkedToday" style="color:#6b7280;font-size:0.75rem;">Не отмечено</span><button class="btn-work" data-action="markAttendance" data-warehouse="Москва">Отметить</button></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Принял коробов</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>кор.</span><span class="counter-value" id="moscowReceived">0</span></div><div class="manual-input-row"><input type="number" id="moscowReceivedManual" class="input-field" placeholder="Введите" min="0"><button class="btn-set" data-target="moscowReceived" data-manual="moscowReceivedManual">Уст.</button></div><div class="adjust-buttons"><button class="btn-adjust" data-target="moscowReceived" data-delta="-1">–</button><button class="btn-adjust" data-target="moscowReceived" data-delta="1">+</button></div><button class="btn-ok green" data-action="receive">ОК</button><button class="reset-btn" data-reset="moscowReceived">сброс</button></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Собрал паллет</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>палл.</span><span class="counter-value" id="moscowCollected">0</span></div><div class="manual-input-row"><input type="number" id="moscowCollectedManual" class="input-field" placeholder="Введите" min="0"><button class="btn-set" data-target="moscowCollected" data-manual="moscowCollectedManual">Уст.</button></div><div class="adjust-buttons"><button class="btn-adjust" data-target="moscowCollected" data-delta="-1">–</button><button class="btn-adjust" data-target="moscowCollected" data-delta="1">+</button></div><button class="btn-ok" data-action="collect">ОК</button><button class="reset-btn" data-reset="moscowCollected">сброс</button></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Отгрузил паллет</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>палл.</span><span class="counter-value" id="moscowShipped">0</span></div><div class="manual-input-row"><input type="number" id="moscowShippedManual" class="input-field" placeholder="Введите" min="0"><button class="btn-set" data-target="moscowShipped" data-manual="moscowShippedManual">Уст.</button></div><div class="adjust-buttons"><button class="btn-adjust" data-target="moscowShipped" data-delta="-1">–</button><button class="btn-adjust" data-target="moscowShipped" data-delta="1">+</button></div><button class="btn-ok orange" data-action="ship">ОК</button><button class="reset-btn" data-reset="moscowShipped">сброс</button></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Выкладка товара</h3></div><div class="accordion-content"><div><div class="op-card"><input type="text" id="moscowArticle" class="input-field" placeholder="Артикул"><input type="number" id="moscowQuantity" class="input-field" placeholder="Кол-во" min="1"><button class="btn-ok blue" data-action="lay">ОК</button><div style="margin-top:4px;font-size:0.65rem;">Последний: <span id="moscowLastArticle">—</span></div></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Сборка по накладной</h3></div><div class="accordion-content"><div><div class="op-card"><input type="text" id="moscowInvoiceNumber" class="input-field" placeholder="Накладная"><input type="number" id="moscowInvoiceQuantity" class="input-field" placeholder="Кол-во" min="1"><button class="btn-ok purple" data-action="invoice">ОК</button><div style="margin-top:4px;font-size:0.65rem;">Всего: <span id="moscowInvoiceTotal">0</span> шт.</div></div></div></div></div>';
-    
-    var pushkinoContent = '<div class="work-day-card"><div><span>Отметить присутствие</span></div><div style="display:flex;align-items:center;gap:8px;"><span id="pushkinoWorkedToday" style="color:#6b7280;font-size:0.75rem;">Не отмечено</span><button class="btn-work" data-action="markAttendance" data-warehouse="Пушкино">Отметить</button></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Принял с осн. склада</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>кор.</span><span class="counter-value" id="pushkinoAccepted">0</span></div><div class="adjust-buttons"><button class="btn-adjust" data-target="pushkinoAccepted" data-delta="-1">–</button><button class="btn-adjust" data-target="pushkinoAccepted" data-delta="1">+</button></div><button class="btn-ok" data-action="accept">ОК</button><button class="reset-btn" data-reset="pushkinoAccepted">сброс</button><div style="margin-top:4px;font-size:0.65rem;">Всего: <span id="pushkinoAcceptedTotal">0</span> кор.</div></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Отгрузил на осн.</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>кор.</span><span class="counter-value" id="pushkinoShipped">0</span></div><div class="adjust-buttons"><button class="btn-adjust" data-target="pushkinoShipped" data-delta="-1">–</button><button class="btn-adjust" data-target="pushkinoShipped" data-delta="1">+</button></div><button class="btn-ok orange" data-action="shipPushkino">ОК</button><button class="reset-btn" data-reset="pushkinoShipped">сброс</button><div style="margin-top:4px;font-size:0.65rem;">Всего: <span id="pushkinoShippedTotal">0</span> кор.</div></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Выгрузка фуры</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>кор.</span><span class="counter-value" id="pushkinoUnloaded">0</span></div><div class="adjust-buttons"><button class="btn-adjust" data-target="pushkinoUnloaded" data-delta="-1">–</button><button class="btn-adjust" data-target="pushkinoUnloaded" data-delta="1">+</button></div><button class="btn-ok blue" data-action="unload">ОК</button><button class="reset-btn" data-reset="pushkinoUnloaded">сброс</button><div style="margin-top:4px;font-size:0.65rem;">Всего: <span id="pushkinoUnloadedTotal">0</span> кор.</div></div></div></div></div>'+
-    '<div class="accordion-item"><div class="accordion-header"><h3><span class="accordion-icon">&#x25B6;</span> Перебрал паллеты</h3></div><div class="accordion-content"><div><div class="op-card"><div class="counter-row"><span>кор.</span><span class="counter-value" id="pushkinoReworked">0</span></div><div class="adjust-buttons"><button class="btn-adjust" data-target="pushkinoReworked" data-delta="-1">–</button><button class="btn-adjust" data-target="pushkinoReworked" data-delta="1">+</button></div><button class="btn-ok teal" data-action="rework">ОК</button><button class="reset-btn" data-reset="pushkinoReworked">сброс</button><div style="margin-top:4px;font-size:0.65rem;">Всего: <span id="pushkinoReworkedTotal">0</span> кор.</div></div></div></div></div>';
-    
-    return ''+
-    '<!-- TAB: Operations -->'+
-    '<div class="tab-content active" id="tab-operations">'+
-        '<div class="warehouse-container active" id="moscowContainer">'+moscowContent+'</div>'+
-        '<div class="warehouse-container" id="pushkinoContainer">'+pushkinoContent+'</div>'+
-    '</div>'+
-    '<!-- TAB: Photos -->'+
-    '<div class="tab-content" id="tab-photos">'+
-        '<div class="photo-card">'+
-            '<div class="photo-title">Фото паллет (до '+MAX_PHOTOS+' фото)</div>'+
-            '<div class="photo-slots">'+slotsHtml+'</div>'+
-            '<div class="photo-counter" id="photoCounter">Заполнено: 0 / '+MAX_PHOTOS+'</div>'+
-            '<div class="photo-form-row">'+
-                '<div class="input-field-wrap"><input type="text" id="photoCity" class="input-field" placeholder="Город" list="citySuggestions" style="margin-bottom:0;"><datalist id="citySuggestions"></datalist></div>'+
-                '<div class="date-picker-wrap"><label class="date-picker-label" for="photoDate">Дата</label><input type="date" id="photoDate" class="date-picker-input" value="'+todayStr+'"><div class="date-value" id="dateDisplayValue">'+todayDisplay+'</div></div>'+
-            '</div>'+
-            ipRowsHtml+
-            '<button class="btn-photo" id="savePhotoBtn" onclick="window.savePhotos()">Сохранить паллету</button>'+
-        '</div>'+
-        '<div class="my-photo-history"><div class="section-title">Мои паллеты</div><div id="myPhotoHistoryContainer"><div class="loading">Загрузка...</div></div></div>'+
-    '</div>'+
-    '<!-- TAB: History -->'+
-    '<div class="tab-content" id="tab-history">'+
-        '<div class="history-section">'+
-            '<div class="history-header">'+
-                '<h3>Мои записи</h3>'+
-                '<div class="date-selector">'+
-                    '<button class="date-nav-btn" data-action="prevDay">←</button>'+
-                    '<input type="date" id="historyDateInput">'+
-                    '<button class="date-nav-btn" data-action="nextDay">→</button>'+
-                    '<button class="date-nav-btn" data-action="todayHistory" style="font-size:0.65rem;padding:5px 8px;">Сегодня</button>'+
-                '</div>'+
-            '</div>'+
-            '<div id="myHistoryContainer"></div>'+
-        '</div>'+
-    '</div>';
-}
-
-function logout() { 
-    currentUser = null; isAdmin = false; isSuperAdmin = false; clearAllPhotoPreviews();
-    _employeesCache.data = null; _employeesCache.timestamp = 0; _historyCache = {}; _cityCache = null; _cityColorMap = {};
-    _photoDataStore = {}; _photoIdCounter = 0;
-    clearSession(); document.getElementById('loginScreen').style.display = 'block'; document.getElementById('dashboard').classList.remove('active'); 
-    document.getElementById('iosTabBar').style.display = 'none';
-    document.getElementById('warehouseSwitchBar').style.display = 'none';
-}
-
-// ==================== ИНИЦИАЛИЗАЦИЯ И СОБЫТИЯ ====================
-function attachLoginEvents() {
-    var dl = async function() { 
-        var lv = document.getElementById("loginUser").value.trim(), pv = document.getElementById("loginPass").value.trim(); 
-        var le = document.getElementById("loginError"), lb = document.getElementById("doLogin"); 
-        if (!lv || !pv) { le.style.display = "block"; le.innerText = "Введите логин и пароль"; return; } 
-        le.style.display = "none"; lb.disabled = true; lb.textContent = "Вход..."; 
-        try { var u = await loginUser(lv, pv); if (!u) { le.style.display = "block"; le.innerText = "Неверный логин или пароль"; lb.disabled = false; lb.textContent = "Войти"; return; } saveSession(u); await completeLogin(u); } 
-        catch(e) { le.style.display = "block"; le.innerText = "Ошибка входа"; lb.disabled = false; lb.textContent = "Войти"; } 
-    };
-    document.getElementById("doLogin").onclick = dl;
-    document.getElementById("loginPass")?.addEventListener("keypress", function(e) { if(e.key==="Enter") dl(); });
-    document.getElementById("regToggle").addEventListener("click", function() { document.getElementById("regBlock").classList.toggle("show"); });
-    document.getElementById("doRegister").onclick = async function() { 
-        var rl = document.getElementById("regLogin").value.trim(), rp = document.getElementById("regPass").value.trim(), rn = document.getElementById("regName").value.trim(); 
-        var re = document.getElementById("regError"), result = await registerUser(rl, rp, rn); 
-        re.style.display = "block"; re.className = result.success ? "success-msg" : "error-msg"; 
-        re.innerText = result.success ? "Регистрация успешна! Теперь войдите." : result.error; 
-        if (result.success) { document.getElementById("regLogin").value=""; document.getElementById("regPass").value=""; document.getElementById("regName").value=""; } 
-        setTimeout(function() { re.style.display = "none"; }, 3000); 
-    };
-}
-
-var swipeStartX = 0, swipeThreshold = 60;
-function switchWarehouse(wh) {
-    if (currentWarehouse === wh) return;
-    currentWarehouse = wh;
-    var mc = document.getElementById('moscowContainer'), pc = document.getElementById('pushkinoContainer');
-    var dots = document.querySelectorAll('#warehouseIndicator .swipe-dot');
-    var label = document.getElementById('currentWhLabel');
-    if (mc && pc) {
-        if (wh === 'Москва') { mc.classList.add('active'); mc.classList.remove('swipe-left','swipe-right'); pc.classList.remove('active'); pc.classList.add('swipe-right'); setTimeout(function() { pc.classList.remove('swipe-right'); }, 300); }
-        else { pc.classList.add('active'); pc.classList.remove('swipe-left','swipe-right'); mc.classList.remove('active'); mc.classList.add('swipe-left'); setTimeout(function() { mc.classList.remove('swipe-left'); }, 300); }
-    }
-    dots.forEach(function(dot) { dot.classList.toggle('active', dot.dataset.wh === wh); });
-    if (label) label.textContent = wh;
-    var hint = document.getElementById('swipeHint');
-    if (hint) { hint.classList.add('show'); setTimeout(function() { hint.classList.remove('show'); }, 2000); }
-}
-
-function initSwipeDetection() {
-    var opsTab = document.getElementById('tab-operations'); if (!opsTab) return;
-    opsTab.addEventListener('touchstart', function(e) { swipeStartX = e.touches[0].clientX; }, { passive: true });
-    opsTab.addEventListener('touchend', function(e) { if (currentTab !== 'operations') return; var diffX = e.changedTouches[0].clientX - swipeStartX; if (Math.abs(diffX) > swipeThreshold) { if (diffX > 0 && currentWarehouse === 'Пушкино') switchWarehouse('Москва'); else if (diffX < 0 && currentWarehouse === 'Москва') switchWarehouse('Пушкино'); } });
-    setTimeout(function() { var hint = document.getElementById('swipeHint'); if (hint) { hint.classList.add('show'); setTimeout(function() { hint.classList.remove('show'); }, 3000); } }, 1000);
-}
-
-function isPWA() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone || document.referrer.indexOf('android-app://') >= 0; }
-function getOS() { var ua = navigator.userAgent; if (/iPhone|iPad|iPod/.test(ua)) return 'ios'; if (/Android/.test(ua)) return 'android'; return 'other'; }
-function showInstallPrompt() { if (isPWA()) return; var os = getOS(); var ih = document.getElementById('iosInstallHint'); if (os === 'ios') { if (ih) { ih.innerHTML = 'Установите как приложение: нажмите Поделиться в Safari, затем На экран Домой'; ih.classList.add('show'); setTimeout(function() { if (ih) ih.classList.remove('show'); }, 15000); } } else if (os === 'android' && window._deferredPrompt) { var b = document.getElementById('installBanner'); if (b) { b.innerHTML = '<span>Установить как приложение</span>'; b.classList.add('show'); b.onclick = function() { window._deferredPrompt.prompt(); window._deferredPrompt.userChoice.then(function() { window._deferredPrompt = null; b.classList.remove('show'); }); }; } } }
-window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault(); window._deferredPrompt = e; showInstallPrompt(); });
-window.addEventListener('appinstalled', function() { window._deferredPrompt = null; var b = document.getElementById('installBanner'); if (b) b.classList.remove('show'); });
-
-async function init() {
-    initTheme(); getEmployees().catch(function(){});
-    var session = getSession();
-    if (session) { try { await completeLogin(session); } catch(e) { clearSession(); attachLoginEvents(); document.getElementById('loginScreen').style.display = 'block'; } } 
-    else { attachLoginEvents(); }
-    
-    document.addEventListener('click', function(e) { 
-        var t = e.target; 
-        if (t.closest('.ios-tab-item') && !t.closest('.ios-segmented-control')) {
-            var tabName = t.closest('.ios-tab-item').dataset.tab;
-            if (tabName) switchTab(tabName);
-            return;
-        }
-        if (t.closest('.accordion-header')) { t.closest('.accordion-item').classList.toggle('open'); return; }
-        if (t.classList.contains('btn-set')) { var tg=t.dataset.target, mi=t.dataset.manual, m=document.getElementById(mi); if(m){var v=parseInt(m.value); counters[tg]=(!isNaN(v)&&v>=0)?v:0; m.value=''; updateAllCounters(); showToast('Установлено: '+counters[tg],'info'); } } 
-        if (t.classList.contains('btn-adjust')) { var tg=t.dataset.target, d=parseInt(t.dataset.delta); counters[tg]=Math.max(0,(counters[tg]||0)+d); updateAllCounters(); } 
-        if (t.hasAttribute('data-reset')) { counters[t.dataset.reset]=0; updateAllCounters(); showToast('Сброшено','info'); } 
-        if (t.hasAttribute('data-action')) {
-            var action = t.dataset.action;
-            if (action === 'markAttendance') { markAttendance(t.dataset.warehouse); return; }
-            if (action === 'prevDay') { currentHistoryDate.setDate(currentHistoryDate.getDate()-1); var ds=formatDateForInput(currentHistoryDate); var inp=document.getElementById('historyDateInput'); if(inp)inp.value=ds; loadHistoryForDate(ds); return; }
-            if (action === 'nextDay') { currentHistoryDate.setDate(currentHistoryDate.getDate()+1); var ds=formatDateForInput(currentHistoryDate); var inp=document.getElementById('historyDateInput'); if(inp)inp.value=ds; loadHistoryForDate(ds); return; }
-            if (action === 'todayHistory') { currentHistoryDate=new Date(); var ds=formatDateForInput(currentHistoryDate); var inp=document.getElementById('historyDateInput'); if(inp)inp.value=ds; loadHistoryForDate(ds); return; }
-            handleAction(action); 
-        } 
-        if (t.hasAttribute('data-admin-action')) {
-            var adminAction = t.dataset.adminAction;
-            if (adminAction === 'applyAdminFilter') { loadAdminLogs(); return; }
-            if (adminAction === 'clearAdminFilter') { var emp=document.getElementById('adminFilterEmployee'),date=document.getElementById('adminFilterDate');if(emp)emp.value='';if(date)date.value=getTodayStr();loadAdminLogs(); return; }
-            if (adminAction === 'addEmployee') { var n=prompt('Фамилия нового сотрудника:');if(n)addEmployee(n); return; }
-            if (adminAction === 'cleanInactive') { cleanInactiveEmployees(); return; }
-            if (adminAction === 'generateReport') { generateAdminReport(); return; }
-            if (adminAction === 'archivePhotos') { var months=prompt('Удалить фото старше скольких месяцев?','5');var m=parseInt(months);if(m&&m>0)archiveOldPhotos(m); return; }
-            if (adminAction === 'applyPhotoFilter') { var f={};var emp=document.getElementById('photoFilterEmployee')?.value,date=document.getElementById('photoFilterDate')?.value,ip=document.getElementById('photoFilterIP')?.value,city=document.getElementById('photoFilterCityInput')?.value.trim();if(emp)f.userId=emp;if(date)f.date=date;if(ip)f.ip=ip;if(city)f.city=city;loadPalletPhotos(f); return; }
-            if (adminAction === 'clearPhotoFilter') { var emp=document.getElementById('photoFilterEmployee'),date=document.getElementById('photoFilterDate'),ip=document.getElementById('photoFilterIP'),city=document.getElementById('photoFilterCityInput');if(emp)emp.value='';if(date)date.value='';if(ip)ip.value='';if(city)city.value='';loadPalletPhotos(); return; }
-        }
-        if (t.classList.contains('swipe-dot')) { switchWarehouse(t.dataset.wh); }
-        if (t.classList.contains('ios-segment')) { var seg = t.closest('.ios-segmented-control'); if(seg) seg.querySelectorAll('.ios-segment').forEach(function(x){x.classList.remove('active');}); t.classList.add('active'); var tab=t.dataset.tab; ['logs','employees','reports','photos'].forEach(function(tn){ var el=document.getElementById('tab'+tn.charAt(0).toUpperCase()+tn.slice(1)); if(el)el.style.display=tn===tab?'block':'none'; }); if(tab==='photos')loadPalletPhotos(); } 
+        html += `<div class="shipment-card">
+            <button class="card-delete" data-mp="${mp}" data-id="${e.id}" title="Удалить">×</button>
+            <div class="card-header">
+                <div>
+                    <div class="card-city">📍 ${e.city}</div>
+                    <div class="card-date">${e.date}</div>
+                </div>
+            </div>
+            <div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>
+            <div class="card-qty-label">единиц товара</div>
+            ${route ? `<div class="route-badge badge-info">🚚 ${route.delivery}</div>` : ''}
+            <div class="card-status">
+                <select class="status-select ${statusObj.class}" data-mp="${mp}" data-id="${e.id}">
+                    ${STATUSES.map(s => `<option value="${s.value}" ${currentStatus === s.value ? 'selected' : ''}>${s.label}</option>`).join('')}
+                </select>
+            </div>
+        </div>`;
     });
     
-    document.addEventListener('change', function(e) {
-        if (e.target.id === 'historyDateInput') { currentHistoryDate=new Date(e.target.value); loadHistoryForDate(e.target.value); }
-        if (e.target.id === 'photoDate') { var dv = document.getElementById('dateDisplayValue'); if (dv) dv.textContent = formatDateForDisplay(e.target.value); }
-    });
-    
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
-    
-    var today=new Date(), weekAgo=new Date(today); weekAgo.setDate(today.getDate()-7);
-    var rs=document.getElementById('reportStartDate'), re=document.getElementById('reportEndDate');
-    if(rs)rs.value=weekAgo.toISOString().split('T')[0]; if(re)re.value=today.toISOString().split('T')[0];
-    initSwipeDetection();
+    document.getElementById(containerId).innerHTML = html;
 }
 
-init();
+function renderLog() {
+    const fm = document.getElementById('logFilterMonth').value;
+    const fs = document.getElementById('logFilterStatus').value;
+    const fmp = document.getElementById('logFilterMP').value;
+    let fl = [...logEntries];
+    if (fm) fl = fl.filter(e => e.date && e.date.startsWith(fm));
+    if (fs === 'paid') fl = fl.filter(e => e.paid);
+    if (fs === 'unpaid') fl = fl.filter(e => !e.paid);
+    if (fmp !== 'all') fl = fl.filter(e => e.marketplace === fmp);
+    const srt = fl.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    document.getElementById('logCount').textContent = srt.length;
+    
+    if (!srt.length) { 
+        document.getElementById('logTable').innerHTML = '<div class="empty">Нет записей</div>'; 
+        document.getElementById('logSummary').innerHTML = '';
+        return; 
+    }
+    
+    const tq = srt.reduce((s,e) => s + (e.qty||0), 0);
+    const ta = srt.reduce((s,e) => s + (e.amount||0), 0);
+    const taf = srt.reduce((s,e) => s + (e.amountFull||0), 0);
+    const tpd = srt.filter(e => e.paid).reduce((s,e) => s + (e.amountFull||0), 0);
+    const tup = srt.filter(e => !e.paid).reduce((s,e) => s + (e.amountFull||0), 0);
+    
+    document.getElementById('logSummary').innerHTML = `
+        <div class="summary-item"><div class="label">Отправок</div><div class="value">${srt.length}</div></div>
+        <div class="summary-item"><div class="label">Товаров</div><div class="value">${tq.toLocaleString('ru-RU')}</div></div>
+        <div class="summary-item"><div class="label">Сумма</div><div class="value">${fmtPrice(ta)}</div></div>
+        <div class="summary-item"><div class="label">С НДС</div><div class="value">${fmtPrice(taf)}</div></div>
+        <div class="summary-item"><div class="label">Оплачено / Не опл.</div><div class="value" style="font-size:15px"><span style="color:#10b981">${fmtPrice(tpd)}</span> / <span style="color:#f59e0b">${fmtPrice(tup)}</span></div></div>`;
+    
+    let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';
+    
+    let lm = '';
+    srt.forEach(e => {
+        if (!e.date) return;
+        const m = monthName(e.date + 'T00:00:00');
+        if (m !== lm && !fm) { lm = m; html += `<tr><td colspan="12" class="month-sep">📅 ${m} 2026</td></tr>`; }
+        
+        html += `<tr>
+            <td>${e.date.split('-').reverse().join('.')}</td>
+            <td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${e.marketplace}</span></td>
+            <td>${e.type||'FBO'}</td>
+            <td>
+                <select class="log-select" onchange="updateLogSupplier('${e.id}', this.value)">
+                    ${SUPPLIERS.map(s => `<option value="${s}" ${e.supplier === s ? 'selected' : ''}>${s || '—'}</option>`).join('')}
+                </select>
+            </td>
+            <td>${e.city||''}</td>
+            <td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td>
+            <td class="num"><input class="log-edit-input" style="width:60px;text-align:center;" value="${e.boxes||0}" type="number" onchange="updateLogPallets('${e.id}', this.value)"></td>
+            <td class="num"><input class="log-edit-input" style="width:90px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" onchange="updateLogAmount('${e.id}', this.value)"></td>
+            <td class="num">${fmtPrice(e.amountFull)}</td>
+            <td>
+                <select onchange="updateLogNds('${e.id}', this.value)" style="font-size:10px;padding:2px;">
+                    <option value="22%" ${e.nds==='22%'?'selected':''}>22%</option>
+                    <option value="7%" ${e.nds==='7%'?'selected':''}>7%</option>
+                </select>
+            </td>
+            <td><button class="btn-status ${e.paid?'paid-active':'unpaid-active'}" onclick="toggleLogPaid('${e.id}')">${e.paid?'Оплачен':'Не опл.'}</button></td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteLogEntry('${e.id}')">✕</button></td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('logTable').innerHTML = html;
+}
+
+function renderAll() { 
+    renderSchedule(); 
+    renderShipmentCards('Wildberries'); 
+    renderShipmentCards('Ozon'); 
+    renderLog(); 
+    checkTrucksForTomorrow();
+}
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
+document.getElementById('shipDateWildberries').value = new Date().toISOString().slice(0,10);
+document.getElementById('shipDateOzon').value = new Date().toISOString().slice(0,10);
+document.getElementById('cityList').innerHTML = Object.keys(routesDB).map(c => `<option value="${c}">`).join('');
+
+currentPage = localStorage.getItem('currentPage') || 'schedule';
+switchPage(currentPage);
+
+document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', function() { switchPage(this.dataset.page); }));
+document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
+
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('status-select')) {
+        handleStatusChange(e);
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('card-delete')) {
+        const mp = e.target.dataset.mp;
+        const id = e.target.dataset.id;
+        if (id) deleteShipment(mp, id);
+    }
+});
+
+document.getElementById('btnImportSchedule').addEventListener('click', toggleScheduleImport);
+document.getElementById('btnDoScheduleImport').addEventListener('click', doScheduleImport);
+document.getElementById('btnExportSchedule').addEventListener('click', exportScheduleCSV);
+
+document.getElementById('btnSaveWb').addEventListener('click', () => saveShipment('Wildberries'));
+document.getElementById('btnClearWb').addEventListener('click', () => clearShipmentForm('Wildberries'));
+document.getElementById('shipCityWildberries').addEventListener('input', showRouteInfo);
+
+document.getElementById('btnSaveOzon').addEventListener('click', () => saveShipment('Ozon'));
+document.getElementById('btnClearOzon').addEventListener('click', () => clearShipmentForm('Ozon'));
+
+document.getElementById('btnAddLog').addEventListener('click', addLogEntry);
+document.getElementById('btnToggleLogImport').addEventListener('click', toggleLogImport);
+document.getElementById('btnDoLogImport').addEventListener('click', doLogImport);
+document.getElementById('btnExportLog').addEventListener('click', exportLogCSV);
+document.getElementById('btnResetLogFilters').addEventListener('click', resetLogFilters);
+document.getElementById('logFilterMonth').addEventListener('change', renderLog);
+document.getElementById('logFilterStatus').addEventListener('change', renderLog);
+document.getElementById('logFilterMP').addEventListener('change', renderLog);
+document.getElementById('logAmount').addEventListener('input', updateLogCalc);
+document.getElementById('logNDS').addEventListener('change', updateLogCalc);
+
+updateLogCalc();
+loadFromFirebase();
 </script>
 </body>
 </html>
