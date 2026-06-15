@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>График отгрузок</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #f2f4f7;
+            --surface: #ffffff;
+            --text-primary: #1a1c1e;
+            --text-secondary: #5f6368;
+            --text-tertiary: #9aa0a6;
+            --border: #e8eaed;
+            --separator: #f1f3f4;
+            --accent: #1a73e8;
+            --accent-hover: #1557b0;
+            --wb: #7b1fa2;
+            --ozon: #0277bd;
+            --ved: #00695c;
+            --success: #0d904f;
+            --warning: #f9ab00;
+            --danger: #ea4335;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.4;
+            padding: 20px 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
+        }
+        .header-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-status { display: flex; align-items: center; gap: 12px; }
+        .sync-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #0d904f;
+            box-shadow: 0 0 0 3px rgba(13,144,79,0.2);
+        }
+        .sync-dot.offline { background: #ea4335; box-shadow: 0 0 0 3px rgba(234,67,53,0.2); }
+        .sync-dot.loading { background: #f9ab00; box-shadow: 0 0 0 3px rgba(249,171,0,0.2); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .sync-text { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 20px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: all 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; font-family: inherit;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { background: #f8f9fa; }
+        .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 14px; }
+        .btn-wb { background: var(--wb); color: #fff; }
+        .btn-wb:hover { opacity: 0.9; }
+        .btn-ozon { background: var(--ozon); color: #fff; }
+        .btn-ozon:hover { opacity: 0.9; }
+        .btn-log { background: #3c4043; color: #fff; }
+        .btn-log:hover { opacity: 0.9; }
+        .btn-ved { background: var(--ved); color: #fff; }
+        .btn-ved:hover { opacity: 0.9; }
+        .btn-danger-sm { background: transparent; color: #ea4335; border: 1px solid #ea4335; padding: 4px 10px; font-size: 11px; border-radius: 14px; cursor: pointer; font-family: inherit; font-weight: 600; }
+        .btn-danger-sm:hover { background: #fce8e6; }
+
+        .nav {
+            display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-md);
+            padding: 4px; margin-bottom: 24px; box-shadow: var(--shadow-sm);
+        }
+        .nav-btn {
+            flex: 1; padding: 10px 14px; border: none; border-radius: 12px;
+            font-size: 13px; font-weight: 600; cursor: pointer; background: transparent;
+            color: var(--text-secondary); transition: all 0.15s; font-family: inherit; text-align: center; white-space: nowrap;
+        }
+        .nav-btn:hover { background: #f1f3f4; }
+        .nav-btn.active { background: var(--accent); color: #fff; }
+        .nav-btn.wb-active { background: var(--wb); color: #fff; }
+        .nav-btn.ozon-active { background: var(--ozon); color: #fff; }
+        .nav-btn.logistics-active { background: #3c4043; color: #fff; }
+        .nav-btn.ved-active { background: var(--ved); color: #fff; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+        .subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; }
+
+        .form-card {
+            background: var(--surface); border-radius: var(--radius-md);
+            padding: 18px; box-shadow: var(--shadow-sm); margin-bottom: 20px;
+        }
+        .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+        .field label {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-tertiary);
+        }
+        .field input, .field select {
+            padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 13px; font-family: inherit; background: #fafbfc; width: 100%;
+        }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--accent); background: #fff; }
+        .field-calc {
+            background: #e8f0fe; border-radius: 8px; padding: 8px 10px;
+            font-size: 13px; font-weight: 600; color: var(--accent); text-align: right;
+        }
+
+        .route-info {
+            background: #e6f4ea; border-radius: 8px; padding: 10px 14px;
+            margin-top: 8px; font-size: 12px; display: none;
+        }
+        .route-info.show { display: block; }
+        .route-info .route-title { font-weight: 600; margin-bottom: 2px; }
+        .route-info .route-detail { font-size: 11px; }
+        .route-schedule { margin-top: 4px; }
+        .route-chip {
+            background: #ceead6; color: #137333; padding: 2px 8px;
+            border-radius: 10px; font-size: 10px; font-weight: 500; display: inline-block; margin: 2px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .shipment-card {
+            background: var(--surface); border-radius: var(--radius-md);
+            padding: 18px; box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s; position: relative;
+        }
+        .shipment-card:hover { box-shadow: var(--shadow-md); }
+        .card-city { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+        .card-date { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+        .card-qty { font-size: 28px; font-weight: 700; margin: 4px 0; letter-spacing: -0.5px; }
+        .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-bottom: 12px; }
+        .card-status select {
+            width: 100%; padding: 6px 10px; border-radius: 8px;
+            border: 1px solid var(--border); font-size: 11px; font-weight: 500;
+            cursor: pointer; font-family: inherit; background: #fafbfc;
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; transition: all 0.2s;
+        }
+        .status-work { background: #fef7e0; color: #e37400; border-color: #f9ab00; }
+        .status-wait { background: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
+        .status-reject { background: #fce8e6; color: #c5221f; border-color: #ea4335; }
+        .status-sent { background: #e6f4ea; color: #137333; border-color: #0d904f; }
+        .status-ready { background: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
+        .card-delete {
+            position: absolute; top: 10px; right: 10px;
+            background: none; border: none; color: var(--text-tertiary);
+            cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 8px; z-index: 2;
+        }
+        .card-delete:hover { background: #fce8e6; color: #ea4335; }
+        .route-badge {
+            display: inline-block; font-size: 11px; color: var(--text-secondary);
+            background: #f1f3f4; padding: 2px 8px; border-radius: 8px; margin-bottom: 8px;
+        }
+
+        .file-upload-box {
+            border: 2px dashed var(--border); border-radius: 10px;
+            padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafbfc;
+        }
+        .file-upload-box:hover { border-color: var(--ved); background: #e0f2f1; }
+        .file-upload-box.has-file { border-color: var(--success); background: #e6f4ea; border-style: solid; }
+        .file-upload-box input[type="file"] { display: none; }
+        .file-name { font-size: 12px; font-weight: 600; color: var(--success); margin-top: 4px; }
+        .file-preview {
+            margin-top: 10px; background: #fff; border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px; font-size: 11px;
+            max-height: 150px; overflow-y: auto; display: none;
+        }
+        .file-preview.show { display: block; }
+        .file-preview table { width: 100%; font-size: 11px; }
+        .file-preview th { font-size: 9px; padding: 4px 6px; background: #fafbfc; }
+        .file-preview td { padding: 3px 6px; }
+
+        .supply-card {
+            background: var(--surface); border-radius: var(--radius-md);
+            padding: 18px; box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s; position: relative; cursor: pointer;
+        }
+        .supply-card:hover { box-shadow: var(--shadow-md); }
+        .supply-number { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .supply-supplier { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+        .supply-warehouse { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+        .supply-eta { font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+        .supply-items-count { font-size: 11px; color: var(--text-secondary); }
+        .supply-status-badge {
+            margin-top: 8px; padding: 6px 10px; border-radius: 8px;
+            font-size: 11px; font-weight: 600; display: inline-block;
+        }
+        .status-transit { background: #e8f0fe; color: #1a73e8; }
+        .status-customs { background: #fef7e0; color: #e37400; }
+        .status-svh { background: #fce8e6; color: #c5221f; }
+        .status-arrived { background: #e6f4ea; color: #137333; }
+
+        .supply-details {
+            display: none; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid var(--separator);
+        }
+        .supply-details.show { display: block; }
+        .supply-details table { width: 100%; font-size: 11px; }
+        .supply-details th {
+            text-align: left; padding: 6px 8px; font-size: 9px; font-weight: 700;
+            text-transform: uppercase; color: var(--text-tertiary); background: #fafbfc;
+        }
+        .supply-details td { padding: 4px 8px; border-bottom: 1px solid var(--separator); }
+
+        .chart-card {
+            background: var(--surface); border-radius: var(--radius-lg);
+            padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px;
+        }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .chart-title { font-size: 15px; font-weight: 600; }
+        .chart-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .legend-dot.wb { background: var(--wb); }
+        .legend-dot.ozon { background: var(--ozon); }
+        .chart-svg { width: 100%; height: 200px; overflow: visible; }
+        .chart-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+        .chart-line.wb { stroke: var(--wb); }
+        .chart-line.ozon { stroke: var(--ozon); }
+        .chart-area { opacity: 0.06; }
+        .chart-area.wb { fill: var(--wb); }
+        .chart-area.ozon { fill: var(--ozon); }
+        .chart-dot { stroke: #fff; stroke-width: 2; cursor: pointer; transition: all 0.2s; }
+        .chart-dot:hover { r: 5; }
+        .chart-dot.wb { fill: var(--wb); }
+        .chart-dot.ozon { fill: var(--ozon); }
+        .chart-grid line { stroke: var(--border); stroke-width: 0.5; }
+        .chart-axis text { font-size: 10px; fill: var(--text-tertiary); font-weight: 500; }
+
+        .table-wrap {
+            background: var(--surface); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); overflow-x: auto; margin-bottom: 24px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+        th {
+            text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary);
+            border-bottom: 1px solid var(--border); background: #fafbfc;
+        }
+        td { padding: 10px 16px; border-bottom: 1px solid var(--separator); }
+        tr:hover { background: #f8f9fa; }
+        .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 12px;
+            font-size: 10px; font-weight: 600;
+        }
+        .badge-wb { background: #f3e5f5; color: var(--wb); }
+        .badge-ozon { background: #e1f5fe; color: var(--ozon); }
+        .badge-info { background: #e8f0fe; color: #1a73e8; }
+
+        .week-row { cursor: pointer; }
+        .week-row.current { background: #e8f0fe; }
+        .progress-bar { height: 4px; border-radius: 2px; background: #e8eaed; margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 2px; }
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+
+        .capacity-input {
+            width: 70px; text-align: center; padding: 4px 8px;
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 12px; font-weight: 600; background: #fafbfc;
+        }
+        .capacity-input:focus { outline: none; border-color: var(--accent); }
+
+        .toggle-icon { display: inline-block; transition: transform 0.2s; font-size: 10px; margin-left: 4px; color: var(--text-tertiary); }
+        .toggle-icon.open { transform: rotate(180deg); }
+
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: var(--surface); border-radius: var(--radius-md);
+            padding: 18px 20px; box-shadow: var(--shadow-sm);
+        }
+        .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 6px; }
+        .kpi-value { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
+        .kpi-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+        .kpi-wb { border-left: 3px solid var(--wb); }
+        .kpi-ozon { border-left: 3px solid var(--ozon); }
+
+        .alert-card {
+            background: #fef7e0; border: 1px solid #f9ab00; border-radius: var(--radius-md);
+            padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start;
+        }
+        .alert-icon { font-size: 20px; }
+        .alert-content h3 { font-size: 13px; font-weight: 600; color: #e37400; margin-bottom: 6px; }
+        .alert-item {
+            display: inline-block; background: #fff; border: 1px solid #f9ab00;
+            border-radius: 8px; padding: 6px 12px; margin: 2px 4px 2px 0; font-size: 11px; color: #5f6368;
+        }
+
+        .log-edit-input {
+            width: 100%; padding: 4px 6px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 11px; background: #fafbfc; font-family: inherit;
+        }
+        .log-edit-input:focus { outline: none; border-color: var(--accent); }
+        .log-select {
+            padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 11px; background: #fafbfc; font-family: inherit;
+        }
+        .btn-status {
+            padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;
+            cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
+        }
+        .btn-status.paid { background: #e6f4ea; color: #137333; }
+        .btn-status.unpaid { background: #fef7e0; color: #e37400; }
+
+        .import-area { margin-bottom: 16px; }
+        .import-area textarea {
+            width: 100%; height: 100px; font-family: 'SF Mono', monospace;
+            font-size: 11px; padding: 10px; border: 1px solid var(--border);
+            border-radius: 10px; resize: vertical; background: #fafbfc;
+        }
+
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+        .filters select, .filters input {
+            padding: 6px 10px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 12px; background: #fff;
+        }
+        .chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f1f3f4; padding: 4px 10px; border-radius: 16px;
+            font-size: 11px; font-weight: 500; cursor: pointer;
+        }
+        .chip:hover { background: #e8eaed; }
+
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #1a1c1e; color: #fff; padding: 10px 18px;
+            border-radius: 12px; font-size: 13px; font-weight: 500;
+            z-index: 1000; opacity: 0; transform: translateY(10px);
+            transition: all 0.3s; box-shadow: 0 10px 15px rgba(0,0,0,0.15);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-tertiary); font-size: 13px; }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .cards-grid { grid-template-columns: 1fr; }
+            .nav-btn { font-size: 11px; padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">📦 Отгрузки</div>
+    <div class="header-status">
+        <div class="sync-dot loading" id="syncDot"></div>
+        <span class="sync-text" id="syncStatus">Синхронизация...</span>
+        <button class="btn btn-outline btn-sm" id="btnSyncNow" style="margin-left:4px;">Обновить</button>
+    </div>
+</div>
+
+<div class="nav">
+    <button class="nav-btn active" data-page="schedule">📊 Сводная</button>
+    <button class="nav-btn" data-page="wb">🟣 WB</button>
+    <button class="nav-btn" data-page="ozon">🔵 Ozon</button>
+    <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
+    <button class="nav-btn" data-page="ved">🌏 ВЭД</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- СВОДНАЯ -->
+<div class="page active" id="page-schedule">
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-title">Отправлено товаров по месяцам</div>
+            <div class="chart-legend">
+                <span><span class="legend-dot wb"></span> WB</span>
+                <span><span class="legend-dot ozon"></span> Ozon</span>
+            </div>
+        </div>
+        <svg class="chart-svg" id="yearlyChart" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+        <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт</button>
+        <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 CSV</button>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b> · Строк: <b id="scheduleTotalRows">0</b></span>
+    </div>
+    <div class="import-area" id="scheduleImportBlock" style="display:none;">
+        <textarea id="scheduleImportText" placeholder="Вставь строки (дата	МП	город	кол-во)"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoScheduleImport">Загрузить</button>
+    </div>
+    <div class="table-wrap" id="scheduleTable"><div class="empty-state">Нет данных</div></div>
+</div>
+
+<!-- WB -->
+<div class="page" id="page-wb">
+    <h1>🟣 Wildberries</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="shipDateWildberries"></div>
+            <div class="field"><label>Город</label><input type="text" id="shipCityWildberries" placeholder="Начните вводить" list="cityList" oninput="showRouteInfo()"></div>
+            <div class="field" style="max-width:100px;"><label>Кол-во</label><input type="number" id="shipQtyWildberries" min="1" placeholder="0"></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-wb btn-sm" id="btnSaveWb">✅ Сохранить</button>
+                <button class="btn btn-outline btn-sm" id="btnClearWb">Очистить</button>
+            </div>
+        </div>
+        <div class="route-info" id="routeInfoWildberries">
+            <div class="route-title" id="routeTitleWildberries"></div>
+            <div class="route-detail" id="routeDetailWildberries" style="font-size:11px;"></div>
+            <div class="route-schedule" id="routeScheduleWildberries" style="margin-top:4px;"></div>
+        </div>
+    </div>
+    <div class="cards-grid" id="wbCards"><div class="empty-state">Нет отгрузок</div></div>
+</div>
+
+<!-- OZON -->
+<div class="page" id="page-ozon">
+    <h1>🔵 Ozon</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="shipDateOzon"></div>
+            <div class="field"><label>Город</label><input type="text" id="shipCityOzon" placeholder="Начните вводить" list="cityList"></div>
+            <div class="field" style="max-width:100px;"><label>Кол-во</label><input type="number" id="shipQtyOzon" min="1" placeholder="0"></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-ozon btn-sm" id="btnSaveOzon">✅ Сохранить</button>
+                <button class="btn btn-outline btn-sm" id="btnClearOzon">Очистить</button>
+            </div>
+        </div>
+    </div>
+    <div class="cards-grid" id="ozonCards"><div class="empty-state">Нет отгрузок</div></div>
+</div>
+
+<!-- ЛОГИСТИКА -->
+<div class="page" id="page-logistics">
+    <h1>🚚 Логистика</h1>
+    <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты</p>
+    <div class="alert-card" id="truckAlert" style="display:none;">
+        <div class="alert-icon">🚛</div>
+        <div class="alert-content"><h3>На завтра нужно заказать машины</h3><div id="truckList"></div></div>
+    </div>
+    <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-outline btn-sm" id="btnToggleLogImport">📥 Импорт</button>
+        <button class="btn btn-outline btn-sm" id="btnExportLog">📤 CSV</button>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">Строк: <b id="logCount">0</b></span>
+    </div>
+    <div class="import-area" id="logImportBlock" style="display:none;">
+        <textarea id="logImportText" placeholder="Вставь строки (дата МП тип поставщик город кол-во паллет сумма статус НДС%)"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
+    </div>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="logDate"></div>
+            <div class="field"><label>МП</label><select id="logMP"><option>Wildberries</option><option>Ozon</option></select></div>
+            <div class="field"><label>Тип</label><select id="logType"><option>FBO</option><option>FBS</option></select></div>
+            <div class="field"><label>Поставщик</label><select id="logSupplier"><option value="">—</option><option>Большие Амбиции</option><option>ИП Орищенко</option><option>НордТрансСклад</option><option>Тессар</option></select></div>
+            <div class="field"><label>Город</label><input type="text" id="logCity" placeholder="Город" list="cityList"></div>
+            <div class="field" style="max-width:80px;"><label>Кол-во</label><input type="number" id="logQty" min="1"></div>
+            <div class="field" style="max-width:70px;"><label>Паллет</label><input type="number" id="logBoxes" min="1"></div>
+            <div class="field" style="max-width:100px;"><label>Сумма, ₽</label><input type="number" id="logAmount" step="0.01"></div>
+            <div class="field" style="max-width:80px;"><label>НДС</label><select id="logNDS"><option value="22%">22%</option><option value="7%">7%</option></select></div>
+            <div class="field" style="max-width:110px;"><label>С НДС</label><div class="field-calc" id="logCalcFull">0 ₽</div></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-log btn-sm" id="btnAddLog">+ Добавить</button>
+            </div>
+        </div>
+    </div>
+    <div class="filters">
+        <input type="month" id="logFilterMonth" style="width:130px;">
+        <select id="logFilterStatus"><option value="all">Все</option><option value="paid">Оплачен</option><option value="unpaid">Не оплачен</option></select>
+        <select id="logFilterMP"><option value="all">Все МП</option><option>Wildberries</option><option>Ozon</option></select>
+        <span class="chip" id="btnResetLogFilters">Сброс</span>
+    </div>
+    <div class="table-wrap" id="logTable"><div class="empty-state">Нет записей</div></div>
+</div>
+
+<!-- ВЭД -->
+<div class="page" id="page-ved">
+    <h1>🌏 ВЭД — Поставки из Китая</h1>
+    <p class="subtitle">Управление поставками: статус, товары, склад выгрузки</p>
+
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Номер поставки</label><input type="text" id="vedNumber" placeholder="CN-2026-001"></div>
+            <div class="field"><label>Ожидаемая дата прибытия</label><input type="date" id="vedEta"></div>
+            <div class="field"><label>Поставщик</label><input type="text" id="vedSupplier" placeholder="Dongguan Ltd"></div>
+            <div class="field"><label>Склад выгрузки</label><select id="vedWarehouse"><option value="Москва">Москва</option><option value="Пушкино">Пушкино</option></select></div>
+            <div class="field"><label>Статус</label><select id="vedStatus"><option value="transit">В пути</option><option value="customs">Таможня</option><option value="svh">На СВХ</option><option value="arrived">Прибыла</option></select></div>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--separator);padding-top:14px;">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">📎 Список товаров (Excel)</div>
+            <div class="file-upload-box" id="vedFileUploadBox">
+                <div style="font-size:13px;font-weight:600;">Перетащите файл или нажмите</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">Excel (.xlsx, .xls) или CSV</div>
+                <div class="file-name" id="vedFileName"></div>
+                <input type="file" id="vedFileInput" accept=".xlsx,.xls,.csv">
+            </div>
+            <div class="file-preview" id="vedFilePreview"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;">
+            <button class="btn btn-ved btn-sm" id="btnSaveVed">✅ Сохранить поставку</button>
+            <button class="btn btn-outline btn-sm" id="btnClearVed">🗑 Очистить</button>
+        </div>
+    </div>
+
+    <div class="kpi-grid" id="vedKpiGrid"></div>
+    <div class="cards-grid" id="vedCards"><div class="empty-state">Нет поставок</div></div>
+</div>
+
+<datalist id="cityList"></datalist>
+
+<script>
+// ========== FIREBASE ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyBCGOXZtpRY_aWOkcUWuW34uJBsNgrgdDA",
+  authDomain: "shipments-f48c2.firebaseapp.com",
+  projectId: "shipments-f48c2",
+  storageBucket: "shipments-f48c2.firebasestorage.app",
+  messagingSenderId: "994289127760",
+  appId: "1:994289127760:web:539f3ca770a1e6d4705c55"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ========== БАЗА РЕЙСОВ ==========
+const routesDB = {
+    'Казань':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Краснодар':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
+    'Невинномысск':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
+    'Екатеринбург':{schedule:'Ср-Сб, Сб-Вт, Вт-Пт',delivery:'2-3 дня'},
+    'Санкт-Петербург':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Челябинск':{schedule:'Ср-Сб, Сб-Вт',delivery:'2-3 дня'},
+    'Минск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Тула':{schedule:'В любой день',delivery:'день в день'},
+    'Коледино':{schedule:'В любой день',delivery:'день в день'},
+    'Электросталь':{schedule:'В любой день',delivery:'день в день'},
+    'Волгоград':{schedule:'Ср-Пт',delivery:'2-3 дня'},
+    'Владимир':{schedule:'В любой день',delivery:'2 дня'},
+    'Рязань':{schedule:'В любой день',delivery:'день в день'},
+    'Воронеж':{schedule:'Пн-Чт, Ср-Сб, Пт-Пн',delivery:'3-4 дня'},
+    'Новосибирск':{schedule:'Пн-Сб, Пт-Ср',delivery:'5-6 дней'},
+    'Сарапул':{schedule:'Пн-Чт',delivery:'4 дня'},
+    'Котовск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Питер':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Шушары':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Чехов':{schedule:'В любой день',delivery:'день в день'},
+    'Чехов 1':{schedule:'В любой день',delivery:'день в день'},
+    'Чехов 2':{schedule:'В любой день',delivery:'день в день'},
+    'Хоругвино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Петровское':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Радумля':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Ногинск':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Фреш':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино 1':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино 2':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Жуковский':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Домодедово':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Софьино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Гривно':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Ватутинки':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+};
+
+const STATUSES = [
+    { value: 'in_work', label: '⚙️ В работе', class: 'status-work' },
+    { value: 'waiting', label: '⏳ Ожидает', class: 'status-wait' },
+    { value: 'rejected', label: '🚫 Не принят', class: 'status-reject' },
+    { value: 'sent', label: '📦 Отправлено', class: 'status-sent' },
+    { value: 'ready', label: '✅ Готово', class: 'status-ready' }
+];
+
+const VED_STATUSES = {
+    transit: { label: '🚢 В пути', class: 'status-transit' },
+    customs: { label: '🛃 Таможня', class: 'status-customs' },
+    svh: { label: '📦 На СВХ', class: 'status-svh' },
+    arrived: { label: '✅ Прибыла', class: 'status-arrived' }
+};
+
+const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
+const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+// ========== СОСТОЯНИЕ ==========
+let wbShipments = [];
+let ozonShipments = [];
+let logEntries = [];
+let vedSupplies = [];
+let weekCapacities = {};
+let isOnline = false;
+let currentPage = 'schedule';
+let vedTempFileData = null;
+
+function updateSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    const dot = document.getElementById('syncDot');
+    dot.className = 'sync-dot';
+    if (status === 'online') { dot.classList.add('online'); el.textContent = 'Онлайн'; }
+    else if (status === 'offline') { dot.classList.add('offline'); el.textContent = 'Офлайн'; }
+    else { dot.classList.add('loading'); el.textContent = 'Загрузка...'; }
+}
+
+async function loadFromFirebase() {
+    try {
+        updateSyncStatus('loading');
+        const [wbSnap, ozSnap, logSnap, vedSnap, capDoc] = await Promise.all([
+            db.collection('shipments_wb').orderBy('date').get(),
+            db.collection('shipments_ozon').orderBy('date').get(),
+            db.collection('logistics').orderBy('date').get(),
+            db.collection('ved_supplies').orderBy('eta').get(),
+            db.collection('settings').doc('capacities').get()
+        ]);
+        wbShipments = wbSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work' }));
+        ozonShipments = ozSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work' }));
+        logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false }));
+        vedSupplies = vedSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
+        isOnline = true;
+        updateSyncStatus('online');
+        saveToLocalStorage();
+        renderAll();
+    } catch (e) {
+        console.error('Firebase error:', e);
+        loadFromLocalStorage();
+        isOnline = false;
+        updateSyncStatus('offline');
+        renderAll();
+    }
+}
+
+function loadFromLocalStorage() {
+    wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work' }));
+    ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work' }));
+    logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false }));
+    vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]');
+    weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('wb', JSON.stringify(wbShipments));
+    localStorage.setItem('ozon', JSON.stringify(ozonShipments));
+    localStorage.setItem('log', JSON.stringify(logEntries));
+    localStorage.setItem('ved', JSON.stringify(vedSupplies));
+    localStorage.setItem('cap', JSON.stringify(weekCapacities));
+    localStorage.setItem('currentPage', currentPage);
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ========== WB / OZON ==========
+async function addShipmentToFirebase(mp, shipment) {
+    if (!isOnline) return;
+    try { const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon'; const { id, ...data } = shipment; await db.collection(collection).doc(String(id)).set(data); } catch (e) { console.error(e); }
+}
+async function updateStatusInFirebase(mp, id, status) {
+    const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+    try { await db.collection(collection).doc(String(id)).update({ status }); } catch (e) { console.error(e); }
+}
+async function deleteFromFirebase(mp, id) {
+    if (!isOnline) return;
+    const collection = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+    try { await db.collection(collection).doc(String(id)).delete(); } catch (e) { console.error(e); }
+}
+
+async function saveShipment(mp) {
+    const date = document.getElementById('shipDate' + mp).value;
+    const city = document.getElementById('shipCity' + mp).value.trim();
+    const qty = parseInt(document.getElementById('shipQty' + mp).value) || 0;
+    if (!date || !city || qty <= 0) return alert('Заполните дату, город и количество');
+    const shipment = { id: Date.now(), date, city, qty, source: mp, status: 'in_work' };
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    arr.push(shipment);
+    await addShipmentToFirebase(mp, shipment);
+    saveToLocalStorage();
+    renderShipmentCards(mp);
+    renderSchedule();
+    clearShipmentForm(mp);
+    showToast('✅ ' + city + ' — ' + qty.toLocaleString('ru-RU') + ' ед.');
+}
+
+function clearShipmentForm(mp) {
+    document.getElementById('shipDate' + mp).value = new Date().toISOString().slice(0,10);
+    document.getElementById('shipCity' + mp).value = '';
+    document.getElementById('shipQty' + mp).value = '';
+    if (mp === 'Wildberries') document.getElementById('routeInfoWildberries').classList.remove('show');
+}
+
+async function deleteShipment(mp, id) {
+    if (!confirm('Удалить?')) return;
+    if (mp === 'Wildberries') wbShipments = wbShipments.filter(s => String(s.id) !== String(id));
+    else ozonShipments = ozonShipments.filter(s => String(s.id) !== String(id));
+    await deleteFromFirebase(mp, id);
+    saveToLocalStorage();
+    renderShipmentCards(mp);
+    renderSchedule();
+}
+
+function handleStatusChange(event) {
+    const select = event.target;
+    if (!select.classList.contains('status-select')) return;
+    const mp = select.dataset.mp, id = select.dataset.id, status = select.value;
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    const shipment = arr.find(s => String(s.id) === String(id));
+    if (shipment) {
+        shipment.status = status;
+        saveToLocalStorage();
+        if (isOnline) updateStatusInFirebase(mp, id, status).catch(e => console.warn(e));
+        renderShipmentCards(mp);
+    }
+}
+
+function showRouteInfo() {
+    const city = document.getElementById('shipCityWildberries').value.trim();
+    const route = routesDB[city];
+    const info = document.getElementById('routeInfoWildberries');
+    if (route) {
+        info.classList.add('show');
+        document.getElementById('routeTitleWildberries').textContent = '🚛 ' + city;
+        document.getElementById('routeDetailWildberries').textContent = 'Срок: ' + route.delivery;
+        document.getElementById('routeScheduleWildberries').innerHTML = route.schedule.split(', ').map(s => `<span class="route-chip">${s}</span>`).join('');
+    } else { info.classList.remove('show'); }
+}
+
+// ========== ЛОГИСТИКА ==========
+async function updateLogFieldInFirebase(id, field, value) {
+    if (!isOnline) return;
+    try { await db.collection('logistics').doc(String(id)).update({ [field]: value }); } catch (e) { console.error(e); }
+}
+async function deleteLogFromFirebase(id) {
+    if (!isOnline) return;
+    try { await db.collection('logistics').doc(String(id)).delete(); } catch (e) { console.error(e); }
+}
+
+function updateLogSupplier(id, value) { const e = logEntries.find(x => String(x.id) === String(id)); if (e) { e.supplier = value; saveToLocalStorage(); updateLogFieldInFirebase(id, 'supplier', value); } }
+function updateLogPallets(id, value) { const e = logEntries.find(x => String(x.id) === String(id)); if (e) { e.boxes = parseInt(value) || 0; saveToLocalStorage(); updateLogFieldInFirebase(id, 'boxes', e.boxes); } }
+function updateLogAmount(id, value) {
+    const e = logEntries.find(x => String(x.id) === String(id));
+    if (e) { const amount = parseFloat(value) || 0; const rate = e.nds === '22%' ? 1.22 : 1.07; e.amount = amount; e.amountFull = Math.round(amount * rate * 100) / 100; saveToLocalStorage(); updateLogFieldInFirebase(id, 'amount', e.amount); updateLogFieldInFirebase(id, 'amountFull', e.amountFull); renderLog(); }
+}
+function updateLogNds(id, value) {
+    const e = logEntries.find(x => String(x.id) === String(id));
+    if (e) { e.nds = value; const rate = value === '22%' ? 1.22 : 1.07; e.amountFull = Math.round((e.amount || 0) * rate * 100) / 100; saveToLocalStorage(); updateLogFieldInFirebase(id, 'nds', value); updateLogFieldInFirebase(id, 'amountFull', e.amountFull); renderLog(); }
+}
+function toggleLogPaid(id) { const e = logEntries.find(x => String(x.id) === String(id)); if (e) { e.paid = !e.paid; saveToLocalStorage(); updateLogFieldInFirebase(id, 'paid', e.paid); renderLog(); } }
+
+function checkTrucksForTomorrow() {
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const tomorrowShipments = [...wbShipments, ...ozonShipments].filter(s => s.date === tomorrowStr);
+    const truckAlert = document.getElementById('truckAlert');
+    if (tomorrowShipments.length === 0) { truckAlert.style.display = 'none'; return; }
+    truckAlert.style.display = 'flex';
+    const byCity = {};
+    tomorrowShipments.forEach(s => { const key = s.city; if (!byCity[key]) byCity[key] = { city: s.city, mp: s.source, qty: 0 }; byCity[key].qty += s.qty; });
+    document.getElementById('truckList').innerHTML = Object.values(byCity).map(item =>
+        `<span class="alert-item">🚛 <b>${item.city}</b> — ${item.qty.toLocaleString('ru-RU')} ед. <span class="badge ${item.mp === 'Wildberries' ? 'badge-wb' : 'badge-ozon'}">${item.mp === 'Wildberries' ? 'WB' : 'Ozon'}</span></span>`
+    ).join('');
+}
+
+// ========== ВЭД ==========
+function handleVedFileSelect(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
+            
+            if (rows.length < 2) return alert('Файл пуст');
+            
+            let dataStartIndex = 0;
+            for (let i = 0; i < Math.min(rows.length, 15); i++) {
+                const row = rows[i];
+                if (row && Array.isArray(row)) {
+                    for (let j = 0; j < row.length; j++) {
+                        if (row[j] && String(row[j]).includes('序号')) {
+                            dataStartIndex = i + 1;
+                            break;
+                        }
+                    }
+                }
+                if (dataStartIndex > 0) break;
+            }
+            
+            if (dataStartIndex === 0) dataStartIndex = 1;
+            
+            const items = [];
+            for (let i = dataStartIndex; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || !Array.isArray(row)) continue;
+                
+                const hasData = row.some(cell => cell !== '' && cell !== null && cell !== undefined);
+                if (!hasData) continue;
+                
+                const code = String(row[1] || '').trim();
+                const article = String(row[2] || '').trim();
+                const model = String(row[3] || '').trim();
+                const description = String(row[4] || '').trim();
+                
+                // Получаем QTY — только числа > 100
+                let qty = 0;
+                
+                // Пробуем колонку K (индекс 10)
+                const val10 = parseInt(String(row[10] || '0').replace(/\s/g, '')) || 0;
+                if (val10 > 100) {
+                    qty = val10;
+                }
+                
+                // Если не нашли — пробуем колонку L (индекс 11)
+                if (qty === 0) {
+                    const val11 = parseInt(String(row[11] || '0').replace(/\s/g, '')) || 0;
+                    if (val11 > 100) {
+                        qty = val11;
+                    }
+                }
+                
+                // Если всё ещё 0 — умножаем val9 × val10
+                if (qty === 0) {
+                    const val9 = parseInt(String(row[9] || '0').replace(/\s/g, '')) || 0;
+                    const v10 = parseInt(String(row[10] || '0').replace(/\s/g, '')) || 1;
+                    if (val9 > 100 && v10 >= 1) {
+                        qty = val9 * v10;
+                    }
+                }
+                
+                // Последний шанс — val9 если > 100
+                if (qty === 0) {
+                    const val9 = parseInt(String(row[9] || '0').replace(/\s/g, '')) || 0;
+                    if (val9 > 100) {
+                        qty = val9;
+                    }
+                }
+                
+                if (!code && !article && !model && qty === 0) continue;
+                
+                items.push({
+                    article: article || code,
+                    name: model || description || article || code,
+                    qty: qty
+                });
+            }
+            
+            if (items.length === 0) {
+                return alert('Не удалось распознать данные. Проверьте формат файла.');
+            }
+            
+            vedTempFileData = { name: file.name, items, raw: rows };
+            document.getElementById('vedFileName').textContent = '📎 ' + file.name + ' (' + items.length + ' позиций)';
+            document.getElementById('vedFileUploadBox').classList.add('has-file');
+            showVedFilePreview(items);
+            
+        } catch (err) { console.error(err); alert('Ошибка чтения файла: ' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function handleVedCSVFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const lines = e.target.result.split('\n').filter(l => l.trim());
+        const rows = lines.map(l => l.split(/[\t,;]/));
+        const items = rows.slice(1).filter(r => r.length >= 3).map(row => ({
+            article: String(row[0] || '').trim(),
+            name: String(row[1] || '').trim(),
+            qty: parseInt(String(row[2] || '0').replace(/\s/g, '')) || 0
+        })).filter(item => item.article && item.qty > 0);
+        
+        vedTempFileData = { name: file.name, items, raw: rows };
+        document.getElementById('vedFileName').textContent = '📎 ' + file.name + ' (' + items.length + ' позиций)';
+        document.getElementById('vedFileUploadBox').classList.add('has-file');
+        showVedFilePreview(items);
+    };
+    reader.readAsText(file);
+}
+
+function showVedFilePreview(items) {
+    const preview = document.getElementById('vedFilePreview');
+    const data = items.slice(0, 5);
+    let html = '<div style="font-weight:600;margin-bottom:6px;">Предпросмотр (первые 5 позиций):</div>';
+    html += '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кол-во</th></tr></thead><tbody>';
+    data.forEach(item => {
+        html += `<tr><td>${item.article || '—'}</td><td>${item.name || '—'}</td><td class="num">${(item.qty || 0).toLocaleString('ru-RU')}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    if (items.length > 5) html += `<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">... и ещё ${items.length - 5} позиций</div>`;
+    preview.innerHTML = html;
+    preview.classList.add('show');
+}
+
+async function saveVedSupply() {
+    const number = document.getElementById('vedNumber').value.trim();
+    const eta = document.getElementById('vedEta').value;
+    const supplier = document.getElementById('vedSupplier').value.trim();
+    const warehouse = document.getElementById('vedWarehouse').value;
+    const status = document.getElementById('vedStatus').value;
+    const fileData = vedTempFileData;
+
+    if (!number || !eta || !supplier) return alert('Заполните номер поставки, дату и поставщика');
+    if (!fileData) return alert('Прикрепите файл со списком товаров');
+
+    const supply = {
+        id: Date.now(),
+        number,
+        eta,
+        supplier,
+        warehouse,
+        status,
+        items: fileData.items,
+        fileName: fileData.name,
+        createdAt: new Date().toISOString(),
+        history: [{ status, date: new Date().toISOString() }]
+    };
+
+    vedSupplies.push(supply);
+    if (isOnline) {
+        const { id, ...data } = supply;
+        try { await db.collection('ved_supplies').doc(String(id)).set(data); } catch(e) { console.error(e); }
+    }
+    saveToLocalStorage();
+    clearVedForm();
+    renderVedCards();
+    showToast('✅ Поставка сохранена: ' + number);
+}
+
+function clearVedForm() {
+    document.getElementById('vedNumber').value = '';
+    document.getElementById('vedEta').value = '';
+    document.getElementById('vedSupplier').value = '';
+    document.getElementById('vedWarehouse').value = 'Москва';
+    document.getElementById('vedStatus').value = 'transit';
+    vedTempFileData = null;
+    document.getElementById('vedFileName').textContent = '';
+    document.getElementById('vedFileUploadBox').classList.remove('has-file');
+    document.getElementById('vedFilePreview').innerHTML = '';
+    document.getElementById('vedFilePreview').classList.remove('show');
+}
+
+async function updateVedStatus(id, status) {
+    const supply = vedSupplies.find(s => String(s.id) === String(id));
+    if (supply) {
+        supply.status = status;
+        supply.history = supply.history || [];
+        supply.history.push({ status, date: new Date().toISOString() });
+        saveToLocalStorage();
+        if (isOnline) {
+            try { await db.collection('ved_supplies').doc(String(id)).update({ status, history: supply.history }); } catch(e) { console.error(e); }
+        }
+        renderVedCards();
+    }
+}
+
+async function deleteVedSupply(id) {
+    if (!confirm('Удалить поставку?')) return;
+    vedSupplies = vedSupplies.filter(s => String(s.id) !== String(id));
+    if (isOnline) { try { await db.collection('ved_supplies').doc(String(id)).delete(); } catch(e) { console.error(e); } }
+    saveToLocalStorage();
+    renderVedCards();
+}
+
+function toggleVedDetails(id) {
+    const el = document.getElementById('ved-details-' + id);
+    if (el) el.classList.toggle('show');
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ==========
+function getWeekKey(ds) {
+    if (!ds || typeof ds !== 'string') return { key: 'unknown-' + Math.random(), label: '—' };
+    const d = new Date(ds + 'T00:00:00'); if (isNaN(d.getTime())) return { key: 'unknown-' + Math.random(), label: '—' };
+    const day = d.getDay() || 7; const mon = new Date(d); mon.setDate(d.getDate() - day + 1); const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const fmt = dt => dt.getDate().toString().padStart(2,'0') + '.' + (dt.getMonth()+1).toString().padStart(2,'0');
+    return { key: mon.toISOString().slice(0,10), label: fmt(mon) + '-' + fmt(sun) };
+}
+function getCurrentWeekKey() { const now = new Date(); const day = now.getDay() || 7; const mon = new Date(now); mon.setDate(now.getDate() - day + 1); return mon.toISOString().slice(0,10); }
+function downloadCSV(csv, fn) { const b = new Blob(['\uFEFF'+csv], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fn; a.click(); }
+function fmtPrice(n) { return n ? n.toLocaleString('ru-RU') + ' ₽' : '0 ₽'; }
+function monthName(d) { return MONTHS[new Date(d).getMonth()]; }
+function getAllShipments() { const all = []; wbShipments.forEach(s => all.push({...s, marketplace:'Wildberries'})); ozonShipments.forEach(s => all.push({...s, marketplace:'Ozon'})); return all.filter(s => s.date && typeof s.date === 'string' && !isNaN(new Date(s.date + 'T00:00:00').getTime())); }
+
+function switchPage(page) {
+    currentPage = page; localStorage.setItem('currentPage', page);
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const map = {schedule:0, wb:1, ozon:2, logistics:3, ved:4};
+    const cls = ['active','wb-active','ozon-active','logistics-active','ved-active'];
+    document.querySelectorAll('.nav-btn')[map[page]].classList.add(cls[map[page]]);
+    if (page === 'logistics') { updateLogCalc(); renderLog(); checkTrucksForTomorrow(); }
+    if (page === 'ved') { renderVedCards(); }
+}
+
+// ========== ИМПОРТ / ЭКСПОРТ ==========
+let showScheduleImport = false;
+function toggleScheduleImport() { showScheduleImport = !showScheduleImport; document.getElementById('scheduleImportBlock').style.display = showScheduleImport ? 'block' : 'none'; }
+async function doScheduleImport() {
+    const text = document.getElementById('scheduleImportText').value.trim(); if (!text) return;
+    let impWb = 0, impOz = 0; const newWb = [], newOz = [];
+    text.split('\n').filter(l => l.trim()).forEach(line => {
+        let cols = line.split('\t'); if (cols.length < 4) cols = line.split(/[\t,;]/);
+        if (cols.length >= 4) {
+            let dateStr = cols[0].trim(); const mp = cols[1].trim(), city = cols[2].trim(), qty = parseInt(cols[3].replace(/\s/g,'')) || 0;
+            if (['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp)) return;
+            if (!mp || !city || qty <= 0) return;
+            let target = null; if (['Wildberries','WB','ВБ'].includes(mp)) target = 'Wildberries'; else if (['Ozon','Озон'].includes(mp)) target = 'Ozon'; else return;
+            const dp = dateStr.split('.'); if (dp.length === 3) dateStr = dp[2] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
+            if (isNaN(new Date(dateStr).getTime())) return;
+            const shipment = { id: Date.now() + Math.random(), date: dateStr, city, qty, source: target, status: 'in_work' };
+            if (target === 'Wildberries') { newWb.push(shipment); wbShipments.push(shipment); impWb++; } else { newOz.push(shipment); ozonShipments.push(shipment); impOz++; }
+        }
+    });
+    if (isOnline && (newWb.length > 0 || newOz.length > 0)) { const batch = db.batch(); newWb.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_wb').doc(String(id)), data); }); newOz.forEach(s => { const { id, ...data } = s; batch.set(db.collection('shipments_ozon').doc(String(id)), data); }); try { await batch.commit(); } catch (e) { console.error(e); } }
+    saveToLocalStorage(); document.getElementById('scheduleImportText').value = ''; toggleScheduleImport(); renderAll();
+    showToast(`✅ WB: ${impWb}, Ozon: ${impOz}`);
+}
+async function updateWeekCapacity(key, val) { weekCapacities[key] = parseInt(val) || 0; await saveCapacityToFirebase(); saveToLocalStorage(); renderSchedule(); }
+async function saveCapacityToFirebase() { if (!isOnline) return; try { await db.collection('settings').doc('capacities').set({ capacities: weekCapacities }, { merge: true }); } catch (e) { console.error(e); } }
+function exportScheduleCSV() {
+    const all = getAllShipments(); const grp = {};
+    all.forEach(s => { const wk = getWeekKey(s.date); if (!grp[wk.key]) grp[wk.key] = {label:wk.label,wb:0,ozon:0}; if (s.marketplace==='Wildberries') grp[wk.key].wb+=s.qty; else grp[wk.key].ozon+=s.qty; });
+    let csv = 'Неделя\tWB\tOzon\tВсего\tСпособность\tЗагрузка\n';
+    Object.keys(grp).filter(k => !k.startsWith('unknown')).sort().reverse().forEach(k => { const g=grp[k], t=g.wb+g.ozon, cap=weekCapacities[k]||0; csv += `${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`; });
+    downloadCSV(csv, 'сводная.csv');
+}
+
+// ========== ЛОГИСТИКА: ФОРМА ==========
+function updateLogCalc() { const a = parseFloat(document.getElementById('logAmount').value) || 0; const rate = document.getElementById('logNDS').value === '22%' ? 1.22 : 1.07; document.getElementById('logCalcFull').textContent = (Math.round(a*rate*100)/100).toLocaleString('ru-RU') + ' ₽'; }
+async function addLogEntry() {
+    const date = document.getElementById('logDate').value, mp = document.getElementById('logMP').value, type = document.getElementById('logType').value, supplier = document.getElementById('logSupplier').value, city = document.getElementById('logCity').value.trim(), qty = parseInt(document.getElementById('logQty').value) || 0, boxes = parseInt(document.getElementById('logBoxes').value) || 0, amount = parseFloat(document.getElementById('logAmount').value) || 0, nds = document.getElementById('logNDS').value, rate = nds === '22%' ? 1.22 : 1.07;
+    if (!date || !city || qty <= 0 || amount <= 0) return alert('Заполните обязательные поля');
+    const entry = { id: Date.now(), date, marketplace: mp, type, supplier, city, qty, boxes, amount, amountFull: Math.round(amount*rate*100)/100, paid: false, nds, source: 'Логистика' };
+    logEntries.push(entry); const { id, ...data } = entry;
+    if (isOnline) { try { await db.collection('logistics').doc(String(id)).set(data); } catch(e) { console.error(e); } }
+    saveToLocalStorage(); ['logCity','logQty','logBoxes','logAmount'].forEach(id => document.getElementById(id).value = ''); updateLogCalc(); renderLog();
+}
+async function deleteLogEntry(id) { if (confirm('Удалить?')) { logEntries = logEntries.filter(l => l.id !== id); await deleteLogFromFirebase(id); saveToLocalStorage(); renderLog(); } }
+let showLogImport = false;
+function toggleLogImport() { showLogImport = !showLogImport; document.getElementById('logImportBlock').style.display = showLogImport ? 'block' : 'none'; }
+async function doLogImport() {
+    const text = document.getElementById('logImportText').value.trim(); if (!text) return; const newEntries = [];
+    text.split('\n').filter(l => l.trim()).forEach(line => { const cols = line.split('\t'); if (cols.length >= 9) { const qty = parseInt(cols[5].replace(/\s/g,'')) || 0; const amount = parseFloat(cols[7].replace(/[₽\s]/g,'').replace(',','.')) || 0; const nds = cols[9] || '22%'; const rate = nds === '22%' ? 1.22 : 1.07; const entry = { id: Date.now() + Math.random(), date: cols[0].split('.').reverse().join('-'), marketplace: cols[1], type: cols[2], supplier: cols[3], city: cols[4], qty, boxes: parseInt(cols[6])||0, amount, amountFull: Math.round(amount*rate*100)/100, paid: cols[8]==='Оплачен', nds, source: 'Логистика' }; newEntries.push(entry); logEntries.push(entry); } });
+    if (isOnline && newEntries.length > 0) { const batch = db.batch(); newEntries.forEach(e => { const { id, ...data } = e; batch.set(db.collection('logistics').doc(String(id)), data); }); try { await batch.commit(); } catch (e) { console.error(e); } }
+    saveToLocalStorage(); document.getElementById('logImportText').value = ''; toggleLogImport(); renderLog(); showToast(`✅ ${newEntries.length} строк`);
+}
+function exportLogCSV() { let csv = 'Дата\tМП\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tС НДС\tСтатус\tНДС\tЦена/ед\tЦена/ед НДС\n'; [...logEntries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e => { const up = e.qty>0?e.amount/e.qty:0, upf = e.qty>0?e.amountFull/e.qty:0; csv += `${e.date.split('-').reverse().join('.')}\t${e.marketplace}\t${e.type}\t${e.supplier||''}\t${e.city}\t${e.qty}\t${e.boxes}\t${e.amount}\t${e.amountFull}\t${e.paid?'Оплачен':'Не оплачен'}\t${e.nds}\t${up.toFixed(2)}\t${upf.toFixed(2)}\n`; }); downloadCSV(csv, 'логистика.csv'); }
+function resetLogFilters() { document.getElementById('logFilterMonth').value = ''; document.getElementById('logFilterStatus').value = 'all'; document.getElementById('logFilterMP').value = 'all'; renderLog(); }
+
+// ========== ОТОБРАЖЕНИЕ ==========
+function renderYearlyAnalytics() {
+    const all = getAllShipments(); const svg = document.getElementById('yearlyChart');
+    if (all.length === 0) { svg.innerHTML = '<text x="300" y="100" text-anchor="middle" font-size="13" fill="#9aa0a6">Нет данных</text>'; return; }
+    const byMonth = {}; all.forEach(s => { const d = new Date(s.date + 'T00:00:00'); const mk = d.getFullYear() + '-' + String(d.getMonth()).padStart(2,'0'); if (!byMonth[mk]) byMonth[mk] = { label: MONTHS[d.getMonth()], wb: 0, ozon: 0, total: 0 }; if (s.marketplace === 'Wildberries') byMonth[mk].wb += s.qty; else byMonth[mk].ozon += s.qty; byMonth[mk].total += s.qty; });
+    const months = Object.keys(byMonth).sort(); if (months.length === 0) return;
+    const maxVal = Math.max(...months.map(k => byMonth[k].total)); const yMax = Math.ceil(maxVal / 10000) * 10000 || 1000;
+    const W = 600, H = 200, PL = 55, PR = 20, PT = 15, PB = 30, cw = W - PL - PR, ch = H - PT - PB;
+    const gx = i => PL + (cw / (months.length - 1)) * i, gy = v => PT + ch - (v / yMax) * ch;
+    let svgContent = '';
+    for (let i = 0; i <= 4; i++) { const y = PT + (ch / 4) * i; const val = Math.round(yMax - (yMax / 4) * i); svgContent += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" class="chart-grid"/>`; svgContent += `<text x="${PL-8}" y="${y+4}" text-anchor="end" class="chart-axis">${val.toLocaleString('ru-RU')}</text>`; }
+    let wbArea = '', ozArea = '', wbPath = '', ozPath = '';
+    months.forEach((k, i) => { const x = gx(i); wbArea += `${x},${gy(byMonth[k].wb)} `; ozArea += `${x},${gy(byMonth[k].ozon)} `; wbPath += (i===0?'M':'L') + `${x},${gy(byMonth[k].wb)} `; ozPath += (i===0?'M':'L') + `${x},${gy(byMonth[k].ozon)} `; });
+    svgContent += `<polygon points="${PL},${PT+ch} ${wbArea} ${W-PR},${PT+ch}" class="chart-area wb"/>`; svgContent += `<polygon points="${PL},${PT+ch} ${ozArea} ${W-PR},${PT+ch}" class="chart-area ozon"/>`;
+    svgContent += `<path d="${wbPath}" class="chart-line wb"/>`; svgContent += `<path d="${ozPath}" class="chart-line ozon"/>`;
+    months.forEach((k, i) => { svgContent += `<circle cx="${gx(i)}" cy="${gy(byMonth[k].wb)}" r="3.5" class="chart-dot wb"><title>WB ${byMonth[k].label}: ${byMonth[k].wb.toLocaleString('ru-RU')} ед.</title></circle>`; svgContent += `<circle cx="${gx(i)}" cy="${gy(byMonth[k].ozon)}" r="3.5" class="chart-dot ozon"><title>Ozon ${byMonth[k].label}: ${byMonth[k].ozon.toLocaleString('ru-RU')} ед.</title></circle>`; });
+    months.forEach((k, i) => { svgContent += `<text x="${gx(i)}" y="${H-8}" text-anchor="middle" class="chart-axis">${byMonth[k].label.slice(0,3)}</text>`; });
+    svg.innerHTML = svgContent;
+}
+
+function renderKPIs() {
+    const all = getAllShipments(); const totalWb = all.filter(s => s.marketplace === 'Wildberries').reduce((s, x) => s + x.qty, 0); const totalOz = all.filter(s => s.marketplace === 'Ozon').reduce((s, x) => s + x.qty, 0);
+    const currentWeekKey = getCurrentWeekKey(); const thisWeek = all.filter(s => { const wk = getWeekKey(s.date); return wk.key === currentWeekKey; });
+    const weekWb = thisWeek.filter(s => s.marketplace === 'Wildberries').reduce((s, x) => s + x.qty, 0); const weekOz = thisWeek.filter(s => s.marketplace === 'Ozon').reduce((s, x) => s + x.qty, 0);
+    const totalCap = Object.values(weekCapacities).reduce((s, c) => s + (c || 0), 0);
+    document.getElementById('kpiGrid').innerHTML = `
+        <div class="kpi-card kpi-wb"><div class="kpi-label">WB за год</div><div class="kpi-value" style="color:var(--wb)">${totalWb.toLocaleString('ru-RU')}</div><div class="kpi-sub">единиц товара</div></div>
+        <div class="kpi-card kpi-ozon"><div class="kpi-label">Ozon за год</div><div class="kpi-value" style="color:var(--ozon)">${totalOz.toLocaleString('ru-RU')}</div><div class="kpi-sub">единиц товара</div></div>
+        <div class="kpi-card"><div class="kpi-label">Текущая неделя</div><div class="kpi-value">${(weekWb + weekOz).toLocaleString('ru-RU')}</div><div class="kpi-sub">WB: ${weekWb.toLocaleString('ru-RU')} · Ozon: ${weekOz.toLocaleString('ru-RU')}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Способность склада</div><div class="kpi-value">${totalCap.toLocaleString('ru-RU')}</div><div class="kpi-sub">единиц в неделю</div></div>
+    `;
+}
+
+function renderSchedule() {
+    const all = getAllShipments(); const grp = {};
+    all.forEach(s => { const wk = getWeekKey(s.date); if (!grp[wk.key]) grp[wk.key] = {label:wk.label, wb:0, ozon:0, details:[]}; if (s.marketplace==='Wildberries') grp[wk.key].wb += s.qty; else grp[wk.key].ozon += s.qty; grp[wk.key].details.push(s); });
+    const weeks = Object.keys(grp).sort().reverse(); const currentWeekKey = getCurrentWeekKey();
+    document.getElementById('scheduleWeekCount').textContent = weeks.filter(k => !k.startsWith('unknown')).length;
+    document.getElementById('scheduleTotalRows').textContent = all.length;
+    if (!weeks.length) { document.getElementById('scheduleTable').innerHTML = '<div class="empty-state">Нет данных</div>'; return; }
+    let html = '<table><thead><tr><th>Неделя</th><th class="num">🟣 WB</th><th class="num">🔵 Ozon</th><th class="num">Всего</th><th>Способность</th><th>Загрузка</th></tr></thead><tbody>';
+    weeks.forEach((key, i) => { const g = grp[key], t = g.wb + g.ozon, cap = weekCapacities[key] || 0; const pct = cap > 0 ? Math.round(t / cap * 100) : 0; const bc = pct > 100 ? 'danger' : pct > 80 ? 'warn' : 'good'; const isCurrent = key === currentWeekKey; const rc = isCurrent ? 'week-row current' : 'week-row'; const hasDetails = g.details.length > 0; const wid = 'week-' + key.replace(/[^a-zA-Z0-9]/g, '-');
+        html += `<tr class="${rc}" onclick="toggleWeekDetails('${wid}', this)"><td><b>${g.label}</b>${isCurrent ? ' <span class="badge badge-info">текущая</span>' : ''}${hasDetails ? '<span class="toggle-icon" id="icon-' + wid + '">▾</span>' : ''}</td><td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td><td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td><td class="num"><b>${t.toLocaleString('ru-RU')}</b></td><td><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onclick="event.stopPropagation()" onchange="updateWeekCapacity('${key}',this.value)"></td><td><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;">${cap>0?pct+'%':'—'}</span></td></tr>`;
+        if (hasDetails) { const byCity = {}; g.details.forEach(d => { const ck = d.city + '|' + d.marketplace; if (!byCity[ck]) byCity[ck] = 0; byCity[ck] += d.qty; }); html += `<tr id="${wid}" style="display:none;background:#fafbfc;"><td colspan="6" style="padding:8px 16px;font-size:11px;color:var(--text-secondary);">`; Object.entries(byCity).forEach(([ck, qty]) => { const [city, mp] = ck.split('|'); html += `<span class="badge ${mp==='Wildberries'?'badge-wb':'badge-ozon'}" style="margin:2px;">${city}: ${qty.toLocaleString('ru-RU')} шт</span> `; }); html += '</td></tr>'; }
+    });
+    html += '</tbody></table>'; document.getElementById('scheduleTable').innerHTML = html;
+    renderKPIs(); renderYearlyAnalytics();
+}
+
+function toggleWeekDetails(weekId) { const el = document.getElementById(weekId); const icon = document.getElementById('icon-' + weekId); if (el) { el.style.display = el.style.display === 'none' ? 'table-row' : 'none'; if (icon) icon.classList.toggle('open'); } }
+
+function renderShipmentCards(mp) {
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments; const containerId = mp === 'Wildberries' ? 'wbCards' : 'ozonCards'; const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date));
+    if (!srt.length) { document.getElementById(containerId).innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; }
+    let html = ''; srt.forEach(e => { const currentStatus = e.status || 'in_work'; const statusObj = STATUSES.find(s => s.value === currentStatus) || STATUSES[0]; const route = mp === 'Wildberries' ? (routesDB[e.city] || null) : null;
+        html += `<div class="shipment-card"><button class="card-delete" data-mp="${mp}" data-id="${e.id}">×</button><div class="card-city">📍 ${e.city}</div><div class="card-date">${e.date}</div><div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div><div class="card-qty-label">единиц</div>${route ? `<div class="route-badge">🚚 ${route.delivery}</div>` : ''}<div class="card-status"><select class="status-select ${statusObj.class}" data-mp="${mp}" data-id="${e.id}">${STATUSES.map(s => `<option value="${s.value}" ${currentStatus === s.value ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div></div>`;
+    }); document.getElementById(containerId).innerHTML = html;
+}
+
+function renderLog() {
+    const fm = document.getElementById('logFilterMonth').value, fs = document.getElementById('logFilterStatus').value, fmp = document.getElementById('logFilterMP').value; let fl = [...logEntries];
+    if (fm) fl = fl.filter(e => e.date && e.date.startsWith(fm)); if (fs === 'paid') fl = fl.filter(e => e.paid); if (fs === 'unpaid') fl = fl.filter(e => !e.paid); if (fmp !== 'all') fl = fl.filter(e => e.marketplace === fmp);
+    const srt = fl.sort((a,b) => (b.date||'').localeCompare(a.date||'')); document.getElementById('logCount').textContent = srt.length;
+    if (!srt.length) { document.getElementById('logTable').innerHTML = '<div class="empty-state">Нет записей</div>'; return; }
+    let html = '<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>'; let lm = '';
+    srt.forEach(e => { if (!e.date) return; const m = monthName(e.date + 'T00:00:00'); if (m !== lm && !fm) { lm = m; html += `<tr><td colspan="12" style="background:#fafbfc;font-weight:600;font-size:11px;color:var(--text-secondary);">${m}</td></tr>`; }
+        html += `<tr><td>${e.date.split('-').reverse().join('.')}</td><td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${e.marketplace}</span></td><td>${e.type||'FBO'}</td><td><select class="log-select" onchange="updateLogSupplier('${e.id}', this.value)">${SUPPLIERS.map(s => `<option value="${s}" ${e.supplier===s?'selected':''}>${s||'—'}</option>`).join('')}</select></td><td>${e.city||''}</td><td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td><td class="num"><input class="log-edit-input" style="width:50px;text-align:center;" value="${e.boxes||0}" type="number" onchange="updateLogPallets('${e.id}', this.value)"></td><td class="num"><input class="log-edit-input" style="width:80px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" onchange="updateLogAmount('${e.id}', this.value)"></td><td class="num">${fmtPrice(e.amountFull)}</td><td><select onchange="updateLogNds('${e.id}', this.value)" style="font-size:10px;padding:2px;"><option value="22%" ${e.nds==='22%'?'selected':''}>22%</option><option value="7%" ${e.nds==='7%'?'selected':''}>7%</option></select></td><td><button class="btn-status ${e.paid?'paid':'unpaid'}" onclick="toggleLogPaid('${e.id}')">${e.paid?'Оплачен':'Не опл.'}</button></td><td><button class="btn btn-danger-sm" onclick="deleteLogEntry('${e.id}')">×</button></td></tr>`;
+    }); html += '</tbody></table>'; document.getElementById('logTable').innerHTML = html;
+}
+
+function renderVedKPIs() {
+    const total = vedSupplies.length;
+    const inTransit = vedSupplies.filter(s => s.status === 'transit').length;
+    const atCustoms = vedSupplies.filter(s => s.status === 'customs').length;
+    const atSvh = vedSupplies.filter(s => s.status === 'svh').length;
+    const arrived = vedSupplies.filter(s => s.status === 'arrived').length;
+    const totalItems = vedSupplies.reduce((sum, s) => sum + (s.items || []).reduce((s2, i) => s2 + (i.qty || 0), 0), 0);
+    document.getElementById('vedKpiGrid').innerHTML = `
+        <div class="kpi-card"><div class="kpi-label">Всего поставок</div><div class="kpi-value">${total}</div></div>
+        <div class="kpi-card" style="border-left:3px solid #1a73e8;"><div class="kpi-label">В пути</div><div class="kpi-value" style="color:#1a73e8;">${inTransit}</div></div>
+        <div class="kpi-card" style="border-left:3px solid #f9ab00;"><div class="kpi-label">Таможня</div><div class="kpi-value" style="color:#e37400;">${atCustoms}</div></div>
+        <div class="kpi-card" style="border-left:3px solid #ea4335;"><div class="kpi-label">На СВХ</div><div class="kpi-value" style="color:#c5221f;">${atSvh}</div></div>
+        <div class="kpi-card" style="border-left:3px solid #0d904f;"><div class="kpi-label">Прибыло</div><div class="kpi-value" style="color:#137333;">${arrived}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Товаров в поставках</div><div class="kpi-value">${totalItems.toLocaleString('ru-RU')}</div></div>
+    `;
+}
+
+function renderVedCards() {
+    const container = document.getElementById('vedCards');
+    const srt = [...vedSupplies].sort((a,b) => (a.eta||'').localeCompare(b.eta||''));
+    if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKPIs(); return; }
+    let html = '';
+    srt.forEach(s => {
+        const statusObj = VED_STATUSES[s.status] || VED_STATUSES.transit;
+        const totalQty = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0);
+        const historyHtml = (s.history || []).map(h => { const st = VED_STATUSES[h.status] || VED_STATUSES.transit; return `<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${new Date(h.date).toLocaleString('ru-RU')} — ${st.label}</div>`; }).join('');
+        html += `<div class="supply-card" onclick="toggleVedDetails(${s.id})">
+            <button class="card-delete" onclick="event.stopPropagation();deleteVedSupply(${s.id})">×</button>
+            <div class="supply-number">📦 ${s.number}</div>
+            <div class="supply-supplier">🏭 ${s.supplier}</div>
+            <div class="supply-warehouse">📍 Склад: ${s.warehouse}</div>
+            <div class="supply-eta">📅 Прибытие: ${s.eta}</div>
+            <div class="supply-items-count">📋 Товаров: ${(s.items||[]).length} позиций · ${totalQty.toLocaleString('ru-RU')} ед.</div>
+            <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+                <span class="supply-status-badge ${statusObj.class}">${statusObj.label}</span>
+                <select onclick="event.stopPropagation()" onchange="updateVedStatus(${s.id}, this.value)" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:#fafbfc;">
+                    ${Object.entries(VED_STATUSES).map(([k,v]) => `<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}
+                </select>
+            </div>
+            <div class="supply-details" id="ved-details-${s.id}">
+                <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px;">📎 ${s.fileName}</div>
+                <table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кол-во</th></tr></thead><tbody>
+                    ${(s.items||[]).slice(0, 20).map(i => `<tr><td>${i.article}</td><td>${i.name}</td><td class="num">${(i.qty||0).toLocaleString('ru-RU')}</td></tr>`).join('')}
+                    ${(s.items||[]).length > 20 ? `<tr><td colspan="3" style="color:var(--text-tertiary);">... и ещё ${s.items.length - 20} позиций</td></tr>` : ''}
+                </tbody></table>
+                ${historyHtml ? '<div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);font-weight:600;">История:</div>' + historyHtml : ''}
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+    renderVedKPIs();
+}
+
+function renderAll() { renderSchedule(); renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); renderVedCards(); checkTrucksForTomorrow(); }
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
+document.getElementById('shipDateWildberries').value = new Date().toISOString().slice(0,10);
+document.getElementById('shipDateOzon').value = new Date().toISOString().slice(0,10);
+document.getElementById('cityList').innerHTML = Object.keys(routesDB).map(c => `<option value="${c}">`).join('');
+
+currentPage = localStorage.getItem('currentPage') || 'schedule'; switchPage(currentPage);
+document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', function() { switchPage(this.dataset.page); }));
+document.getElementById('btnSyncNow').addEventListener('click', loadFromFirebase);
+
+document.addEventListener('change', function(e) { if (e.target.classList.contains('status-select')) handleStatusChange(e); });
+document.addEventListener('click', function(e) { if (e.target.classList.contains('card-delete')) { e.stopPropagation(); const mp = e.target.dataset.mp; const id = e.target.dataset.id; if (id && mp) deleteShipment(mp, id); } });
+
+document.getElementById('btnImportSchedule').addEventListener('click', toggleScheduleImport);
+document.getElementById('btnDoScheduleImport').addEventListener('click', doScheduleImport);
+document.getElementById('btnExportSchedule').addEventListener('click', exportScheduleCSV);
+document.getElementById('btnSaveWb').addEventListener('click', () => saveShipment('Wildberries'));
+document.getElementById('btnClearWb').addEventListener('click', () => clearShipmentForm('Wildberries'));
+document.getElementById('shipCityWildberries').addEventListener('input', showRouteInfo);
+document.getElementById('btnSaveOzon').addEventListener('click', () => saveShipment('Ozon'));
+document.getElementById('btnClearOzon').addEventListener('click', () => clearShipmentForm('Ozon'));
+document.getElementById('btnAddLog').addEventListener('click', addLogEntry);
+document.getElementById('btnToggleLogImport').addEventListener('click', toggleLogImport);
+document.getElementById('btnDoLogImport').addEventListener('click', doLogImport);
+document.getElementById('btnExportLog').addEventListener('click', exportLogCSV);
+document.getElementById('btnResetLogFilters').addEventListener('click', resetLogFilters);
+document.getElementById('logFilterMonth').addEventListener('change', renderLog);
+document.getElementById('logFilterStatus').addEventListener('change', renderLog);
+document.getElementById('logFilterMP').addEventListener('change', renderLog);
+document.getElementById('logAmount').addEventListener('input', updateLogCalc);
+document.getElementById('logNDS').addEventListener('change', updateLogCalc);
+
+document.getElementById('btnSaveVed').addEventListener('click', saveVedSupply);
+document.getElementById('btnClearVed').addEventListener('click', clearVedForm);
+
+const vedBox = document.getElementById('vedFileUploadBox');
+const vedInput = document.getElementById('vedFileInput');
+vedBox.addEventListener('click', () => vedInput.click());
+vedBox.addEventListener('dragover', e => { e.preventDefault(); vedBox.style.borderColor = 'var(--ved)'; });
+vedBox.addEventListener('dragleave', () => { vedBox.style.borderColor = ''; });
+vedBox.addEventListener('drop', e => { e.preventDefault(); vedBox.style.borderColor = ''; const file = e.dataTransfer.files[0]; if (file) { const ext = file.name.split('.').pop().toLowerCase(); if (['xlsx','xls'].includes(ext)) handleVedFileSelect(file); else if (ext === 'csv') handleVedCSVFile(file); else alert('Поддерживаются .xlsx, .xls, .csv'); } });
+vedInput.addEventListener('change', function() { if (this.files[0]) { const file = this.files[0]; const ext = file.name.split('.').pop().toLowerCase(); if (['xlsx','xls'].includes(ext)) handleVedFileSelect(file); else if (ext === 'csv') handleVedCSVFile(file); else alert('Поддерживаются .xlsx, .xls, .csv'); } });
+
+updateLogCalc();
+loadFromFirebase();
+</script>
+</body>
+</html>
