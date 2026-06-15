@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>График отгрузок</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #f2f4f7;
+            --surface: #ffffff;
+            --text-primary: #1a1c1e;
+            --text-secondary: #5f6368;
+            --text-tertiary: #9aa0a6;
+            --border: #e8eaed;
+            --separator: #f1f3f4;
+            --accent: #1a73e8;
+            --accent-hover: #1557b0;
+            --wb: #7b1fa2;
+            --ozon: #0277bd;
+            --ved: #00695c;
+            --success: #0d904f;
+            --warning: #f9ab00;
+            --danger: #ea4335;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.4;
+            padding: 20px 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-status { display: flex; align-items: center; gap: 12px; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #0d904f; box-shadow: 0 0 0 3px rgba(13,144,79,0.2); }
+        .sync-dot.offline { background: #ea4335; box-shadow: 0 0 0 3px rgba(234,67,53,0.2); }
+        .sync-dot.loading { background: #f9ab00; box-shadow: 0 0 0 3px rgba(249,171,0,0.2); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .sync-text { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+
+        .btn { padding: 8px 16px; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { background: #f8f9fa; }
+        .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 14px; }
+        .btn-wb { background: var(--wb); color: #fff; }
+        .btn-ozon { background: var(--ozon); color: #fff; }
+        .btn-log { background: #3c4043; color: #fff; }
+        .btn-ved { background: var(--ved); color: #fff; }
+        .btn-danger-sm { background: transparent; color: #ea4335; border: 1px solid #ea4335; padding: 4px 10px; font-size: 11px; border-radius: 14px; cursor: pointer; font-family: inherit; font-weight: 600; }
+        .btn-danger-sm:hover { background: #fce8e6; }
+        .btn-status { padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+        .btn-status.paid { background: #e6f4ea; color: #137333; }
+        .btn-status.unpaid { background: #fef7e0; color: #e37400; }
+
+        .nav { display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-md); padding: 4px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+        .nav-btn { flex: 1; padding: 10px 14px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; font-family: inherit; text-align: center; white-space: nowrap; }
+        .nav-btn:hover { background: #f1f3f4; }
+        .nav-btn.active { background: var(--accent); color: #fff; }
+        .nav-btn.wb-active { background: var(--wb); color: #fff; }
+        .nav-btn.ozon-active { background: var(--ozon); color: #fff; }
+        .nav-btn.logistics-active { background: #3c4043; color: #fff; }
+        .nav-btn.ved-active { background: var(--ved); color: #fff; }
+        .nav-btn.sales-active { background: #e37400; color: #fff; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+        .subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; }
+
+        .form-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+        .field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }
+        .field input, .field select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; background: #fafbfc; width: 100%; }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--accent); background: #fff; }
+        .field-calc { background: #e8f0fe; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--accent); text-align: right; }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .shipment-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s; position: relative; }
+        .shipment-card:hover { box-shadow: var(--shadow-md); }
+        .card-city { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+        .card-date { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+        .card-qty { font-size: 28px; font-weight: 700; margin: 4px 0; letter-spacing: -0.5px; }
+        .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-bottom: 12px; }
+        .card-status select { width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; background: #fafbfc; }
+        .card-delete { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 8px; z-index: 2; }
+        .card-delete:hover { background: #fce8e6; color: #ea4335; }
+        .status-work { background: #fef7e0; color: #e37400; }
+        .status-wait { background: #e8f0fe; color: #1a73e8; }
+        .status-reject { background: #fce8e6; color: #c5221f; }
+        .status-sent { background: #e6f4ea; color: #137333; }
+        .status-ready { background: #e8f0fe; color: #1a73e8; }
+
+        .file-upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafbfc; }
+        .file-upload-box:hover { border-color: var(--ved); background: #e0f2f1; }
+        .file-upload-box.has-file { border-color: var(--success); background: #e6f4ea; border-style: solid; }
+        .file-upload-box input[type="file"] { display: none; }
+        .file-name { font-size: 12px; font-weight: 600; color: var(--success); margin-top: 4px; }
+        .file-preview { margin-top: 10px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 11px; max-height: 400px; overflow-y: auto; display: none; }
+        .file-preview.show { display: block; }
+        .file-preview table { width: 100%; font-size: 11px; border-collapse: collapse; }
+        .file-preview th { font-size: 9px; padding: 8px; background: #fafbfc; text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); }
+        .file-preview td { padding: 6px 8px; border-bottom: 1px solid var(--separator); }
+
+        .supply-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s; position: relative; cursor: pointer; }
+        .supply-card:hover { box-shadow: var(--shadow-md); }
+        .supply-number { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .supply-supplier { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+        .supply-warehouse { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+        .supply-eta { font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+        .supply-volume { font-size: 14px; font-weight: 700; color: var(--ved); margin: 6px 0; }
+        .supply-status-badge { margin-top: 8px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .status-transit { background: #e8f0fe; color: #1a73e8; }
+        .status-customs { background: #fef7e0; color: #e37400; }
+        .status-svh { background: #fce8e6; color: #c5221f; }
+        .status-arrived { background: #e6f4ea; color: #137333; }
+        .supply-details { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--separator); }
+        .supply-details.show { display: block; }
+        .supply-details table { width: 100%; font-size: 11px; }
+        .supply-details th { text-align: left; padding: 6px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); background: #fafbfc; }
+        .supply-details td { padding: 4px 8px; border-bottom: 1px solid var(--separator); }
+
+        .table-wrap { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow-x: auto; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+        th { text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); border-bottom: 1px solid var(--border); background: #fafbfc; }
+        td { padding: 10px 16px; border-bottom: 1px solid var(--separator); }
+        tr:hover { background: #f8f9fa; }
+        .num { text-align: right; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+        .badge-wb { background: #f3e5f5; color: var(--wb); }
+        .badge-ozon { background: #e1f5fe; color: var(--ozon); }
+        .badge-info { background: #e8f0fe; color: #1a73e8; }
+        .badge-success { background: #e6f4ea; color: var(--success); }
+        .badge-warning { background: #fef7e0; color: #e37400; }
+        .badge-danger { background: #fce8e6; color: #c5221f; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .kpi-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px 20px; box-shadow: var(--shadow-sm); }
+        .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 6px; }
+        .kpi-value { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
+        .kpi-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+        .kpi-wb { border-left: 3px solid var(--wb); }
+        .kpi-ozon { border-left: 3px solid var(--ozon); }
+        .kpi-ved { border-left: 3px solid var(--ved); }
+        .kpi-danger { border-left: 3px solid var(--danger); }
+
+        .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1c1e; color: #fff; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; z-index: 1000; opacity: 0; transform: translateY(10px); transition: all 0.3s; box-shadow: 0 10px 15px rgba(0,0,0,0.15); }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-tertiary); font-size: 13px; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--surface); border-radius: var(--radius-lg); padding: 24px; max-width: 500px; width: 90%; box-shadow: var(--shadow-md); }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .modal-body { margin-bottom: 20px; }
+        .modal-footer { display: flex; gap: 12px; justify-content: flex-end; }
+
+        .parser-stats { display: flex; gap: 12px; margin-top: 8px; font-size: 10px; color: var(--text-tertiary); }
+        .parser-stat { display: flex; align-items: center; gap: 4px; }
+        .parser-stat-value { font-weight: 600; color: var(--text-primary); }
+        .parser-confidence { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .confidence-high { background: #e6f4ea; color: #137333; }
+        .confidence-medium { background: #fef7e0; color: #e37400; }
+        .confidence-low { background: #fce8e6; color: #c5221f; }
+        .mapping-interface { margin-top: 16px; padding: 16px; background: #fafbfc; border-radius: 12px; border: 1px solid var(--border); }
+        .mapping-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 8px; background: #fff; border-radius: 8px; }
+        .mapping-label { font-size: 12px; font-weight: 600; min-width: 100px; color: var(--text-secondary); }
+        .mapping-select { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; }
+
+        .progress-bar { height: 4px; border-radius: 2px; background: #e8eaed; margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 2px; }
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+        .capacity-input { width: 70px; text-align: center; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; background: #fafbfc; }
+        .capacity-input:focus { outline: none; border-color: var(--accent); }
+        .sales-plan-input { width: 120px; padding: 6px 8px; text-align: right; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-family: inherit; }
+        .sales-plan-input:focus { outline: none; border-color: var(--accent); }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+        .filters select, .filters input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: #fff; }
+        .chip { display: inline-flex; align-items: center; gap: 4px; background: #f1f3f4; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 500; cursor: pointer; }
+        .chip:hover { background: #e8eaed; }
+        .import-area { margin-bottom: 16px; }
+        .import-area textarea { width: 100%; height: 100px; font-family: 'SF Mono', monospace; font-size: 11px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; resize: vertical; background: #fafbfc; }
+        .week-row { cursor: pointer; }
+        .week-row.current { background: #e8f0fe; }
+        .toggle-icon { display: inline-block; transition: transform 0.2s; font-size: 10px; margin-left: 4px; color: var(--text-tertiary); }
+        .toggle-icon.open { transform: rotate(180deg); }
+        .log-edit-input { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: #fafbfc; font-family: inherit; }
+        .log-edit-input:focus { outline: none; border-color: var(--accent); }
+        .log-select { padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: #fafbfc; font-family: inherit; }
+        .route-info { background: #e6f4ea; border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 12px; display: none; }
+        .route-info.show { display: block; }
+        .route-chip { background: #ceead6; color: #137333; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; display: inline-block; margin: 2px; }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .cards-grid { grid-template-columns: 1fr; }
+            .nav-btn { font-size: 11px; padding: 8px 10px; }
+            .sales-plan-input { width: 90px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">📦 Отгрузки</div>
+    <div class="header-status">
+        <div class="sync-dot loading" id="syncDot"></div>
+        <span class="sync-text" id="syncStatus">Синхронизация...</span>
+        <button class="btn btn-outline btn-sm" id="btnSyncNow" style="margin-left:4px;">Обновить</button>
+    </div>
+</div>
+
+<div class="nav">
+    <button class="nav-btn active" data-page="schedule">📊 Сводная</button>
+    <button class="nav-btn" data-page="wb">🟣 WB</button>
+    <button class="nav-btn" data-page="ozon">🔵 Ozon</button>
+    <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
+    <button class="nav-btn" data-page="ved">🌏 ВЭД</button>
+    <button class="nav-btn" data-page="sales-plan">📈 План продаж</button>
+    <button class="nav-btn" data-page="sku-library">📚 Справочник SKU</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- СВОДНАЯ -->
+<div class="page active" id="page-schedule">
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-title">Прогноз загрузки склада 2026</div>
+            <div class="chart-legend">
+                <span><span class="legend-dot incoming"></span> Приход (ВЭД)</span>
+                <span><span class="legend-dot expense"></span> Расход (прогноз)</span>
+            </div>
+        </div>
+        <svg class="chart-svg" id="forecastChart" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+        <button class="btn btn-primary btn-sm" id="btnImportSchedule">📥 Импорт отгрузок</button>
+        <button class="btn btn-outline btn-sm" id="btnExportSchedule">📤 CSV</button>
+        <button class="btn btn-ved btn-sm" id="btnImportExcelModel">📥 Импорт Excel-модели</button>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b> · Строк: <b id="scheduleTotalRows">0</b></span>
+    </div>
+    <div class="import-area" id="scheduleImportBlock" style="display:none;">
+        <textarea id="scheduleImportText" placeholder="Вставь строки (дата	МП	город	кол-во)"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoScheduleImport">Загрузить</button>
+    </div>
+    <div class="table-wrap" id="scheduleTable"><div class="empty-state">Нет данных</div></div>
+    <div class="table-wrap" id="forecastTable"><div class="empty-state">Загрузите Excel-модель для расчёта прогноза</div></div>
+</div>
+
+<!-- WB -->
+<div class="page" id="page-wb">
+    <h1>🟣 Wildberries</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="shipDateWildberries"></div>
+            <div class="field"><label>Город</label><input type="text" id="shipCityWildberries" placeholder="Начните вводить" list="cityList" oninput="showRouteInfo()"></div>
+            <div class="field" style="max-width:100px;"><label>Кол-во</label><input type="number" id="shipQtyWildberries" min="1" placeholder="0"></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-wb btn-sm" id="btnSaveWb">✅ Сохранить</button>
+                <button class="btn btn-outline btn-sm" id="btnClearWb">Очистить</button>
+            </div>
+        </div>
+        <div class="route-info" id="routeInfoWildberries">
+            <div class="route-title" id="routeTitleWildberries"></div>
+            <div class="route-detail" id="routeDetailWildberries" style="font-size:11px;"></div>
+            <div class="route-schedule" id="routeScheduleWildberries" style="margin-top:4px;"></div>
+        </div>
+    </div>
+    <div class="cards-grid" id="wbCards"><div class="empty-state">Нет отгрузок</div></div>
+</div>
+
+<!-- OZON -->
+<div class="page" id="page-ozon">
+    <h1>🔵 Ozon</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="shipDateOzon"></div>
+            <div class="field"><label>Город</label><input type="text" id="shipCityOzon" placeholder="Начните вводить" list="cityList"></div>
+            <div class="field" style="max-width:100px;"><label>Кол-во</label><input type="number" id="shipQtyOzon" min="1" placeholder="0"></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-ozon btn-sm" id="btnSaveOzon">✅ Сохранить</button>
+                <button class="btn btn-outline btn-sm" id="btnClearOzon">Очистить</button>
+            </div>
+        </div>
+    </div>
+    <div class="cards-grid" id="ozonCards"><div class="empty-state">Нет отгрузок</div></div>
+</div>
+
+<!-- ЛОГИСТИКА -->
+<div class="page" id="page-logistics">
+    <h1>🚚 Логистика</h1>
+    <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты</p>
+    <div class="alert-card" id="truckAlert" style="display:none;">
+        <div class="alert-icon">🚛</div>
+        <div class="alert-content"><h3>На завтра нужно заказать машины</h3><div id="truckList"></div></div>
+    </div>
+    <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-outline btn-sm" id="btnToggleLogImport">📥 Импорт</button>
+        <button class="btn btn-outline btn-sm" id="btnExportLog">📤 CSV</button>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">Строк: <b id="logCount">0</b></span>
+    </div>
+    <div class="import-area" id="logImportBlock" style="display:none;">
+        <textarea id="logImportText" placeholder="Вставь строки (дата МП тип поставщик город кол-во паллет сумма статус НДС%)"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
+    </div>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Дата</label><input type="date" id="logDate"></div>
+            <div class="field"><label>МП</label><select id="logMP"><option>Wildberries</option><option>Ozon</option></select></div>
+            <div class="field"><label>Тип</label><select id="logType"><option>FBO</option><option>FBS</option></select></div>
+            <div class="field"><label>Поставщик</label><select id="logSupplier"><option value="">—</option><option>Большие Амбиции</option><option>ИП Орищенко</option><option>НордТрансСклад</option><option>Тессар</option></select></div>
+            <div class="field"><label>Город</label><input type="text" id="logCity" placeholder="Город" list="cityList"></div>
+            <div class="field" style="max-width:80px;"><label>Кол-во</label><input type="number" id="logQty" min="1"></div>
+            <div class="field" style="max-width:70px;"><label>Паллет</label><input type="number" id="logBoxes" min="1"></div>
+            <div class="field" style="max-width:100px;"><label>Сумма, ₽</label><input type="number" id="logAmount" step="0.01"></div>
+            <div class="field" style="max-width:80px;"><label>НДС</label><select id="logNDS"><option value="22%">22%</option><option value="7%">7%</option></select></div>
+            <div class="field" style="max-width:110px;"><label>С НДС</label><div class="field-calc" id="logCalcFull">0 ₽</div></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-log btn-sm" id="btnAddLog">+ Добавить</button>
+            </div>
+        </div>
+    </div>
+    <div class="filters">
+        <input type="month" id="logFilterMonth" style="width:130px;">
+        <select id="logFilterStatus"><option value="all">Все</option><option value="paid">Оплачен</option><option value="unpaid">Не оплачен</option></select>
+        <select id="logFilterMP"><option value="all">Все МП</option><option>Wildberries</option><option>Ozon</option></select>
+        <span class="chip" id="btnResetLogFilters">Сброс</span>
+    </div>
+    <div class="table-wrap" id="logTable"><div class="empty-state">Нет записей</div></div>
+</div>
+
+<!-- ВЭД -->
+<div class="page" id="page-ved">
+    <h1>🌏 ВЭД — Поставки из Китая</h1>
+    <p class="subtitle">Умный парсер: автоматически находит артикул, наименование (≥6 символов), короба, шт/кор, всего, объём</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Номер поставки</label><input type="text" id="vedNumber" placeholder="W-1603-3003"></div>
+            <div class="field"><label>Ожидаемая дата прибытия</label><input type="date" id="vedEta"></div>
+            <div class="field"><label>Поставщик</label><input type="text" id="vedSupplier" placeholder="蓉信电子"></div>
+            <div class="field"><label>Склад выгрузки</label><select id="vedWarehouse"><option value="Москва">Москва</option><option value="Пушкино">Пушкино</option></select></div>
+            <div class="field"><label>Статус</label><select id="vedStatus"><option value="transit">В пути</option><option value="customs">Таможня</option><option value="svh">На СВХ</option><option value="arrived">Прибыла</option></select></div>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--separator);padding-top:14px;">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">📎 Список товаров (Excel) — 🤖 Автоопределение всех колонок</div>
+            <div class="file-upload-box" id="vedFileUploadBox">
+                <div style="font-size:13px;font-weight:600;">Перетащите файл или нажмите</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">Excel (.xlsx, .xls) или CSV</div>
+                <div class="file-name" id="vedFileName"></div>
+                <div class="parser-stats" id="parserStats" style="display:none;">
+                    <div class="parser-stat">🎯 Формат: <span class="parser-stat-value" id="detectedFormat">—</span></div>
+                    <div class="parser-stat">📊 Уверенность: <span class="parser-confidence" id="confidenceBadge">—</span></div>
+                    <div class="parser-stat">📚 Обучено: <span class="parser-stat-value" id="parserLearned">—</span></div>
+                </div>
+                <input type="file" id="vedFileInput" accept=".xlsx,.xls,.csv">
+            </div>
+            <div class="mapping-interface" id="mappingInterface" style="display:none;">
+                <h4 style="margin-bottom:12px;font-size:13px;">🔧 Ручная настройка колонок</h4>
+                <p style="font-size:10px;color:var(--text-secondary);margin-bottom:12px;">Система не смогла точно определить формат. Выберите соответствие колонок вручную.</p>
+                <div id="mappingRows"></div>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-sm" id="btnApplyMapping">✅ Применить маппинг</button>
+                    <button class="btn btn-outline btn-sm" id="btnCancelMapping">Отмена</button>
+                </div>
+            </div>
+            <div class="file-preview" id="vedFilePreview"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;">
+            <button class="btn btn-ved btn-sm" id="btnSaveVed">✅ Сохранить поставку</button>
+            <button class="btn btn-outline btn-sm" id="btnClearVed">🗑 Очистить</button>
+        </div>
+    </div>
+    <div class="kpi-grid" id="vedKpiGrid"></div>
+    <div class="cards-grid" id="vedCards"><div class="empty-state">Нет поставок</div></div>
+</div>
+
+<!-- ПЛАН ПРОДАЖ -->
+<div class="page" id="page-sales-plan">
+    <h1>📈 План продаж 2026</h1>
+    <p class="subtitle">Заполните план продаж по месяцам. Расход будет рассчитан автоматически.</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Ёмкость складов, м³</label><input type="number" id="totalCapacity" step="1" value="2267"></div>
+            <div class="field"><label>Текущая занятость, м³</label><input type="number" id="currentOccupancy" step="1" value="1408"></div>
+            <div class="field"><label>Постоянный объём, м³</label><input type="number" id="constantVolume" step="1" value="85"></div>
+            <div class="field"><label>Расход марта (база), м³</label><input type="number" id="baseExpense" step="0.01" value="51.50"></div>
+        </div>
+        <div style="margin-top:12px;">
+            <button class="btn btn-primary btn-sm" id="btnSaveWarehouseSettings">💾 Сохранить настройки</button>
+            <button class="btn btn-outline btn-sm" id="btnImportExcelForSettings">📥 Импорт из Excel</button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Месяц</th><th class="num">План продаж, ₽</th><th class="num">Рост</th><th class="num">Расход, м³</th><th class="num">Приход, м³</th><th class="num">Остаток, м³</th><th>Загрузка</th></tr></thead>
+            <tbody id="salesPlanEditor"></tbody>
+        </table>
+    </div>
+    <div style="display:flex; gap:12px; margin-top:12px;">
+        <button class="btn btn-primary" id="btnSaveSalesPlan">💾 Сохранить план</button>
+        <button class="btn btn-outline" id="btnResetSalesPlan">⟳ Сбросить</button>
+    </div>
+</div>
+
+<!-- СПРАВОЧНИК SKU -->
+<div class="page" id="page-sku-library">
+    <h1>📚 Справочник SKU</h1>
+    <p class="subtitle">База габаритов товаров для автоматического расчёта объёма</p>
+    <div class="form-card">
+        <div class="form-row">
+            <div class="field"><label>Артикул</label><input type="text" id="skuArticle" placeholder="S20001-3/02"></div>
+            <div class="field"><label>Наименование</label><input type="text" id="skuName" placeholder="Headphones..."></div>
+            <div class="field"><label>Длина, см</label><input type="number" id="skuLength" step="0.1" placeholder="см"></div>
+            <div class="field"><label>Ширина, см</label><input type="number" id="skuWidth" step="0.1" placeholder="см"></div>
+            <div class="field"><label>Высота, см</label><input type="number" id="skuHeight" step="0.1" placeholder="см"></div>
+            <div class="field"><label>Шт/кор</label><input type="number" id="skuPerCarton" placeholder="шт"></div>
+            <div class="field" style="justify-content:flex-end;">
+                <button class="btn btn-primary btn-sm" id="btnAddSku">➕ Добавить</button>
+            </div>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table id="skuTable">
+            <thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Длина, см</th><th class="num">Ширина, см</th><th class="num">Высота, см</th><th class="num">Шт/кор</th><th class="num">Объём короба, м³</th><th></th></tr></thead>
+            <tbody id="skuList"></tbody>
+        </table>
+    </div>
+</div>
+
+<datalist id="cityList"></datalist>
+<div class="modal" id="volumeModal">
+    <div class="modal-content">
+        <div class="modal-header">✏️ Введите объём поставки</div>
+        <div class="modal-body">
+            <p style="margin-bottom:12px;">Для поставки <span id="modalNumber" style="font-weight:600;"></span> не удалось автоматически определить объём.</p>
+            <div class="field"><label>📏 Объём, м³</label><input type="number" id="modalVolume" step="0.01" placeholder="0.00"></div>
+            <div class="field" style="margin-top:12px;"><label>💾 Запомнить для артикула</label><select id="modalSaveToLibrary"><option value="yes">Да, запомнить для этого артикула</option><option value="no">Нет, только для этой поставки</option></select></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="modalCancel">Отмена</button>
+            <button class="btn btn-primary btn-sm" id="modalConfirm">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== FIREBASE ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyBCGOXZtpRY_aWOkcUWuW34uJBsNgrgdDA",
+  authDomain: "shipments-f48c2.firebaseapp.com",
+  projectId: "shipments-f48c2",
+  storageBucket: "shipments-f48c2.firebasestorage.app",
+  messagingSenderId: "994289127760",
+  appId: "1:994289127760:web:539f3ca770a1e6d4705c55"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ========== КОНСТАНТЫ ==========
+const routesDB = {
+    'Казань':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Краснодар':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
+    'Невинномысск':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
+    'Екатеринбург':{schedule:'Ср-Сб, Сб-Вт, Вт-Пт',delivery:'2-3 дня'},
+    'Санкт-Петербург':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Челябинск':{schedule:'Ср-Сб, Сб-Вт',delivery:'2-3 дня'},
+    'Минск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Тула':{schedule:'В любой день',delivery:'день в день'},
+    'Коледино':{schedule:'В любой день',delivery:'день в день'},
+    'Электросталь':{schedule:'В любой день',delivery:'день в день'},
+    'Волгоград':{schedule:'Ср-Пт',delivery:'2-3 дня'},
+    'Владимир':{schedule:'В любой день',delivery:'2 дня'},
+    'Рязань':{schedule:'В любой день',delivery:'день в день'},
+    'Воронеж':{schedule:'Пн-Чт, Ср-Сб, Пт-Пн',delivery:'3-4 дня'},
+    'Новосибирск':{schedule:'Пн-Сб, Пт-Ср',delivery:'5-6 дней'},
+    'Сарапул':{schedule:'Пн-Чт',delivery:'4 дня'},
+    'Котовск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Питер':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Шушары':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
+    'Чехов':{schedule:'В любой день',delivery:'день в день'},
+    'Чехов 1':{schedule:'В любой день',delivery:'день в день'},
+    'Чехов 2':{schedule:'В любой день',delivery:'день в день'},
+    'Хоругвино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Петровское':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Радумля':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Ногинск':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Фреш':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино 1':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Пушкино 2':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Жуковский':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Домодедово':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Софьино':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Гривно':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Ватутинки':{schedule:'В любой день',delivery:'1-2 дня'},
+    'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+};
+
+const STATUSES = [
+    { value: 'in_work', label: '⚙️ В работе', class: 'status-work' },
+    { value: 'waiting', label: '⏳ Ожидает', class: 'status-wait' },
+    { value: 'rejected', label: '🚫 Не принят', class: 'status-reject' },
+    { value: 'sent', label: '📦 Отправлено', class: 'status-sent' },
+    { value: 'ready', label: '✅ Готово', class: 'status-ready' }
+];
+
+const VED_STATUSES = {
+    transit: { label: '🚢 В пути', class: 'status-transit' },
+    customs: { label: '🛃 Таможня', class: 'status-customs' },
+    svh: { label: '📦 На СВХ', class: 'status-svh' },
+    arrived: { label: '✅ Прибыла', class: 'status-arrived' }
+};
+
+const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
+const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+// ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+let wbShipments = [];
+let ozonShipments = [];
+let logEntries = [];
+let vedSupplies = [];
+let weekCapacities = {};
+let isOnline = false;
+let currentPage = 'schedule';
+let vedTempFileData = null;
+let pendingSupplyData = null;
+let skuLibrary = {};
+let warehouseData = {
+    totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50,
+    salesPlan: {
+        "Апрель": 343000000, "Май": 387000000, "Июнь": 428300000,
+        "Июль": 494000000, "Август": 565000000, "Сентябрь": 629000000,
+        "Октябрь": 697000000, "Ноябрь": 775000000, "Декабрь": 1149000000
+    }
+};
+
+// ========== УМНЫЙ ПАРСЕР ВЭД (с правилом "наименование ≥ 6 символов") ==========
+class SmartVedParser {
+    constructor() {
+        this.learningHistory = [];
+        this.loadLearningHistory();
+        this.articlePatterns = [
+            /^[A-Z0-9]{2,}[-_][A-Z0-9]{2,}[-_\/][A-Z0-9]{2,}$/i,
+            /^[A-Z]{1,2}\d{2,}[-_]\d{2,}$/i,
+            /^[A-Z0-9]{3,}[-_][A-Z0-9]{3,}[-_][A-Z0-9]{3,}$/i,
+            /^[A-Z0-9]{2,}[-_]\d{3,}[-_][A-Z0-9]{2,}$/i,
+            /^[A-Z0-9]{4,10}$/i,
+            /^[A-Z]{2,5}\d{2,6}$/i
+        ];
+    }
+    loadLearningHistory() { const saved = localStorage.getItem('ved_parser_learning'); if (saved) this.learningHistory = JSON.parse(saved); }
+    saveLearningHistory() { localStorage.setItem('ved_parser_learning', JSON.stringify(this.learningHistory)); }
+    createFingerprint(rows) {
+        if (rows.length === 0) return '';
+        const sample = rows.slice(0, Math.min(5, rows.length)).map(row => ({ length: row.length, firstCells: row.slice(0, 5).map(cell => String(cell || '').toLowerCase().slice(0, 30).replace(/[^a-zа-я0-9]/g, '')) }));
+        return JSON.stringify(sample);
+    }
+    findSimilarFormat(rows) {
+        const fingerprint = this.createFingerprint(rows);
+        let exactMatch = this.learningHistory.find(h => h.fingerprint === fingerprint);
+        if (exactMatch) return exactMatch;
+        const sampleStructure = rows.slice(0, 5).map(row => row.length);
+        const similar = this.learningHistory.find(h => { if (!h.structure) return false; return JSON.stringify(sampleStructure) === JSON.stringify(h.structure); });
+        return similar || null;
+    }
+    isArticleLike(value) {
+        if (!value || value.length < 2) return false;
+        const str = String(value).trim();
+        for (const pattern of this.articlePatterns) { if (pattern.test(str)) return true; }
+        if (/[A-Z0-9]/i.test(str) && str.length >= 3 && str.length <= 30) {
+            if (/^\d+$/.test(str) && str.length > 6) return false;
+            if (str.includes(' ') && str.length > 15) return false;
+            if (/[-_\/]/.test(str)) return true;
+            if (/[A-Z]/i.test(str) && /\d/.test(str)) return true;
+        }
+        return false;
+    }
+    isNameLike(value) {
+        if (!value || value.length < 2) return false;
+        const str = String(value).trim();
+        // ПРАВИЛО: наименование должно быть минимум 6 символов
+        if (str.length < 6) return false;
+        // Должно содержать буквы
+        if (/[а-яА-Яa-zA-Z]{3,}/.test(str)) return true;
+        if (/[\u4e00-\u9fff]/.test(str)) return true;
+        // Несколько слов через пробел
+        if (/\s/.test(str) && str.length > 5) return true;
+        // Содержит точку (как "GQbox.") и буквы
+        if (/\./.test(str) && /[a-zA-Z]/.test(str)) return true;
+        // Не должно быть чисто числовым
+        if (/^\d+$/.test(str)) return false;
+        // Не должно быть похоже на артикул
+        if (this.isArticleLike(str)) return false;
+        // Длинные строки с буквами - точно наименование
+        if (str.length > 10 && /[a-zA-Zа-яА-Я]/.test(str)) return true;
+        return false;
+    }
+    isCartonsLike(value) {
+        if (!value) return false;
+        const str = String(value).trim();
+        const num = parseInt(str.replace(/[^0-9]/g, ''));
+        if (isNaN(num) || num <= 0) return false;
+        return num >= 1 && num <= 10000 && !str.includes('.') && !str.includes(',');
+    }
+    isPerCartonLike(value) {
+        if (!value) return false;
+        const str = String(value).trim();
+        const num = parseInt(str.replace(/[^0-9]/g, ''));
+        if (isNaN(num) || num <= 0) return false;
+        return num >= 1 && num <= 1000 && !str.includes('.') && !str.includes(',');
+    }
+    isTotalQtyLike(value) {
+        if (!value) return false;
+        const str = String(value).trim();
+        const num = parseInt(str.replace(/[^0-9]/g, ''));
+        if (isNaN(num) || num <= 0) return false;
+        return num >= 10 && num <= 1000000 && !str.includes('.') && !str.includes(',');
+    }
+    isVolumeLike(value) {
+        if (!value) return false;
+        const str = String(value).trim();
+        const num = parseFloat(str.replace(',', '.'));
+        return !isNaN(num) && num > 0 && num >= 0.001 && num <= 1000;
+    }
+    findAllColumnsByContent(rows, headerRowIndex = 0) {
+        const startRow = headerRowIndex + 1;
+        const maxCols = rows[0] ? rows[0].length : 0;
+        const columnMap = {};
+        const columnScores = {};
+        const columnSamples = {};
+        for (let colIndex = 0; colIndex < maxCols; colIndex++) {
+            const scores = { article: 0, name: 0, cartons: 0, perCarton: 0, totalQty: 0, volume: 0 };
+            const samples = [];
+            let totalCells = 0, emptyCells = 0;
+            for (let i = startRow; i < Math.min(startRow + 30, rows.length); i++) {
+                const row = rows[i];
+                if (!row || !Array.isArray(row)) continue;
+                const value = String(row[colIndex] || '').trim();
+                totalCells++;
+                if (!value || value === '0' || value === '-') { emptyCells++; continue; }
+                if (samples.length < 5) samples.push(value);
+                if (this.isArticleLike(value)) scores.article += 3;
+                if (this.isNameLike(value)) scores.name += 3;
+                if (this.isCartonsLike(value)) scores.cartons += 2;
+                if (this.isPerCartonLike(value)) scores.perCarton += 2;
+                if (this.isTotalQtyLike(value)) scores.totalQty += 2;
+                if (this.isVolumeLike(value)) scores.volume += 2;
+            }
+            const validCells = Math.max(totalCells - emptyCells, 1);
+            for (const key in scores) scores[key] = scores[key] / validCells;
+            columnScores[colIndex] = scores;
+            columnSamples[colIndex] = samples;
+        }
+        let bestArticleCol = -1, bestArticleScore = 0;
+        for (const col in columnScores) { const score = columnScores[col].article; if (score > bestArticleScore && score > 0.3) { bestArticleScore = score; bestArticleCol = parseInt(col); } }
+        if (bestArticleCol >= 0) columnMap.article = bestArticleCol;
+        let bestCartonsCol = -1, bestCartonsScore = 0;
+        for (const col in columnScores) { if (parseInt(col) === columnMap.article) continue; const score = columnScores[col].cartons; if (score > bestCartonsScore && score > 0.2) { bestCartonsScore = score; bestCartonsCol = parseInt(col); } }
+        if (bestCartonsCol >= 0) columnMap.cartons = bestCartonsCol;
+        let bestPerCartonCol = -1, bestPerCartonScore = 0;
+        for (const col in columnScores) { const iCol = parseInt(col); if (iCol === columnMap.article || iCol === columnMap.cartons) continue; const score = columnScores[col].perCarton; if (score > bestPerCartonScore && score > 0.1) { bestPerCartonScore = score; bestPerCartonCol = iCol; } }
+        if (bestPerCartonCol >= 0) columnMap.perCarton = bestPerCartonCol;
+        let bestTotalQtyCol = -1, bestTotalQtyScore = 0;
+        for (const col in columnScores) { const iCol = parseInt(col); if (iCol === columnMap.article || iCol === columnMap.cartons || iCol === columnMap.perCarton) continue; const score = columnScores[col].totalQty; if (score > bestTotalQtyScore && score > 0.1) { const isLarger = columnScores[col].totalQty > columnScores[col].cartons; if (isLarger || !columnMap.cartons) { bestTotalQtyScore = score; bestTotalQtyCol = iCol; } } }
+        if (bestTotalQtyCol >= 0) columnMap.totalQty = bestTotalQtyCol;
+        let bestVolumeCol = -1, bestVolumeScore = 0;
+        for (const col in columnScores) { const score = columnScores[col].volume; if (score > bestVolumeScore && score > 0.1) { bestVolumeScore = score; bestVolumeCol = parseInt(col); } }
+        if (bestVolumeCol >= 0) columnMap.volume = bestVolumeCol;
+        if (columnMap.article !== undefined) {
+            let bestNameCol = -1, bestNameScore = 0;
+            for (let offset = -5; offset <= 5; offset++) {
+                const colIndex = columnMap.article + offset;
+                if (colIndex < 0 || colIndex >= maxCols || colIndex === columnMap.article) continue;
+                const score = columnScores[colIndex]?.name || 0;
+                if (score > bestNameScore && score > 0.1) { bestNameScore = score; bestNameCol = colIndex; }
+            }
+            if (bestNameCol >= 0) columnMap.name = bestNameCol;
+            else if (columnMap.article + 1 < maxCols) columnMap.name = columnMap.article + 1;
+        }
+        console.log('🔍 Найденные колонки:', Object.entries(columnMap).map(([k,v]) => `${k}: ${String.fromCharCode(65+v)}(${v})`).join(', '));
+        return columnMap;
+    }
+    detectFormat(rows) {
+        if (rows.length < 2) return null;
+        const learnedFormat = this.findSimilarFormat(rows);
+        if (learnedFormat) { console.log('📚 Обученный формат'); return { formatName: 'learned', confidence: 0.95, columnMap: learnedFormat.columnMap, source: 'История обучения', learned: true, headerRowIndex: learnedFormat.headerRowIndex || 0 }; }
+        let headerRowIndex = 0;
+        for (let i = 0; i < Math.min(30, rows.length); i++) {
+            const row = rows[i]; if (!row || !Array.isArray(row)) continue;
+            let matchCount = 0;
+            for (let col = 0; col < row.length; col++) {
+                const cell = String(row[col] || '').toLowerCase().trim();
+                if (!cell) continue;
+                if (['article','артикул','sku','арт','код','item'].some(kw => cell.includes(kw))) matchCount++;
+                if (['name','наименование','название','product','товар'].some(kw => cell.includes(kw))) matchCount++;
+                if (['cartons','короб','qty','кол-во','количество'].some(kw => cell.includes(kw))) matchCount++;
+            }
+            if (matchCount >= 2) { headerRowIndex = i; break; }
+        }
+        const columnMap = this.findAllColumnsByContent(rows, headerRowIndex);
+        if (columnMap.article === undefined || columnMap.cartons === undefined) return { formatName: 'unknown', confidence: 0.1, columnMap, source: 'Анализ', learned: false, headerRowIndex };
+        const confidence = columnMap.volume !== undefined ? 0.9 : (columnMap.name !== undefined ? 0.8 : 0.7);
+        console.log('✅ Формат определён, уверенность:', Math.round(confidence*100)+'%');
+        return { formatName: 'auto_detected', confidence, columnMap, source: 'Анализ содержимого', learned: false, headerRowIndex };
+    }
+    parseWithMapping(rows, columnMap, headerRowIndex = 0) {
+        const items = []; let totalVolume = 0, totalQty = 0, totalCartons = 0, missingVolumeItems = [], skippedRows = 0, parsedRows = 0;
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !Array.isArray(row) || row.every(cell => !cell || String(cell).trim() === '')) { skippedRows++; continue; }
+            const getCell = (fn) => { const ci = columnMap[fn]; if (ci === undefined || ci >= row.length) return ''; const v = row[ci]; return v !== undefined && v !== null ? String(v).trim() : ''; };
+            const getNumber = (fn) => { const v = getCell(fn); if (!v) return 0; const c = v.replace(/[^\d.,\-]/g, '').replace(',', '.'); const n = parseFloat(c); return isNaN(n) ? 0 : n; };
+            const article = getCell('article'); let name = getCell('name');
+            if (!name && columnMap.article !== undefined) {
+                for (let offset = 1; offset <= 3; offset++) {
+                    const nc = columnMap.article + offset;
+                    if (nc < row.length) { const nv = String(row[nc] || '').trim(); if (nv && nv.length >= 6 && /[а-яА-Яa-zA-Z]/.test(nv) && !this.isArticleLike(nv) && isNaN(parseFloat(nv.replace(',','.')))) { name = nv; columnMap.name = nc; break; } }
+                }
+            }
+            if (!article && !name) { const hasTotal = row.some(cell => { const v = String(cell || '').toLowerCase(); return v.includes('total')||v.includes('итого')||v.includes('合计'); }); if (hasTotal) { skippedRows++; continue; } skippedRows++; continue; }
+            if (!name && article) name = article;
+            const cartons = Math.round(getNumber('cartons'));
+            const perCarton = getNumber('perCarton');
+            let qty = getNumber('totalQty');
+            if (qty === 0 && perCarton > 0 && cartons > 0) qty = perCarton * cartons;
+            let volume = 0, volumeSource = 'none';
+            if (columnMap.volume !== undefined) { const cv = getNumber('volume'); if (cv > 0 && cv < 10000) { volume = cv; volumeSource = 'cbm'; } }
+            if (volume === 0 && article) { const sv = calculateVolumeFromSku(article, cartons); if (sv !== null && sv > 0) { volume = sv; volumeSource = 'library'; } }
+            if (volume > 0 && volume < 10000) totalVolume += volume;
+            if (qty > 0 && qty < 10000000) totalQty += qty;
+            if (cartons > 0 && cartons < 100000) totalCartons += cartons;
+            if (volume === 0 && qty > 0) missingVolumeItems.push({ article, name, cartons, perCarton, qty });
+            items.push({ article: article || `Строка ${i+1}`, name: name || article || `Строка ${i+1}`, cartons, perCarton, qty, volume, volumeSource });
+            parsedRows++;
+        }
+        console.log(`📊 Парсинг: ${parsedRows} строк, пропущено ${skippedRows}`);
+        return { items, totalVolume: Math.round(totalVolume*100)/100, totalQty, totalCartons, itemsCount: items.length, missingVolumeCount: items.filter(i => i.volumeSource==='none' && i.qty>0).length, missingVolumeItems, skippedRows, parsedRows, parsingConfidence: items.length>0 ? items.filter(i=>i.volumeSource!=='none').length/items.length : 0 };
+    }
+    async parseFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
+                    if (rows.length < 2) return reject('Файл пуст');
+                    const formatInfo = this.detectFormat(rows);
+                    if (!formatInfo || formatInfo.confidence < 0.3) { resolve({ needsManualMapping: true, rows, formatInfo }); return; }
+                    const result = this.parseWithMapping(rows, formatInfo.columnMap, formatInfo.headerRowIndex || 0);
+                    if (result.parsingConfidence > 0.4 && result.items.length > 3) this.learnFromSuccess(rows, formatInfo, result);
+                    resolve({ ...result, formatInfo, needsManualMapping: false });
+                } catch (err) { reject(err); }
+            };
+            reader.onerror = () => reject('Ошибка чтения');
+            reader.readAsArrayBuffer(file);
+        });
+    }
+    learnFromSuccess(rows, formatInfo, result) {
+        const fingerprint = this.createFingerprint(rows);
+        const structure = rows.slice(0, 5).map(row => row.length);
+        const existing = this.learningHistory.findIndex(h => h.fingerprint === fingerprint);
+        const entry = { fingerprint, structure, formatName: formatInfo.formatName, columnMap: formatInfo.columnMap, headerRowIndex: formatInfo.headerRowIndex, confidence: formatInfo.confidence, parsingConfidence: result.parsingConfidence, timestamp: Date.now(), successCount: existing >= 0 ? (this.learningHistory[existing].successCount||1)+1 : 1 };
+        if (existing >= 0) this.learningHistory[existing] = entry; else this.learningHistory.push(entry);
+        if (this.learningHistory.length > 50) { this.learningHistory.sort((a,b) => b.successCount - a.successCount); this.learningHistory = this.learningHistory.slice(0, 50); }
+        this.saveLearningHistory();
+    }
+    getStats() { return { learnedFormats: this.learningHistory.length, averageConfidence: this.learningHistory.length>0 ? this.learningHistory.reduce((s,h)=>s+h.confidence,0)/this.learningHistory.length : 0 }; }
+}
+
+const smartParser = new SmartVedParser();
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m] || m); }
+function updateSyncStatus(status) { const el = document.getElementById('syncStatus'), dot = document.getElementById('syncDot'); dot.className = 'sync-dot'; if (status === 'online') { dot.classList.add('online'); el.textContent = 'Онлайн'; } else if (status === 'offline') { dot.classList.add('offline'); el.textContent = 'Офлайн'; } else { dot.classList.add('loading'); el.textContent = 'Загрузка...'; } }
+function calculateVolumeFromSku(article, cartons) { const sku = skuLibrary[article]; if (sku && sku.length > 0 && sku.width > 0 && sku.height > 0 && cartons > 0) return (sku.length*sku.width*sku.height/1000000)*cartons; return null; }
+function addSkuToLibrary(article, name, length, width, height, perCarton) { if (!article) return false; skuLibrary[article] = { name: name||article, length: parseFloat(length)||0, width: parseFloat(width)||0, height: parseFloat(height)||0, perCarton: parseFloat(perCarton)||0, volumePerBox: (parseFloat(length)||0)*(parseFloat(width)||0)*(parseFloat(height)||0)/1000000 }; saveSkuLibrary(); return true; }
+function loadSkuLibrary() { const saved = localStorage.getItem('skuLibrary'); if (saved) skuLibrary = JSON.parse(saved); renderSkuTable(); }
+function saveSkuLibrary() { localStorage.setItem('skuLibrary', JSON.stringify(skuLibrary)); renderSkuTable(); }
+function saveToLocalStorage() { localStorage.setItem('wb', JSON.stringify(wbShipments)); localStorage.setItem('ozon', JSON.stringify(ozonShipments)); localStorage.setItem('log', JSON.stringify(logEntries)); localStorage.setItem('ved', JSON.stringify(vedSupplies)); localStorage.setItem('cap', JSON.stringify(weekCapacities)); localStorage.setItem('warehouseData', JSON.stringify(warehouseData)); localStorage.setItem('currentPage', currentPage); }
+
+// ========== ЗАГРУЗКА ДАННЫХ ==========
+async function loadFromFirebase() {
+    try {
+        updateSyncStatus('loading');
+        const [wbSnap, ozSnap, logSnap, vedSnap, capDoc, settingsDoc] = await Promise.all([
+            db.collection('shipments_wb').orderBy('date').get(),
+            db.collection('shipments_ozon').orderBy('date').get(),
+            db.collection('logistics').orderBy('date').get(),
+            db.collection('ved_supplies').orderBy('eta').get(),
+            db.collection('settings').doc('capacities').get(),
+            db.collection('settings').doc('warehouseData').get()
+        ]);
+        wbShipments = wbSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work' }));
+        ozonShipments = ozSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work' }));
+        logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false }));
+        vedSupplies = vedSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
+        if (settingsDoc.exists) { const data = settingsDoc.data(); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; }
+        isOnline = true; updateSyncStatus('online'); saveToLocalStorage(); renderAll();
+    } catch (e) { console.error('Firebase error:', e); loadFromLocalStorage(); isOnline = false; updateSyncStatus('offline'); renderAll(); }
+}
+function loadFromLocalStorage() {
+    wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work' }));
+    ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work' }));
+    logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false }));
+    vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]');
+    weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
+    const savedWarehouse = localStorage.getItem('warehouseData');
+    if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; }
+    loadSkuLibrary();
+}
+
+// ========== WB / OZON ==========
+function showRouteInfo() { const city = document.getElementById('shipCityWildberries').value.trim(); const route = routesDB[city]; const info = document.getElementById('routeInfoWildberries'); if (route) { info.classList.add('show'); document.getElementById('routeTitleWildberries').textContent = '🚛 ' + city; document.getElementById('routeDetailWildberries').textContent = 'Срок: ' + route.delivery; document.getElementById('routeScheduleWildberries').innerHTML = route.schedule.split(', ').map(s => `<span class="route-chip">${s}</span>`).join(''); } else { info.classList.remove('show'); } }
+async function saveShipment(mp) { const date = document.getElementById('shipDate'+mp).value; const city = document.getElementById('shipCity'+mp).value.trim(); const qty = parseInt(document.getElementById('shipQty'+mp).value)||0; if(!date||!city||qty<=0)return alert('Заполните дату, город и количество'); const shipment={id:Date.now(),date,city,qty,source:mp,status:'in_work'}; const arr=mp==='Wildberries'?wbShipments:ozonShipments; arr.push(shipment); if(isOnline){const col=mp==='Wildberries'?'shipments_wb':'shipments_ozon';try{await db.collection(col).doc(String(shipment.id)).set(shipment);}catch(e){console.error(e);}} saveToLocalStorage(); renderAll(); clearShipmentForm(mp); showToast('✅ '+city+' — '+qty.toLocaleString('ru-RU')+' ед.'); }
+function clearShipmentForm(mp) { document.getElementById('shipDate'+mp).value=new Date().toISOString().slice(0,10); document.getElementById('shipCity'+mp).value=''; document.getElementById('shipQty'+mp).value=''; if(mp==='Wildberries')document.getElementById('routeInfoWildberries').classList.remove('show'); }
+async function deleteShipment(mp,id){if(!confirm('Удалить?'))return;if(mp==='Wildberries')wbShipments=wbShipments.filter(s=>String(s.id)!==String(id));else ozonShipments=ozonShipments.filter(s=>String(s.id)!==String(id));if(isOnline){const col=mp==='Wildberries'?'shipments_wb':'shipments_ozon';try{await db.collection(col).doc(String(id)).delete();}catch(e){console.error(e);}}saveToLocalStorage();renderAll();}
+function renderShipmentCards(mp){const arr=mp==='Wildberries'?wbShipments:ozonShipments;const cid=mp==='Wildberries'?'wbCards':'ozonCards';const srt=[...arr].sort((a,b)=>b.date.localeCompare(a.date));if(!srt.length){document.getElementById(cid).innerHTML='<div class="empty-state">Нет отгрузок</div>';return;}let html='';for(let e of srt){const cs=e.status||'in_work';const so=STATUSES.find(s=>s.value===cs)||STATUSES[0];const route=mp==='Wildberries'?(routesDB[e.city]||null):null;html+=`<div class="shipment-card"><button class="card-delete" data-mp="${mp}" data-id="${e.id}">×</button><div class="card-city">📍 ${e.city}</div><div class="card-date">${e.date}</div><div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div><div class="card-qty-label">единиц</div>${route?`<div class="route-badge">🚚 ${route.delivery}</div>`:''}<div class="card-status"><select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}" onchange="handleStatusChange(event)">${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}</select></div></div>`;}document.getElementById(cid).innerHTML=html;}
+function handleStatusChange(event){const select=event.target;if(!select.classList.contains('status-select'))return;const mp=select.dataset.mp,id=select.dataset.id,status=select.value;const arr=mp==='Wildberries'?wbShipments:ozonShipments;const shipment=arr.find(s=>String(s.id)===String(id));if(shipment){shipment.status=status;saveToLocalStorage();if(isOnline){const col=mp==='Wildberries'?'shipments_wb':'shipments_ozon';db.collection(col).doc(String(id)).update({status}).catch(e=>console.warn(e));}renderShipmentCards(mp);}}
+
+// ========== ВЭД ==========
+function handleVedFileSelect(file){if(!file)return;const uploadBox=document.getElementById('vedFileUploadBox');const fileName=document.getElementById('vedFileName');const parserStats=document.getElementById('parserStats');uploadBox.classList.add('has-file');fileName.textContent=`⏳ Анализирую ${file.name}...`;parserStats.style.display='none';smartParser.parseFile(file).then(result=>{if(result.needsManualMapping){showMappingInterface(result.rows,result.formatInfo);fileName.textContent=`⚠️ ${file.name} — требуется настройка`;return;}vedTempFileData={name:file.name,items:result.items,totalVolume:result.totalVolume,totalQty:result.totalQty,totalCartons:result.totalCartons,missingVolumeCount:result.missingVolumeCount,missingVolumeItems:result.missingVolumeItems,parsingConfidence:result.parsingConfidence,formatInfo:result.formatInfo};fileName.textContent=`✅ ${file.name} (${result.itemsCount} поз., ${result.totalVolume.toFixed(2)} м³)`;const format=result.formatInfo;parserStats.style.display='flex';document.getElementById('detectedFormat').textContent=format.source;const confBadge=document.getElementById('confidenceBadge');const conf=Math.round(result.parsingConfidence*100);if(conf>=80){confBadge.className='parser-confidence confidence-high';confBadge.textContent=`${conf}% ✅`;}else if(conf>=50){confBadge.className='parser-confidence confidence-medium';confBadge.textContent=`${conf}% ⚠️`;}else{confBadge.className='parser-confidence confidence-low';confBadge.textContent=`${conf}% ❌`;}document.getElementById('parserLearned').textContent=format.learned?'Да 📚':'Нет 🆕';showVedFilePreviewWithDetails(result);if(result.missingVolumeCount>0)showToast(`⚠️ У ${result.missingVolumeCount} позиций нет объёма`);else showToast(`✅ Определён формат: ${format.source} (${conf}%)`);document.getElementById('mappingInterface').style.display='none';}).catch(err=>{console.error(err);fileName.textContent=`❌ Ошибка: ${err}`;uploadBox.classList.remove('has-file');showToast('❌ '+err);});}
+function showMappingInterface(rows,formatInfo){const mi=document.getElementById('mappingInterface');const mr=document.getElementById('mappingRows');window.pendingMappingRows=rows;let ph='<div style="margin-bottom:12px;font-size:10px;color:var(--text-secondary);">Первые строки:<br>';rows.slice(0,5).forEach((row,idx)=>{ph+=`Строка ${idx+1}: ${row.slice(0,10).map(cell=>String(cell||'').slice(0,15)).join(' | ')}<br>`;});ph+='</div>';const fields=[{id:'article',label:'Артикул',required:true},{id:'name',label:'Наименование (≥6 символов)',required:false},{id:'cartons',label:'Коробов',required:true},{id:'perCarton',label:'Шт/кор',required:false},{id:'totalQty',label:'Всего',required:false},{id:'volume',label:'Объём (CBM)',required:false}];let html=ph;const maxCols=Math.max(...rows.map(row=>row.length));const colOptions='<option value="">— Не выбрано —</option>'+Array.from({length:maxCols},(_,i)=>`<option value="${i}">Колонка ${String.fromCharCode(65+i)} (${i+1})</option>`).join('');const preMapping=formatInfo?.columnMap||{};fields.forEach(field=>{const ps=preMapping[field.id]!==undefined?preMapping[field.id]:'';html+=`<div class="mapping-row"><div class="mapping-label">${field.label}${field.required?'<span style="color:#ea4335;">*</span>':''}</div><select class="mapping-select" id="mapping_${field.id}">${colOptions.replace(`value="${ps}"`,`value="${ps}" selected`)}</select></div>`;});mr.innerHTML=html;mi.style.display='block';window.pendingMappingResolve=(result)=>{vedTempFileData={name:'Настроенный файл',items:result.items,totalVolume:result.totalVolume,totalQty:result.totalQty,totalCartons:result.totalCartons,missingVolumeCount:result.missingVolumeCount,missingVolumeItems:result.missingVolumeItems,parsingConfidence:result.parsingConfidence,formatInfo:{source:'Ручная настройка',learned:false}};document.getElementById('vedFileName').textContent=`✅ Настроенный файл (${result.itemsCount} поз.)`;showVedFilePreviewWithDetails(result);mi.style.display='none';showToast('✅ Маппинг применён');};}
+function applyManualMapping(){const fields=['article','name','cartons','perCarton','totalQty','volume'];const columnMap={};fields.forEach(field=>{const select=document.getElementById('mapping_'+field);if(select&&select.value!=='')columnMap[field]=parseInt(select.value);});if(columnMap.article===undefined||columnMap.cartons===undefined){alert('Выберите артикул и короба');return;}const result=smartParser.parseWithMapping(window.pendingMappingRows,columnMap);smartParser.learnFromSuccess(window.pendingMappingRows,{formatName:'manual',columnMap,headerRowIndex:0,confidence:0.8},result);if(window.pendingMappingResolve){window.pendingMappingResolve(result);window.pendingMappingResolve=null;}}
+function showVedFilePreviewWithDetails(data){const preview=document.getElementById('vedFilePreview');const items=data.items||[];if(!items.length){preview.innerHTML='<div style="color:#ea4335;padding:12px;">Нет данных</div>';preview.classList.add('show');return;}let html=`<div style="font-weight:600;margin-bottom:12px;background:#e6f4ea;padding:10px;border-radius:8px;">📊 Итого: ${data.totalQty.toLocaleString('ru-RU')} шт · ${data.totalCartons.toLocaleString('ru-RU')} кор. · ${data.totalVolume.toFixed(2)} м³</div>`;html+='<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>';items.slice(0,15).forEach(item=>{html+=`<tr><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0,40))}</td><td class="num">${(item.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(item.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(item.qty||0).toLocaleString('ru-RU')}</td><td class="num">${item.volume>0?item.volume.toFixed(3):'—'}</td></tr>`;});html+='</tbody></table>';if(items.length>15)html+=`<div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;">... и ещё ${items.length-15} позиций</div>`;preview.innerHTML=html;preview.classList.add('show');}
+async function saveVedSupply(){const number=document.getElementById('vedNumber').value.trim();const eta=document.getElementById('vedEta').value;const supplier=document.getElementById('vedSupplier').value.trim();const warehouse=document.getElementById('vedWarehouse').value;const status=document.getElementById('vedStatus').value;const fileData=vedTempFileData;if(!number||!eta||!supplier)return alert('Заполните номер, дату и поставщика');if(!fileData)return alert('Прикрепите файл');if(fileData.missingVolumeCount>0&&fileData.totalVolume===0){pendingSupplyData={number,eta,supplier,warehouse,status,fileData};document.getElementById('modalNumber').textContent=number;document.getElementById('modalVolume').value='';document.getElementById('volumeModal').classList.add('active');return;}const supply={id:Date.now(),number,eta,supplier,warehouse,status,items:fileData.items,totalVolume:fileData.totalVolume,totalQty:fileData.totalQty,totalCartons:fileData.totalCartons,fileName:fileData.name,createdAt:new Date().toISOString(),history:[{status,date:new Date().toISOString()}]};vedSupplies.push(supply);if(isOnline){const{id,...data}=supply;try{await db.collection('ved_supplies').doc(String(id)).set(data);}catch(e){console.error(e);}}saveToLocalStorage();clearVedForm();renderAll();showToast(`✅ Поставка сохранена: ${number}`);}
+function clearVedForm(){document.getElementById('vedNumber').value='';document.getElementById('vedEta').value='';document.getElementById('vedSupplier').value='';vedTempFileData=null;document.getElementById('vedFileName').textContent='';document.getElementById('vedFileUploadBox').classList.remove('has-file');document.getElementById('vedFilePreview').innerHTML='';document.getElementById('vedFilePreview').classList.remove('show');document.getElementById('parserStats').style.display='none';document.getElementById('mappingInterface').style.display='none';}
+async function updateVedStatus(id,status){const supply=vedSupplies.find(s=>String(s.id)===String(id));if(supply){supply.status=status;supply.history=supply.history||[];supply.history.push({status,date:new Date().toISOString()});saveToLocalStorage();if(isOnline)try{await db.collection('ved_supplies').doc(String(id)).update({status,history:supply.history});}catch(e){console.error(e);}renderVedCards();renderAll();}}
+async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline)try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){console.error(e);}saveToLocalStorage();renderAll();}
+function toggleVedDetails(id){const el=document.getElementById('ved-details-'+id);if(el)el.classList.toggle('show');}
+function renderVedCards(){const container=document.getElementById('vedCards');const srt=[...vedSupplies].sort((a,b)=>(a.eta||'').localeCompare(b.eta||''));if(!srt.length){container.innerHTML='<div class="empty-state">Нет поставок</div>';renderVedKPIs();return;}let html='';for(let s of srt){const so=VED_STATUSES[s.status]||VED_STATUSES.transit;const tq=(s.items||[]).reduce((sum,i)=>sum+(i.qty||0),0);html+=`<div class="supply-card" onclick="toggleVedDetails(${s.id})"><button class="card-delete" onclick="event.stopPropagation();deleteVedSupply(${s.id})">×</button><div class="supply-number">📦 ${s.number}</div><div class="supply-supplier">🏭 ${s.supplier}</div><div class="supply-warehouse">📍 ${s.warehouse}</div><div class="supply-eta">📅 ${s.eta}</div><div class="supply-volume">📦 <b>${(s.totalVolume||0).toFixed(2)} м³</b> · ${(s.totalCartons||0).toLocaleString('ru-RU')} кор.</div><div class="supply-items-count">📋 ${(s.items||[]).length} поз. · ${tq.toLocaleString('ru-RU')} ед.</div><div style="margin-top:8px;"><span class="supply-status-badge ${so.class}">${so.label}</span><select onclick="event.stopPropagation()" onchange="updateVedStatus(${s.id},this.value)" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);">${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}</select></div><div class="supply-details" id="ved-details-${s.id}"><div style="font-size:10px;">📎 ${s.fileName}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items||[]).slice(0,20).map(i=>`<tr><td style="font-family:monospace;font-size:10px;">${escapeHtml(i.article||'—')}</td><td style="font-size:10px;">${escapeHtml((i.name||'—').slice(0,35))}</td><td class="num">${(i.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(i.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(i.qty||0).toLocaleString('ru-RU')}</td><td class="num">${(i.volume||0).toFixed(3)}</td></tr>`).join('')}${(s.items||[]).length>20?`<tr><td colspan="6" style="color:var(--text-tertiary);">... и ещё ${s.items.length-20} позиций</td></tr>`:''}</tbody></table></div></div>`;}container.innerHTML=html;renderVedKPIs();}
+function renderVedKPIs(){const total=vedSupplies.length;const it=vedSupplies.filter(s=>s.status==='transit').length;const ac=vedSupplies.filter(s=>s.status==='customs').length;const sv=vedSupplies.filter(s=>s.status==='svh').length;const ar=vedSupplies.filter(s=>s.status==='arrived').length;const ti=vedSupplies.reduce((sum,s)=>sum+(s.totalQty||0),0);const tv=vedSupplies.reduce((sum,s)=>sum+(s.totalVolume||0),0);document.getElementById('vedKpiGrid').innerHTML=`<div class="kpi-card"><div class="kpi-label">Всего</div><div class="kpi-value">${total}</div></div><div class="kpi-card" style="border-left:3px solid #1a73e8;"><div class="kpi-label">В пути</div><div class="kpi-value" style="color:#1a73e8;">${it}</div></div><div class="kpi-card" style="border-left:3px solid #f9ab00;"><div class="kpi-label">Таможня</div><div class="kpi-value" style="color:#e37400;">${ac}</div></div><div class="kpi-card" style="border-left:3px solid #ea4335;"><div class="kpi-label">На СВХ</div><div class="kpi-value" style="color:#c5221f;">${sv}</div></div><div class="kpi-card" style="border-left:3px solid #0d904f;"><div class="kpi-label">Прибыло</div><div class="kpi-value" style="color:#137333;">${ar}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">Объём</div><div class="kpi-value" style="color:var(--ved)">${tv.toFixed(1)} м³</div><div class="kpi-sub">${ti.toLocaleString('ru-RU')} ед.</div></div>`;}
+
+// ========== ЛОГИСТИКА ==========
+function updateLogCalc(){const a=parseFloat(document.getElementById('logAmount').value)||0;const rate=document.getElementById('logNDS').value==='22%'?1.22:1.07;document.getElementById('logCalcFull').textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' ₽';}
+async function addLogEntry(){const date=document.getElementById('logDate').value;const mp=document.getElementById('logMP').value;const type=document.getElementById('logType').value;const supplier=document.getElementById('logSupplier').value;const city=document.getElementById('logCity').value.trim();const qty=parseInt(document.getElementById('logQty').value)||0;const boxes=parseInt(document.getElementById('logBoxes').value)||0;const amount=parseFloat(document.getElementById('logAmount').value)||0;const nds=document.getElementById('logNDS').value;const rate=nds==='22%'?1.22:1.07;if(!date||!city||qty<=0||amount<=0)return alert('Заполните обязательные поля');const entry={id:Date.now(),date,marketplace:mp,type,supplier,city,qty,boxes,amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds,source:'Логистика'};logEntries.push(entry);if(isOnline)try{await db.collection('logistics').doc(String(entry.id)).set(entry);}catch(e){console.error(e);}saveToLocalStorage();document.getElementById('logCity').value='';document.getElementById('logQty').value='';document.getElementById('logBoxes').value='';document.getElementById('logAmount').value='';updateLogCalc();renderLog();showToast('✅ Добавлена запись');}
+function renderLog(){const fm=document.getElementById('logFilterMonth').value;const fs=document.getElementById('logFilterStatus').value;const fmp=document.getElementById('logFilterMP').value;let fl=[...logEntries];if(fm)fl=fl.filter(e=>e.date&&e.date.startsWith(fm));if(fs==='paid')fl=fl.filter(e=>e.paid);if(fs==='unpaid')fl=fl.filter(e=>!e.paid);if(fmp!=='all')fl=fl.filter(e=>e.marketplace===fmp);const srt=fl.sort((a,b)=>(b.date||'').localeCompare(a.date||''));document.getElementById('logCount').textContent=srt.length;if(!srt.length){document.getElementById('logTable').innerHTML='<div class="empty-state">Нет записей</div>';return;}let html='<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';for(let e of srt){if(!e.date)continue;html+=`<tr><td>${e.date.split('-').reverse().join('.')}</td><td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${e.marketplace}</span></td><td>${e.type||'FBO'}</td><td><select class="log-select" onchange="updateLogSupplier('${e.id}',this.value)">${SUPPLIERS.map(s=>`<option value="${s}" ${e.supplier===s?'selected':''}>${s||'—'}</option>`).join('')}</select></td><td>${e.city||''}</td><td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td><td class="num"><input class="log-edit-input" style="width:50px;text-align:center;" value="${e.boxes||0}" type="number" onchange="updateLogPallets('${e.id}',this.value)"></td><td class="num"><input class="log-edit-input" style="width:80px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" onchange="updateLogAmount('${e.id}',this.value)"></td><td class="num">${fmtPrice(e.amountFull)}</td><td><select onchange="updateLogNds('${e.id}',this.value)" style="font-size:10px;padding:2px;"><option value="22%" ${e.nds==='22%'?'selected':''}>22%</option><option value="7%" ${e.nds==='7%'?'selected':''}>7%</option></select></td><td><button class="btn-status ${e.paid?'paid':'unpaid'}" onclick="toggleLogPaid('${e.id}')">${e.paid?'Оплачен':'Не опл.'}</button></td><td><button class="btn btn-danger-sm" onclick="deleteLogEntry('${e.id}')">×</button></td></tr>`;}html+='</tbody></table>';document.getElementById('logTable').innerHTML=html;}
+function updateLogSupplier(id,value){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.supplier=value;saveToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({supplier:value});renderLog();}}
+function updateLogPallets(id,value){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.boxes=parseInt(value)||0;saveToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({boxes:e.boxes});renderLog();}}
+function updateLogAmount(id,value){const e=logEntries.find(x=>String(x.id)===String(id));if(e){const amount=parseFloat(value)||0;const rate=e.nds==='22%'?1.22:1.07;e.amount=amount;e.amountFull=Math.round(amount*rate*100)/100;saveToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({amount:e.amount,amountFull:e.amountFull});renderLog();}}
+function updateLogNds(id,value){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.nds=value;const rate=value==='22%'?1.22:1.07;e.amountFull=Math.round((e.amount||0)*rate*100)/100;saveToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({nds:value,amountFull:e.amountFull});renderLog();}}
+function toggleLogPaid(id){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.paid=!e.paid;saveToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({paid:e.paid});renderLog();}}
+async function deleteLogEntry(id){if(confirm('Удалить?')){logEntries=logEntries.filter(l=>l.id!==id);if(isOnline)try{await db.collection('logistics').doc(String(id)).delete();}catch(e){console.error(e);}saveToLocalStorage();renderLog();}}
+function resetLogFilters(){document.getElementById('logFilterMonth').value='';document.getElementById('logFilterStatus').value='all';document.getElementById('logFilterMP').value='all';renderLog();}
+function toggleLogImport(){const block=document.getElementById('logImportBlock');block.style.display=block.style.display==='none'?'block':'none';}
+function fmtPrice(n){return n?n.toLocaleString('ru-RU')+' ₽':'0 ₽';}
+
+// ========== ПРОГНОЗ ==========
+function calculateExpense(month){const ms=311000000;const me=warehouseData.baseExpense;const cs=warehouseData.salesPlan[month]||0;if(cs===0||ms===0)return 0;return me*(cs/ms);}
+function getMonthlyIncoming(month){return vedSupplies.filter(s=>{if(!s.eta)return false;const ed=new Date(s.eta);const em=MONTHS[ed.getMonth()];return em===month&&s.status==='arrived';}).reduce((sum,s)=>sum+(s.totalVolume||0),0);}
+function renderKPIs(){const forecast=calculateForecast();const cm=forecast.find(f=>f.month===MONTHS[new Date().getMonth()])||forecast[0];const clp=cm?Math.round(cm.loadPercent*100):0;const tvv=vedSupplies.reduce((sum,s)=>sum+(s.totalVolume||0),0);let wt=0,ot=0;for(let s of wbShipments)wt+=s.qty||0;for(let s of ozonShipments)ot+=s.qty||0;document.getElementById('kpiGrid').innerHTML=`<div class="kpi-card kpi-wb"><div class="kpi-label">WB за год</div><div class="kpi-value" style="color:var(--wb)">${wt.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ozon"><div class="kpi-label">Ozon за год</div><div class="kpi-value" style="color:var(--ozon)">${ot.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">ВЭД объём</div><div class="kpi-value" style="color:var(--ved)">${tvv.toFixed(1)} м³</div></div><div class="kpi-card ${clp>85?'kpi-danger':''}"><div class="kpi-label">Загрузка склада</div><div class="kpi-value" style="${clp>85?'color:var(--danger)':''}">${clp}%</div></div>`;}
+function calculateForecast(){const months=['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];let remaining=warehouseData.currentOccupancy;const result=[];for(let month of months){const incoming=getMonthlyIncoming(month);const expense=calculateExpense(month);remaining=remaining+incoming-expense;remaining=Math.max(remaining,0);const lp=remaining/warehouseData.totalCapacity;const free=warehouseData.totalCapacity-remaining;result.push({month,incoming:Math.round(incoming*100)/100,expense:Math.round(expense*100)/100,remaining:Math.round(remaining),loadPercent:lp,free:Math.round(free),status:lp>0.85?'ПЕРЕПОЛНЕНИЕ':lp>0.7?'ВЫСОКАЯ ЗАГРУЗКА':lp>0.5?'СРЕДНЯЯ ЗАГРУЗКА':'ОК'});}return result;}
+
+// ========== СВОДНАЯ ==========
+function getWeekKey(ds){if(!ds||typeof ds!=='string')return{key:'unknown-'+Math.random(),label:'—'};const d=new Date(ds+'T00:00:00');if(isNaN(d.getTime()))return{key:'unknown-'+Math.random(),label:'—'};const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-day+1);const fmt=dt=>dt.getDate().toString().padStart(2,'0')+'.'+(dt.getMonth()+1).toString().padStart(2,'0');return{key:mon.toISOString().slice(0,10),label:fmt(mon)+'-'+fmt(new Date(mon.getTime()+6*24*60*60*1000))};}
+function getCurrentWeekKey(){const now=new Date();const day=now.getDay()||7;const mon=new Date(now);mon.setDate(now.getDate()-day+1);return mon.toISOString().slice(0,10);}
+function getAllShipments(){const all=[];wbShipments.forEach(s=>all.push({...s,marketplace:'Wildberries'}));ozonShipments.forEach(s=>all.push({...s,marketplace:'Ozon'}));return all.filter(s=>s.date&&typeof s.date==='string'&&!isNaN(new Date(s.date+'T00:00:00').getTime()));}
+function renderSchedule(){const all=getAllShipments();const grp={};all.forEach(s=>{const wk=getWeekKey(s.date);if(!grp[wk.key])grp[wk.key]={label:wk.label,wb:0,ozon:0,details:[]};if(s.marketplace==='Wildberries')grp[wk.key].wb+=s.qty;else grp[wk.key].ozon+=s.qty;grp[wk.key].details.push(s);});const weeks=Object.keys(grp).sort().reverse();const cwk=getCurrentWeekKey();document.getElementById('scheduleWeekCount').textContent=weeks.filter(k=>!k.startsWith('unknown')).length;document.getElementById('scheduleTotalRows').textContent=all.length;if(!weeks.length){document.getElementById('scheduleTable').innerHTML='<div class="empty-state">Нет данных</div>';}else{let html='<table><thead><tr><th>Неделя</th><th class="num">🟣 WB</th><th class="num">🔵 Ozon</th><th class="num">Всего</th><th>Способность</th><th>Загрузка</th></tr></thead><tbody>';for(let key of weeks){const g=grp[key],t=g.wb+g.ozon,cap=weekCapacities[key]||0;const pct=cap>0?Math.round(t/cap*100):0;const bc=pct>100?'danger':pct>80?'warn':'good';const isCurrent=key===cwk;const rc=isCurrent?'week-row current':'week-row';const hasDetails=g.details.length>0;const wid='week-'+key.replace(/[^a-zA-Z0-9]/g,'-');html+=`<tr class="${rc}" onclick="toggleWeekDetails('${wid}')"><td><b>${g.label}</b>${isCurrent?' <span class="badge badge-info">текущая</span>':''}${hasDetails?'<span class="toggle-icon" id="icon-'+wid+'">▾</span>':''}</td><td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td><td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td><td class="num"><b>${t.toLocaleString('ru-RU')}</b></td><td><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" onclick="event.stopPropagation()" onchange="updateWeekCapacity('${key}',this.value)"></td><td><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;">${cap>0?pct+'%':'—'}</span></td></tr>`;if(hasDetails){const byCity={};g.details.forEach(d=>{const ck=d.city+'|'+d.marketplace;if(!byCity[ck])byCity[ck]=0;byCity[ck]+=d.qty;});html+=`<tr id="${wid}" style="display:none;background:#fafbfc;"><td colspan="6" style="padding:8px 16px;font-size:11px;color:var(--text-secondary);">`;for(let[ck,qty]of Object.entries(byCity)){const[city,mp]=ck.split('|');html+=`<span class="badge ${mp==='Wildberries'?'badge-wb':'badge-ozon'}" style="margin:2px;">${city}: ${qty.toLocaleString('ru-RU')} шт</span> `;}html+='</td></tr>';}}html+='</tbody></table>';document.getElementById('scheduleTable').innerHTML=html;}renderKPIs();renderForecastTable();renderForecastChart();}
+function toggleWeekDetails(wid){const el=document.getElementById(wid);const icon=document.getElementById('icon-'+wid);if(el){el.style.display=el.style.display==='none'?'table-row':'none';if(icon)icon.classList.toggle('open');}}
+async function updateWeekCapacity(key,val){weekCapacities[key]=parseInt(val)||0;if(isOnline)try{await db.collection('settings').doc('capacities').set({capacities:weekCapacities},{merge:true});}catch(e){console.error(e);}saveToLocalStorage();renderSchedule();}
+function exportScheduleCSV(){const all=getAllShipments();const grp={};all.forEach(s=>{const wk=getWeekKey(s.date);if(!grp[wk.key])grp[wk.key]={label:wk.label,wb:0,ozon:0};if(s.marketplace==='Wildberries')grp[wk.key].wb+=s.qty;else grp[wk.key].ozon+=s.qty;});let csv='Неделя\tWB\tOzon\tВсего\tСпособность\tЗагрузка\n';Object.keys(grp).filter(k=>!k.startsWith('unknown')).sort().reverse().forEach(k=>{const g=grp[k],t=g.wb+g.ozon,cap=weekCapacities[k]||0;csv+=`${g.label}\t${g.wb}\t${g.ozon}\t${t}\t${cap}\t${cap>0?Math.round(t/cap*100)+'%':'—'}\n`;});downloadCSV(csv,'сводная.csv');}
+function downloadCSV(csv,fn){const b=new Blob(['\uFEFF'+csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();}
+function renderForecastTable(){const forecast=calculateForecast();const container=document.getElementById('forecastTable');if(!forecast.length||warehouseData.baseExpense===0){container.innerHTML='<div class="empty-state">Загрузите Excel-модель</div>';return;}let html='<div class="forecast-title">📊 Прогноз загрузки склада 2026</div><table><thead><tr><th>Месяц</th><th class="num">📦 Приход</th><th class="num">🚚 Расход</th><th class="num">📊 Остаток</th><th>📈 Загрузка</th><th class="num">✅ Свободно</th><th>⚠️ Статус</th></tr></thead><tbody>';for(let f of forecast){let sc='badge-info';if(f.status==='ПЕРЕПОЛНЕНИЕ')sc='badge-danger';else if(f.status==='ВЫСОКАЯ ЗАГРУЗКА')sc='badge-warning';let lc='good';if(f.loadPercent>0.85)lc='danger';else if(f.loadPercent>0.7)lc='warn';html+=`<tr><td><b>${f.month}</b></td><td class="num">${f.incoming.toFixed(2)}</td><td class="num">${f.expense.toFixed(2)}</td><td class="num"><b>${f.remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lc}" style="width:${f.loadPercent*100}%"></div></div>${Math.round(f.loadPercent*100)}%</td><td class="num">${f.free.toLocaleString('ru-RU')}</td><td><span class="badge ${sc}">${f.status}</span></td></tr>`;}html+='</tbody></table>';container.innerHTML=html;}
+function renderForecastChart(){const forecast=calculateForecast();if(!forecast.length||warehouseData.baseExpense===0){document.getElementById('forecastChart').innerHTML='<text x="300" y="100" text-anchor="middle" font-size="13" fill="#9aa0a6">Загрузите Excel-модель</text>';return;}const svg=document.getElementById('forecastChart');const months=forecast.map(f=>f.month.slice(0,3));const idata=forecast.map(f=>f.incoming);const edata=forecast.map(f=>f.expense);const maxVal=Math.max(...idata,...edata,50);const yMax=Math.ceil(maxVal/10)*10;const W=600,H=200,PL=55,PR=20,PT=15,PB=30,cw=W-PL-PR,ch=H-PT-PB;const gx=i=>PL+(cw/(months.length-1))*i;const gy=v=>PT+ch-(v/yMax)*ch;let sc='';for(let i=0;i<=4;i++){const y=PT+(ch/4)*i;const val=Math.round(yMax-(yMax/4)*i);sc+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" class="chart-grid"/><text x="${PL-8}" y="${y+4}" text-anchor="end" class="chart-axis">${val.toFixed(0)}</text>`;}let ip='',ep='';for(let i=0;i<months.length;i++){const x=gx(i);ip+=(i===0?'M':'L')+`${x},${gy(idata[i])} `;ep+=(i===0?'M':'L')+`${x},${gy(edata[i])} `;}sc+=`<path d="${ip}" class="chart-line incoming" stroke-width="2.5" fill="none"/><path d="${ep}" class="chart-line expense" stroke-width="2.5" fill="none"/>`;for(let i=0;i<months.length;i++){sc+=`<circle cx="${gx(i)}" cy="${gy(idata[i])}" r="3.5" class="chart-dot" style="fill:var(--ved);"><title>Приход ${months[i]}: ${idata[i].toFixed(2)} м³</title></circle><circle cx="${gx(i)}" cy="${gy(edata[i])}" r="3.5" class="chart-dot" style="fill:#e37400;"><title>Расход ${months[i]}: ${edata[i].toFixed(2)} м³</title></circle><text x="${gx(i)}" y="${H-8}" text-anchor="middle" class="chart-axis">${months[i]}</text>`;}svg.innerHTML=sc;}
+
+// ========== ПЛАН ПРОДАЖ ==========
+function renderSalesPlanEditor(){const tbody=document.getElementById('salesPlanEditor');const months=['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];document.getElementById('totalCapacity').value=warehouseData.totalCapacity;document.getElementById('currentOccupancy').value=warehouseData.currentOccupancy;document.getElementById('constantVolume').value=warehouseData.constantVolume;document.getElementById('baseExpense').value=warehouseData.baseExpense;let html='';let ps=0;for(let month of months){const sales=warehouseData.salesPlan[month]||0;const growth=ps>0?((sales/ps-1)*100).toFixed(1)+'%':'—';const expense=calculateExpense(month);const incoming=getMonthlyIncoming(month);const forecast=calculateForecast();const fd=forecast.find(f=>f.month===month);const remaining=fd?fd.remaining:0;const lp=fd?(fd.loadPercent*100).toFixed(0):0;html+=`<tr><td><b>${month}</b></td><td class="num"><input type="number" class="sales-plan-input" id="sales_${month}" value="${sales}" step="1000000" onchange="updateSalesPlan('${month}',this.value)"></td><td class="num">${growth}</td><td class="num">${expense.toFixed(2)}</td><td class="num">${incoming.toFixed(2)}</td><td class="num"><b>${remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lp>85?'danger':(lp>70?'warn':'good')}" style="width:${lp}%"></div></div>${lp}%</td></tr>`;ps=sales;}tbody.innerHTML=html;}
+function updateSalesPlan(month,value){warehouseData.salesPlan[month]=parseFloat(value)||0;renderSalesPlanEditor();renderForecastTable();renderForecastChart();renderKPIs();}
+async function saveSalesPlan(){saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderForecastTable();renderForecastChart();renderKPIs();showToast('✅ План сохранён');}
+async function saveWarehouseSettings(){warehouseData.totalCapacity=parseFloat(document.getElementById('totalCapacity').value)||2267;warehouseData.currentOccupancy=parseFloat(document.getElementById('currentOccupancy').value)||1408;warehouseData.constantVolume=parseFloat(document.getElementById('constantVolume').value)||85;warehouseData.baseExpense=parseFloat(document.getElementById('baseExpense').value)||51.50;saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderForecastTable();renderForecastChart();renderKPIs();showToast('✅ Настройки сохранены');}
+async function importExcelModel(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array'});const inputSheet=workbook.Sheets["02 Вводные"];let tc=0,co=0,cv=0;let sp={};if(inputSheet){const rows=XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;const ca=String(row[0]||'').toLowerCase();const cb=row[1];if(ca.includes('полезный объем')||ca.includes('полезный объём'))tc=parseFloat(cb)||0;if(ca.includes('занято')&&!ca.includes('постоянный'))co=parseFloat(cb)||0;if(ca.includes('постоянный объем')||ca.includes('постоянный объём'))cv=parseFloat(cb)||0;}let its=false;for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Месяц')&&String(row[8]||'').includes('План продаж')){its=true;continue;}if(its&&row[0]&&MONTHS.includes(String(row[0]).trim())){const month=String(row[0]).trim();const plan=parseFloat(row[8])||0;if(plan>0)sp[month]=plan;}}}const es=workbook.Sheets["03 УходимостьQ1"];let be=51.50;if(es){const rows=XLSX.utils.sheet_to_json(es,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Март')&&row[3])be=parseFloat(row[3])||51.50;}}if(tc>0)warehouseData.totalCapacity=tc;if(co>0)warehouseData.currentOccupancy=co;if(cv>0)warehouseData.constantVolume=cv;if(be>0)warehouseData.baseExpense=be;if(Object.keys(sp).length>0)warehouseData.salesPlan=sp;saveToLocalStorage();if(isOnline)db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});resolve({totalCapacity:tc,currentOccupancy:co,constantVolume:cv,baseExpense:be,salesPlanCount:Object.keys(sp).length});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения');reader.readAsArrayBuffer(file);});}
+
+// ========== ИМПОРТ ОТГРУЗОК ==========
+let showScheduleImport=false;
+function toggleScheduleImport(){showScheduleImport=!showScheduleImport;document.getElementById('scheduleImportBlock').style.display=showScheduleImport?'block':'none';}
+async function doScheduleImport(){const text=document.getElementById('scheduleImportText').value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(cols[3].replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const dp=ds.split('.');if(dp.length===3)ds=dp[2]+'-'+dp[1].padStart(2,'0')+'-'+dp[0].padStart(2,'0');if(isNaN(new Date(ds).getTime()))return;const shipment={id:Date.now()+Math.random(),date:ds,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(String(id)),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(String(id)),data);});try{await batch.commit();}catch(e){console.error(e);}}saveToLocalStorage();document.getElementById('scheduleImportText').value='';toggleScheduleImport();renderAll();showToast(`✅ WB: ${iw}, Ozon: ${io}`);}
+
+// ========== SKU ==========
+function renderSkuTable(){const tbody=document.getElementById('skuList');const items=Object.entries(skuLibrary);if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;">Нет данных</td></tr>';return;}let html='';for(const[article,data]of items){const vpb=(data.length*data.width*data.height/1000000).toFixed(6);html+=`<tr><td style="font-family:monospace;">${escapeHtml(article)}</td><td>${escapeHtml(data.name||'')}</td><td class="num">${data.length||0}</td><td class="num">${data.width||0}</td><td class="num">${data.height||0}</td><td class="num">${data.perCarton||0}</td><td class="num">${vpb}</td><td><button class="btn btn-danger-sm" onclick="deleteSku('${escapeHtml(article)}')">Удалить</button></td></tr>`;}tbody.innerHTML=html;}
+function deleteSku(article){if(confirm(`Удалить ${article}?`)){delete skuLibrary[article];saveSkuLibrary();showToast(`✅ ${article} удалён`);}}
+
+// ========== НАВИГАЦИЯ ==========
+function switchPage(page){currentPage=page;localStorage.setItem('currentPage',page);document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active','sales-active'));document.getElementById('page-'+page).classList.add('active');const map={schedule:0,wb:1,ozon:2,logistics:3,ved:4,'sales-plan':5,'sku-library':6};const cls=['active','wb-active','ozon-active','logistics-active','ved-active','sales-active','ved-active'];const btns=document.querySelectorAll('.nav-btn');if(btns[map[page]])btns[map[page]].classList.add(cls[map[page]]);if(page==='logistics'){updateLogCalc();renderLog();}if(page==='ved')renderVedCards();if(page==='sales-plan')renderSalesPlanEditor();if(page==='sku-library')renderSkuTable();}
+function renderAll(){renderSchedule();renderShipmentCards('Wildberries');renderShipmentCards('Ozon');renderLog();renderVedCards();renderSkuTable();}
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+document.getElementById('logDate').value=new Date().toISOString().slice(0,10);
+document.getElementById('shipDateWildberries').value=new Date().toISOString().slice(0,10);
+document.getElementById('shipDateOzon').value=new Date().toISOString().slice(0,10);
+document.getElementById('cityList').innerHTML=Object.keys(routesDB).map(c=>`<option value="${c}">`).join('');
+currentPage=localStorage.getItem('currentPage')||'schedule';
+switchPage(currentPage);
+
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',function(){switchPage(this.dataset.page);}));
+document.getElementById('btnSyncNow').addEventListener('click',loadFromFirebase);
+document.addEventListener('click',function(e){if(e.target.classList.contains('card-delete')){e.stopPropagation();const mp=e.target.dataset.mp;const id=e.target.dataset.id;if(id&&mp)deleteShipment(mp,id);}});
+
+document.getElementById('btnImportSchedule').addEventListener('click',toggleScheduleImport);
+document.getElementById('btnDoScheduleImport').addEventListener('click',doScheduleImport);
+document.getElementById('btnExportSchedule').addEventListener('click',exportScheduleCSV);
+document.getElementById('btnSaveWb').addEventListener('click',()=>saveShipment('Wildberries'));
+document.getElementById('btnClearWb').addEventListener('click',()=>clearShipmentForm('Wildberries'));
+document.getElementById('shipCityWildberries').addEventListener('input',showRouteInfo);
+document.getElementById('btnSaveOzon').addEventListener('click',()=>saveShipment('Ozon'));
+document.getElementById('btnClearOzon').addEventListener('click',()=>clearShipmentForm('Ozon'));
+document.getElementById('btnAddLog').addEventListener('click',addLogEntry);
+document.getElementById('btnToggleLogImport').addEventListener('click',toggleLogImport);
+document.getElementById('btnExportLog').addEventListener('click',()=>{let csv='Дата\tМП\tТип\tПоставщик\tГород\tКол-во\tПаллет\tСумма\tС НДС\tСтатус\tНДС\n'+[...logEntries].sort((a,b)=>a.date.localeCompare(b.date)).map(e=>`${e.date}\t${e.marketplace}\t${e.type}\t${e.supplier||''}\t${e.city}\t${e.qty}\t${e.boxes}\t${e.amount}\t${e.amountFull}\t${e.paid?'Оплачен':'Не оплачен'}\t${e.nds}`).join('\n');downloadCSV(csv,'логистика.csv');});
+document.getElementById('btnResetLogFilters').addEventListener('click',resetLogFilters);
+document.getElementById('logFilterMonth').addEventListener('change',renderLog);
+document.getElementById('logFilterStatus').addEventListener('change',renderLog);
+document.getElementById('logFilterMP').addEventListener('change',renderLog);
+document.getElementById('logAmount').addEventListener('input',updateLogCalc);
+document.getElementById('logNDS').addEventListener('change',updateLogCalc);
+
+document.getElementById('btnSaveVed').addEventListener('click',saveVedSupply);
+document.getElementById('btnClearVed').addEventListener('click',clearVedForm);
+document.getElementById('btnApplyMapping').addEventListener('click',applyManualMapping);
+document.getElementById('btnCancelMapping').addEventListener('click',()=>{document.getElementById('mappingInterface').style.display='none';window.pendingMappingResolve=null;});
+
+document.getElementById('btnSaveWarehouseSettings').addEventListener('click',saveWarehouseSettings);
+document.getElementById('btnSaveSalesPlan').addEventListener('click',saveSalesPlan);
+document.getElementById('btnResetSalesPlan').addEventListener('click',()=>{if(confirm('Сбросить план?')){warehouseData.salesPlan={"Апрель":343000000,"Май":387000000,"Июнь":428300000,"Июль":494000000,"Август":565000000,"Сентябрь":629000000,"Октябрь":697000000,"Ноябрь":775000000,"Декабрь":1149000000};renderSalesPlanEditor();renderForecastTable();renderForecastChart();showToast('✅ План сброшен');}});
+document.getElementById('btnImportExcelModel').addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='.xlsx,.xls';input.onchange=async(e)=>{const file=e.target.files[0];if(!file)return;try{showToast('⏳ Импорт...');const result=await importExcelModel(file);showToast(`✅ Импортировано`);renderAll();renderSalesPlanEditor();}catch(err){alert('Ошибка: '+err);}};input.click();});
+document.getElementById('btnImportExcelForSettings').addEventListener('click',()=>{document.getElementById('btnImportExcelModel').click();});
+document.getElementById('btnAddSku').addEventListener('click',()=>{const article=document.getElementById('skuArticle').value.trim();const name=document.getElementById('skuName').value.trim();const length=parseFloat(document.getElementById('skuLength').value);const width=parseFloat(document.getElementById('skuWidth').value);const height=parseFloat(document.getElementById('skuHeight').value);const perCarton=parseFloat(document.getElementById('skuPerCarton').value);if(!article)return alert('Введите артикул');if(isNaN(length)||isNaN(width)||isNaN(height))return alert('Введите габариты');addSkuToLibrary(article,name,length,width,height,perCarton);document.getElementById('skuArticle').value='';document.getElementById('skuName').value='';document.getElementById('skuLength').value='';document.getElementById('skuWidth').value='';document.getElementById('skuHeight').value='';document.getElementById('skuPerCarton').value='';showToast(`✅ ${article} добавлен`);});
+
+document.getElementById('modalConfirm').addEventListener('click',()=>{const volume=parseFloat(document.getElementById('modalVolume').value);if(isNaN(volume)||volume<=0)return alert('Введите корректный объём');if(pendingSupplyData){pendingSupplyData.fileData.totalVolume=volume;const supply={id:Date.now(),number:pendingSupplyData.number,eta:pendingSupplyData.eta,supplier:pendingSupplyData.supplier,warehouse:pendingSupplyData.warehouse,status:pendingSupplyData.status,items:pendingSupplyData.fileData.items,totalVolume:volume,totalQty:pendingSupplyData.fileData.totalQty,totalCartons:pendingSupplyData.fileData.totalCartons,fileName:pendingSupplyData.fileData.name,createdAt:new Date().toISOString(),history:[{status:pendingSupplyData.status,date:new Date().toISOString()}]};vedSupplies.push(supply);if(isOnline){const{id,...data}=supply;try{db.collection('ved_supplies').doc(String(id)).set(data);}catch(e){console.error(e);}}saveToLocalStorage();clearVedForm();renderAll();showToast(`✅ Поставка сохранена: ${supply.number}`);pendingSupplyData=null;document.getElementById('volumeModal').classList.remove('active');}});
+document.getElementById('modalCancel').addEventListener('click',()=>{pendingSupplyData=null;document.getElementById('volumeModal').classList.remove('active');});
+
+const vedBox=document.getElementById('vedFileUploadBox');
+const vedInput=document.getElementById('vedFileInput');
+vedBox.addEventListener('click',()=>vedInput.click());
+vedBox.addEventListener('dragover',e=>{e.preventDefault();vedBox.style.borderColor='var(--ved)';});
+vedBox.addEventListener('dragleave',()=>{vedBox.style.borderColor='';});
+vedBox.addEventListener('drop',e=>{e.preventDefault();vedBox.style.borderColor='';const file=e.dataTransfer.files[0];if(file)handleVedFileSelect(file);});
+vedInput.addEventListener('change',function(){if(this.files[0])handleVedFileSelect(this.files[0]);});
+
+updateLogCalc();
+loadFromFirebase();
+
+console.log('🤖 Умный парсер ВЭД v3.1 готов');
+console.log('📚 Обучено форматов:', smartParser.getStats().learnedFormats);
+console.log('🎯 Правило: наименование ≥ 6 символов');
+</script>
+</body>
+</html>
