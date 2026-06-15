@@ -182,10 +182,6 @@
         .confidence-high { background: #e6f4ea; color: #137333; }
         .confidence-medium { background: #fef7e0; color: #e37400; }
         .confidence-low { background: #fce8e6; color: #c5221f; }
-        .mapping-interface { margin-top: 16px; padding: 16px; background: #fafbfc; border-radius: 12px; border: 1px solid var(--border); }
-        .mapping-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 8px; background: #fff; border-radius: 8px; }
-        .mapping-label { font-size: 12px; font-weight: 600; min-width: 100px; color: var(--text-secondary); }
-        .mapping-select { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; }
 
         .progress-bar { height: 4px; border-radius: 2px; background: #e8eaed; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 2px; }
@@ -212,6 +208,32 @@
         .route-info { background: #e6f4ea; border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 12px; display: none; }
         .route-info.show { display: block; }
         .route-chip { background: #ceead6; color: #137333; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; display: inline-block; margin: 2px; }
+
+        .chart-card { background: var(--surface); border-radius: var(--radius-lg); padding: 20px 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .chart-title { font-size: 16px; font-weight: 600; }
+        .chart-legend { display: flex; gap: 16px; font-size: 11px; color: var(--text-secondary); align-items: center; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .legend-dot.incoming { background: var(--ved); }
+        .legend-dot.expense { background: #e37400; }
+        .chart-svg { width: 100%; height: 220px; background: #fafbfc; border-radius: 12px; }
+        .chart-grid { stroke: #e8eaed; stroke-width: 0.5; }
+        .chart-axis { font-size: 9px; fill: var(--text-tertiary); }
+        .chart-line { fill: none; stroke-width: 2.5; }
+        .chart-line.incoming { stroke: var(--ved); }
+        .chart-line.expense { stroke: #e37400; stroke-dasharray: 5,3; }
+        .chart-dot { cursor: pointer; }
+        .forecast-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; padding: 12px; background: #e0f2f1; border-radius: 10px; }
+        .route-badge { font-size: 10px; color: var(--text-secondary); margin-top: 4px; padding: 2px 8px; background: #e8f0fe; border-radius: 8px; display: inline-block; }
+        .supply-items-count { font-size: 11px; color: var(--text-secondary); margin: 4px 0; }
+        .alert-card { background: #fef7e0; border-left: 4px solid #f9ab00; padding: 16px 20px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 28px; }
+        .alert-content h3 { font-size: 14px; margin-bottom: 8px; }
+
+        .parser-summary { background: #e6f4ea; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; }
+        .parser-summary b { color: var(--ved); }
+        .parser-warning { background: #fef7e0; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; font-size: 11px; color: #e37400; }
+        .na-highlight { background: #fff3cd !important; }
 
         @media (max-width: 768px) {
             body { padding: 12px; }
@@ -245,7 +267,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- СВОДНАЯ -->
+<!-- СТРАНИЦЫ -->
 <div class="page active" id="page-schedule">
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="chart-card">
@@ -272,7 +294,6 @@
     <div class="table-wrap" id="forecastTable"><div class="empty-state">Загрузите Excel-модель для расчёта прогноза</div></div>
 </div>
 
-<!-- WB -->
 <div class="page" id="page-wb">
     <h1>🟣 Wildberries</h1>
     <p class="subtitle">Карточки отгрузок с выбором статуса</p>
@@ -295,7 +316,6 @@
     <div class="cards-grid" id="wbCards"><div class="empty-state">Нет отгрузок</div></div>
 </div>
 
-<!-- OZON -->
 <div class="page" id="page-ozon">
     <h1>🔵 Ozon</h1>
     <p class="subtitle">Карточки отгрузок с выбором статуса</p>
@@ -313,7 +333,6 @@
     <div class="cards-grid" id="ozonCards"><div class="empty-state">Нет отгрузок</div></div>
 </div>
 
-<!-- ЛОГИСТИКА -->
 <div class="page" id="page-logistics">
     <h1>🚚 Логистика</h1>
     <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты</p>
@@ -356,10 +375,9 @@
     <div class="table-wrap" id="logTable"><div class="empty-state">Нет записей</div></div>
 </div>
 
-<!-- ВЭД -->
 <div class="page" id="page-ved">
     <h1>🌏 ВЭД — Поставки из Китая</h1>
-    <p class="subtitle">Умный парсер: автоматически находит артикул, наименование (≥6 символов), короба, шт/кор, всего, объём</p>
+    <p class="subtitle">Умный парсер: автоопределение артикула, наименования, коробов, шт/кор, всего, объёма</p>
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Номер поставки</label><input type="text" id="vedNumber" placeholder="W-1603-3003"></div>
@@ -375,20 +393,10 @@
                 <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">Excel (.xlsx, .xls) или CSV</div>
                 <div class="file-name" id="vedFileName"></div>
                 <div class="parser-stats" id="parserStats" style="display:none;">
-                    <div class="parser-stat">🎯 Формат: <span class="parser-stat-value" id="detectedFormat">—</span></div>
+                    <div class="parser-stat">📚 Справочник: <span class="parser-stat-value" id="parserLibrarySize">—</span></div>
                     <div class="parser-stat">📊 Уверенность: <span class="parser-confidence" id="confidenceBadge">—</span></div>
-                    <div class="parser-stat">📚 Обучено: <span class="parser-stat-value" id="parserLearned">—</span></div>
                 </div>
                 <input type="file" id="vedFileInput" accept=".xlsx,.xls,.csv">
-            </div>
-            <div class="mapping-interface" id="mappingInterface" style="display:none;">
-                <h4 style="margin-bottom:12px;font-size:13px;">🔧 Ручная настройка колонок</h4>
-                <p style="font-size:10px;color:var(--text-secondary);margin-bottom:12px;">Система не смогла точно определить формат. Выберите соответствие колонок вручную.</p>
-                <div id="mappingRows"></div>
-                <div style="margin-top:12px;display:flex;gap:8px;">
-                    <button class="btn btn-primary btn-sm" id="btnApplyMapping">✅ Применить маппинг</button>
-                    <button class="btn btn-outline btn-sm" id="btnCancelMapping">Отмена</button>
-                </div>
             </div>
             <div class="file-preview" id="vedFilePreview"></div>
         </div>
@@ -401,7 +409,6 @@
     <div class="cards-grid" id="vedCards"><div class="empty-state">Нет поставок</div></div>
 </div>
 
-<!-- ПЛАН ПРОДАЖ -->
 <div class="page" id="page-sales-plan">
     <h1>📈 План продаж 2026</h1>
     <p class="subtitle">Заполните план продаж по месяцам. Расход будет рассчитан автоматически.</p>
@@ -429,7 +436,6 @@
     </div>
 </div>
 
-<!-- СПРАВОЧНИК SKU -->
 <div class="page" id="page-sku-library">
     <h1>📚 Справочник SKU</h1>
     <p class="subtitle">База габаритов товаров для автоматического расчёта объёма</p>
@@ -461,7 +467,6 @@
         <div class="modal-body">
             <p style="margin-bottom:12px;">Для поставки <span id="modalNumber" style="font-weight:600;"></span> не удалось автоматически определить объём.</p>
             <div class="field"><label>📏 Объём, м³</label><input type="number" id="modalVolume" step="0.01" placeholder="0.00"></div>
-            <div class="field" style="margin-top:12px;"><label>💾 Запомнить для артикула</label><select id="modalSaveToLibrary"><option value="yes">Да, запомнить для этого артикула</option><option value="no">Нет, только для этой поставки</option></select></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline btn-sm" id="modalCancel">Отмена</button>
@@ -561,242 +566,309 @@ let warehouseData = {
     }
 };
 
-// ========== УМНЫЙ ПАРСЕР ВЭД (с правилом "наименование ≥ 6 символов") ==========
-class SmartVedParser {
+// ============================================================
+// УМНЫЙ ПАРСЕР ВЭД - ПОЛНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ v5.0
+// ============================================================
+class FixedVedParser {
     constructor() {
+        this.skuLibrary = {};
         this.learningHistory = [];
         this.loadLearningHistory();
-        this.articlePatterns = [
-            /^[A-Z0-9]{2,}[-_][A-Z0-9]{2,}[-_\/][A-Z0-9]{2,}$/i,
-            /^[A-Z]{1,2}\d{2,}[-_]\d{2,}$/i,
-            /^[A-Z0-9]{3,}[-_][A-Z0-9]{3,}[-_][A-Z0-9]{3,}$/i,
-            /^[A-Z0-9]{2,}[-_]\d{3,}[-_][A-Z0-9]{2,}$/i,
-            /^[A-Z0-9]{4,10}$/i,
-            /^[A-Z]{2,5}\d{2,6}$/i
-        ];
+        this.articleStats = { byHeader: 0, byAutoSearch: 0, byFirstCol: 0, byNameExtract: 0, notFound: 0 };
+        this.columnKeywords = {
+            article: ['article', 'артикул', 'sku', 'код', 'item', 'сырьевые артикулы', 'сырьевой артикул', 'vendor code', 'part number', 'pn'],
+            name: ['name', 'наименование', 'название', 'product', 'товар', 'description', 'описание', 'model', 'модель'],
+            cartons: ['cartons', 'короб', 'ящик', '箱数', '总件数', 'total cartons', 'количество коробок', '箱'],
+            perCarton: ['per carton', 'шт/кор', '每箱数量', 'each carton', 'в коробке', 'qty per ctn', 'pcs/ctn'],
+            totalQty: ['qty', 'количество', '数量', 'total quantity', 'общее количество', 'всего', 'total'],
+            volume: ['cbm', 'объём', 'объем', 'volume', '总体积', 'all cbm', 'total volume', '箱体积', 'each meas']
+        };
     }
-    loadLearningHistory() { const saved = localStorage.getItem('ved_parser_learning'); if (saved) this.learningHistory = JSON.parse(saved); }
-    saveLearningHistory() { localStorage.setItem('ved_parser_learning', JSON.stringify(this.learningHistory)); }
-    createFingerprint(rows) {
-        if (rows.length === 0) return '';
-        const sample = rows.slice(0, Math.min(5, rows.length)).map(row => ({ length: row.length, firstCells: row.slice(0, 5).map(cell => String(cell || '').toLowerCase().slice(0, 30).replace(/[^a-zа-я0-9]/g, '')) }));
-        return JSON.stringify(sample);
+
+    loadLearningHistory() { try { const s = localStorage.getItem('fixed_ved_parser_learning'); if (s) this.learningHistory = JSON.parse(s); } catch (e) { this.learningHistory = []; } }
+    saveLearningHistory() { try { localStorage.setItem('fixed_ved_parser_learning', JSON.stringify(this.learningHistory)); } catch (e) {} }
+
+    loadSkuLibrary(workbook) {
+        const sheetNames = workbook.SheetNames;
+        let refSheet = null;
+        for (const name of sheetNames) {
+            if (name.includes('Лист1') || name.includes('Sheet1') || name.includes('SKU') || name.includes('Reference') || name.includes('справочник')) { refSheet = workbook.Sheets[name]; break; }
+        }
+        if (!refSheet) { console.log('⚠️ Справочный лист не найден'); return; }
+        const rows = XLSX.utils.sheet_to_json(refSheet, { header: 1, defval: '' });
+        let articleCol = -1, perCartonCol = -1, lengthCol = -1, widthCol = -1, heightCol = -1, volumeCol = -1;
+        for (let i = 0; i < Math.min(10, rows.length); i++) {
+            const row = rows[i]; if (!row) continue;
+            for (let col = 0; col < row.length; col++) {
+                const cell = String(row[col] || '').toLowerCase();
+                if (/article|артикул|sku|код/.test(cell) && articleCol === -1) articleCol = col;
+                if (/pcs\/ctn|per carton|шт\/кор|每箱数量/.test(cell) && perCartonCol === -1) perCartonCol = col;
+                if (/length|длина|长/.test(cell) && lengthCol === -1) lengthCol = col;
+                if (/width|ширина|宽/.test(cell) && widthCol === -1) widthCol = col;
+                if (/height|высота|高/.test(cell) && heightCol === -1) heightCol = col;
+                if (/volume|cbm|объем|体积/.test(cell) && volumeCol === -1) volumeCol = col;
+            }
+            if (articleCol !== -1) break;
+        }
+        if (articleCol === -1) {
+            for (let i = 2; i < Math.min(20, rows.length); i++) {
+                const row = rows[i]; if (!row) continue;
+                for (let col = 0; col < row.length; col++) {
+                    if (/^[A-Z]{1,2}\d{4,}[-_\/]?\d*[A-Z]?$/i.test(String(row[col] || ''))) { articleCol = col; break; }
+                }
+                if (articleCol !== -1) break;
+            }
+        }
+        if (articleCol === -1) { console.log('⚠️ Не удалось найти колонку артикулов в справочнике'); return; }
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i]; if (!row || row.length <= articleCol) continue;
+            const article = String(row[articleCol] || '').trim();
+            if (!article || article === '无' || article === 'None') continue;
+            this.skuLibrary[article] = {
+                perCarton: perCartonCol !== -1 ? this.parseNumber(row[perCartonCol]) : 0,
+                length: lengthCol !== -1 ? this.parseNumber(row[lengthCol]) : 0,
+                width: widthCol !== -1 ? this.parseNumber(row[widthCol]) : 0,
+                height: heightCol !== -1 ? this.parseNumber(row[heightCol]) : 0,
+                volume: volumeCol !== -1 ? this.parseNumber(row[volumeCol]) : 0
+            };
+        }
+        console.log(`📚 Загружено ${Object.keys(this.skuLibrary).length} артикулов из справочника`);
     }
-    findSimilarFormat(rows) {
-        const fingerprint = this.createFingerprint(rows);
-        let exactMatch = this.learningHistory.find(h => h.fingerprint === fingerprint);
-        if (exactMatch) return exactMatch;
-        const sampleStructure = rows.slice(0, 5).map(row => row.length);
-        const similar = this.learningHistory.find(h => { if (!h.structure) return false; return JSON.stringify(sampleStructure) === JSON.stringify(h.structure); });
-        return similar || null;
+
+    parseNumber(value) {
+        if (value === undefined || value === null) return 0;
+        if (typeof value === 'number') return value;
+        const str = String(value).trim();
+        if (str === '无' || str === 'None' || str === 'null' || str === '') return 0;
+        const cleaned = str.replace(/\s/g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
     }
+
+    isValueEmpty(value) {
+        if (value === undefined || value === null) return true;
+        const str = String(value).trim();
+        return str === '' || str === '无' || str === 'None' || str === 'null';
+    }
+
+    // 🔥 РАСШИРЕННЫЕ ПАТТЕРНЫ АРТИКУЛОВ
     isArticleLike(value) {
-        if (!value || value.length < 2) return false;
+        if (this.isValueEmpty(value)) return false;
         const str = String(value).trim();
-        for (const pattern of this.articlePatterns) { if (pattern.test(str)) return true; }
-        if (/[A-Z0-9]/i.test(str) && str.length >= 3 && str.length <= 30) {
-            if (/^\d+$/.test(str) && str.length > 6) return false;
-            if (str.includes(' ') && str.length > 15) return false;
-            if (/[-_\/]/.test(str)) return true;
-            if (/[A-Z]/i.test(str) && /\d/.test(str)) return true;
-        }
+        if (str === 'N/A' || str === '无' || str === 'None' || str === 'null') return false;
+        if (str.length < 3 || str.length > 50) return false;
+
+        // Строгие паттерны
+        const strictPatterns = [
+            /^[A-Z]{1,2}\d{4,}[-_\/]?\d*[A-Z]?$/i,
+            /^[A-Z]{1,2}\d{4,}[-_][A-Z0-9]{2,}$/i,
+            /^[A-Z]{1,2}\d{2,}[-_]\d{2,}[-_\/][A-Z0-9]{2,}$/i,
+            /^[A-Z]{1,2}\d{4,}[A-Z]?[-_\/]?\d*$/i,
+            /^[A-Z]{1,2}\d{4,}[-_][A-Z]?[-_\/]?\d*$/i,
+            /^[A-Z]{1,2}\d{2,}[A-Z]?[-_\/]\d{2,}$/i
+        ];
+        for (const p of strictPatterns) { if (p.test(str)) return true; }
+
+        // Средние паттерны
+        const mediumPatterns = [
+            /^[A-Z]{1,2}\d{3,}[A-Z]?(\/|-)?\d*[A-Z]?$/i,
+            /^[A-Z]{1,2}\d{3,}-\d-[A-Z]$/i,
+            /^[A-Z]{1,3}\d{2,6}[A-Z]?$/i,
+            /^[A-Z]{2,5}\d{2,6}$/i,
+            /^[A-Z]{1,2}\d{3,}[A-Z]-\d{2,}$/i
+        ];
+        for (const p of mediumPatterns) { if (p.test(str)) return true; }
+
+        // Нечёткие эвристики
+        if (/[A-Za-z]/.test(str) && /\d/.test(str) && /[-_\/]/.test(str) && str.length <= 20) return true;
+        if (/^[A-Z]{1,2}\d{3,}/i.test(str) && str.length <= 20) return true;
+        const bm = str.match(/[\(\[\"']([A-Z0-9]{4,15})[\)\]\"']/i);
+        if (bm && /[A-Z]/.test(bm[1]) && /\d/.test(bm[1])) return true;
+        if (/^[A-Z]{1}-\d{3,6}$/i.test(str)) return true;
+        if (str.length >= 4 && str.length <= 12 && !str.includes(' ') && /[A-Za-z]/.test(str) && /\d/.test(str) && !/^https?:/.test(str) && !/^[a-z]+[0-9]+$/i.test(str)) return true;
         return false;
     }
-    isNameLike(value) {
-        if (!value || value.length < 2) return false;
-        const str = String(value).trim();
-        // ПРАВИЛО: наименование должно быть минимум 6 символов
-        if (str.length < 6) return false;
-        // Должно содержать буквы
-        if (/[а-яА-Яa-zA-Z]{3,}/.test(str)) return true;
-        if (/[\u4e00-\u9fff]/.test(str)) return true;
-        // Несколько слов через пробел
-        if (/\s/.test(str) && str.length > 5) return true;
-        // Содержит точку (как "GQbox.") и буквы
-        if (/\./.test(str) && /[a-zA-Z]/.test(str)) return true;
-        // Не должно быть чисто числовым
-        if (/^\d+$/.test(str)) return false;
-        // Не должно быть похоже на артикул
-        if (this.isArticleLike(str)) return false;
-        // Длинные строки с буквами - точно наименование
-        if (str.length > 10 && /[a-zA-Zа-яА-Я]/.test(str)) return true;
-        return false;
-    }
-    isCartonsLike(value) {
-        if (!value) return false;
-        const str = String(value).trim();
-        const num = parseInt(str.replace(/[^0-9]/g, ''));
-        if (isNaN(num) || num <= 0) return false;
-        return num >= 1 && num <= 10000 && !str.includes('.') && !str.includes(',');
-    }
-    isPerCartonLike(value) {
-        if (!value) return false;
-        const str = String(value).trim();
-        const num = parseInt(str.replace(/[^0-9]/g, ''));
-        if (isNaN(num) || num <= 0) return false;
-        return num >= 1 && num <= 1000 && !str.includes('.') && !str.includes(',');
-    }
-    isTotalQtyLike(value) {
-        if (!value) return false;
-        const str = String(value).trim();
-        const num = parseInt(str.replace(/[^0-9]/g, ''));
-        if (isNaN(num) || num <= 0) return false;
-        return num >= 10 && num <= 1000000 && !str.includes('.') && !str.includes(',');
-    }
-    isVolumeLike(value) {
-        if (!value) return false;
-        const str = String(value).trim();
-        const num = parseFloat(str.replace(',', '.'));
-        return !isNaN(num) && num > 0 && num >= 0.001 && num <= 1000;
-    }
-    findAllColumnsByContent(rows, headerRowIndex = 0) {
-        const startRow = headerRowIndex + 1;
-        const maxCols = rows[0] ? rows[0].length : 0;
+
+    findColumnsByHeaders(rows) {
         const columnMap = {};
-        const columnScores = {};
-        const columnSamples = {};
-        for (let colIndex = 0; colIndex < maxCols; colIndex++) {
-            const scores = { article: 0, name: 0, cartons: 0, perCarton: 0, totalQty: 0, volume: 0 };
-            const samples = [];
-            let totalCells = 0, emptyCells = 0;
-            for (let i = startRow; i < Math.min(startRow + 30, rows.length); i++) {
-                const row = rows[i];
-                if (!row || !Array.isArray(row)) continue;
-                const value = String(row[colIndex] || '').trim();
-                totalCells++;
-                if (!value || value === '0' || value === '-') { emptyCells++; continue; }
-                if (samples.length < 5) samples.push(value);
-                if (this.isArticleLike(value)) scores.article += 3;
-                if (this.isNameLike(value)) scores.name += 3;
-                if (this.isCartonsLike(value)) scores.cartons += 2;
-                if (this.isPerCartonLike(value)) scores.perCarton += 2;
-                if (this.isTotalQtyLike(value)) scores.totalQty += 2;
-                if (this.isVolumeLike(value)) scores.volume += 2;
-            }
-            const validCells = Math.max(totalCells - emptyCells, 1);
-            for (const key in scores) scores[key] = scores[key] / validCells;
-            columnScores[colIndex] = scores;
-            columnSamples[colIndex] = samples;
-        }
-        let bestArticleCol = -1, bestArticleScore = 0;
-        for (const col in columnScores) { const score = columnScores[col].article; if (score > bestArticleScore && score > 0.3) { bestArticleScore = score; bestArticleCol = parseInt(col); } }
-        if (bestArticleCol >= 0) columnMap.article = bestArticleCol;
-        let bestCartonsCol = -1, bestCartonsScore = 0;
-        for (const col in columnScores) { if (parseInt(col) === columnMap.article) continue; const score = columnScores[col].cartons; if (score > bestCartonsScore && score > 0.2) { bestCartonsScore = score; bestCartonsCol = parseInt(col); } }
-        if (bestCartonsCol >= 0) columnMap.cartons = bestCartonsCol;
-        let bestPerCartonCol = -1, bestPerCartonScore = 0;
-        for (const col in columnScores) { const iCol = parseInt(col); if (iCol === columnMap.article || iCol === columnMap.cartons) continue; const score = columnScores[col].perCarton; if (score > bestPerCartonScore && score > 0.1) { bestPerCartonScore = score; bestPerCartonCol = iCol; } }
-        if (bestPerCartonCol >= 0) columnMap.perCarton = bestPerCartonCol;
-        let bestTotalQtyCol = -1, bestTotalQtyScore = 0;
-        for (const col in columnScores) { const iCol = parseInt(col); if (iCol === columnMap.article || iCol === columnMap.cartons || iCol === columnMap.perCarton) continue; const score = columnScores[col].totalQty; if (score > bestTotalQtyScore && score > 0.1) { const isLarger = columnScores[col].totalQty > columnScores[col].cartons; if (isLarger || !columnMap.cartons) { bestTotalQtyScore = score; bestTotalQtyCol = iCol; } } }
-        if (bestTotalQtyCol >= 0) columnMap.totalQty = bestTotalQtyCol;
-        let bestVolumeCol = -1, bestVolumeScore = 0;
-        for (const col in columnScores) { const score = columnScores[col].volume; if (score > bestVolumeScore && score > 0.1) { bestVolumeScore = score; bestVolumeCol = parseInt(col); } }
-        if (bestVolumeCol >= 0) columnMap.volume = bestVolumeCol;
-        if (columnMap.article !== undefined) {
-            let bestNameCol = -1, bestNameScore = 0;
-            for (let offset = -5; offset <= 5; offset++) {
-                const colIndex = columnMap.article + offset;
-                if (colIndex < 0 || colIndex >= maxCols || colIndex === columnMap.article) continue;
-                const score = columnScores[colIndex]?.name || 0;
-                if (score > bestNameScore && score > 0.1) { bestNameScore = score; bestNameCol = colIndex; }
-            }
-            if (bestNameCol >= 0) columnMap.name = bestNameCol;
-            else if (columnMap.article + 1 < maxCols) columnMap.name = columnMap.article + 1;
-        }
-        console.log('🔍 Найденные колонки:', Object.entries(columnMap).map(([k,v]) => `${k}: ${String.fromCharCode(65+v)}(${v})`).join(', '));
-        return columnMap;
-    }
-    detectFormat(rows) {
-        if (rows.length < 2) return null;
-        const learnedFormat = this.findSimilarFormat(rows);
-        if (learnedFormat) { console.log('📚 Обученный формат'); return { formatName: 'learned', confidence: 0.95, columnMap: learnedFormat.columnMap, source: 'История обучения', learned: true, headerRowIndex: learnedFormat.headerRowIndex || 0 }; }
-        let headerRowIndex = 0;
-        for (let i = 0; i < Math.min(30, rows.length); i++) {
-            const row = rows[i]; if (!row || !Array.isArray(row)) continue;
+        const maxCols = rows[0] ? rows[0].length : 0;
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(10, rows.length); i++) {
+            const row = rows[i]; if (!row) continue;
             let matchCount = 0;
             for (let col = 0; col < row.length; col++) {
-                const cell = String(row[col] || '').toLowerCase().trim();
-                if (!cell) continue;
-                if (['article','артикул','sku','арт','код','item'].some(kw => cell.includes(kw))) matchCount++;
-                if (['name','наименование','название','product','товар'].some(kw => cell.includes(kw))) matchCount++;
-                if (['cartons','короб','qty','кол-во','количество'].some(kw => cell.includes(kw))) matchCount++;
+                const cell = String(row[col] || '').toLowerCase();
+                if (/article|артикул|sku/.test(cell)) matchCount++;
+                if (/qty|количество|数量/.test(cell)) matchCount++;
+                if (/carton|короб|箱/.test(cell)) matchCount++;
             }
-            if (matchCount >= 2) { headerRowIndex = i; break; }
+            if (matchCount >= 2) { headerRowIndex = i; console.log(`📑 Заголовки найдены в строке ${i + 1}`); break; }
         }
-        const columnMap = this.findAllColumnsByContent(rows, headerRowIndex);
-        if (columnMap.article === undefined || columnMap.cartons === undefined) return { formatName: 'unknown', confidence: 0.1, columnMap, source: 'Анализ', learned: false, headerRowIndex };
-        const confidence = columnMap.volume !== undefined ? 0.9 : (columnMap.name !== undefined ? 0.8 : 0.7);
-        console.log('✅ Формат определён, уверенность:', Math.round(confidence*100)+'%');
-        return { formatName: 'auto_detected', confidence, columnMap, source: 'Анализ содержимого', learned: false, headerRowIndex };
-    }
-    parseWithMapping(rows, columnMap, headerRowIndex = 0) {
-        const items = []; let totalVolume = 0, totalQty = 0, totalCartons = 0, missingVolumeItems = [], skippedRows = 0, parsedRows = 0;
-        for (let i = headerRowIndex + 1; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || !Array.isArray(row) || row.every(cell => !cell || String(cell).trim() === '')) { skippedRows++; continue; }
-            const getCell = (fn) => { const ci = columnMap[fn]; if (ci === undefined || ci >= row.length) return ''; const v = row[ci]; return v !== undefined && v !== null ? String(v).trim() : ''; };
-            const getNumber = (fn) => { const v = getCell(fn); if (!v) return 0; const c = v.replace(/[^\d.,\-]/g, '').replace(',', '.'); const n = parseFloat(c); return isNaN(n) ? 0 : n; };
-            const article = getCell('article'); let name = getCell('name');
-            if (!name && columnMap.article !== undefined) {
-                for (let offset = 1; offset <= 3; offset++) {
-                    const nc = columnMap.article + offset;
-                    if (nc < row.length) { const nv = String(row[nc] || '').trim(); if (nv && nv.length >= 6 && /[а-яА-Яa-zA-Z]/.test(nv) && !this.isArticleLike(nv) && isNaN(parseFloat(nv.replace(',','.')))) { name = nv; columnMap.name = nc; break; } }
+        if (headerRowIndex === -1) { console.log('⚠️ Заголовки не найдены'); return { columnMap: {}, headerRowIndex: 0 }; }
+        const headerRow = rows[headerRowIndex];
+        for (let col = 0; col < Math.min(maxCols, headerRow.length); col++) {
+            const header = String(headerRow[col] || '').toLowerCase().trim();
+            if (!header) continue;
+            for (const [field, keywords] of Object.entries(this.columnKeywords)) {
+                for (const keyword of keywords) {
+                    if (header.includes(keyword.toLowerCase())) { columnMap[field] = col; console.log(`✅ ${field} -> колонка ${String.fromCharCode(65 + col)} ("${headerRow[col]}")`); break; }
                 }
             }
-            if (!article && !name) { const hasTotal = row.some(cell => { const v = String(cell || '').toLowerCase(); return v.includes('total')||v.includes('итого')||v.includes('合计'); }); if (hasTotal) { skippedRows++; continue; } skippedRows++; continue; }
-            if (!name && article) name = article;
-            const cartons = Math.round(getNumber('cartons'));
-            const perCarton = getNumber('perCarton');
-            let qty = getNumber('totalQty');
-            if (qty === 0 && perCarton > 0 && cartons > 0) qty = perCarton * cartons;
-            let volume = 0, volumeSource = 'none';
-            if (columnMap.volume !== undefined) { const cv = getNumber('volume'); if (cv > 0 && cv < 10000) { volume = cv; volumeSource = 'cbm'; } }
-            if (volume === 0 && article) { const sv = calculateVolumeFromSku(article, cartons); if (sv !== null && sv > 0) { volume = sv; volumeSource = 'library'; } }
-            if (volume > 0 && volume < 10000) totalVolume += volume;
-            if (qty > 0 && qty < 10000000) totalQty += qty;
-            if (cartons > 0 && cartons < 100000) totalCartons += cartons;
-            if (volume === 0 && qty > 0) missingVolumeItems.push({ article, name, cartons, perCarton, qty });
-            items.push({ article: article || `Строка ${i+1}`, name: name || article || `Строка ${i+1}`, cartons, perCarton, qty, volume, volumeSource });
-            parsedRows++;
         }
-        console.log(`📊 Парсинг: ${parsedRows} строк, пропущено ${skippedRows}`);
-        return { items, totalVolume: Math.round(totalVolume*100)/100, totalQty, totalCartons, itemsCount: items.length, missingVolumeCount: items.filter(i => i.volumeSource==='none' && i.qty>0).length, missingVolumeItems, skippedRows, parsedRows, parsingConfidence: items.length>0 ? items.filter(i=>i.volumeSource!=='none').length/items.length : 0 };
+        return { columnMap, headerRowIndex };
     }
+
+    getFromSkuLibrary(article, field) {
+        if (!article || !this.skuLibrary[article]) return 0;
+        return this.skuLibrary[article][field] || 0;
+    }
+
     async parseFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array', cellFormula: false, cellNF: true });
+                    this.loadSkuLibrary(workbook);
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
-                    if (rows.length < 2) return reject('Файл пуст');
-                    const formatInfo = this.detectFormat(rows);
-                    if (!formatInfo || formatInfo.confidence < 0.3) { resolve({ needsManualMapping: true, rows, formatInfo }); return; }
-                    const result = this.parseWithMapping(rows, formatInfo.columnMap, formatInfo.headerRowIndex || 0);
-                    if (result.parsingConfidence > 0.4 && result.items.length > 3) this.learnFromSuccess(rows, formatInfo, result);
-                    resolve({ ...result, formatInfo, needsManualMapping: false });
-                } catch (err) { reject(err); }
+                    console.log(`📄 Файл: ${file.name}, строк: ${rows.length}`);
+                    const { columnMap, headerRowIndex } = this.findColumnsByHeaders(rows);
+                    const items = [];
+                    let totalVolume = 0, totalQty = 0, totalCartons = 0;
+                    this.articleStats = { byHeader: 0, byAutoSearch: 0, byFirstCol: 0, byNameExtract: 0, notFound: 0 };
+
+                    for (let i = headerRowIndex + 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.every(cell => this.isValueEmpty(cell))) continue;
+                        const firstCell = String(row[0] || '').toLowerCase();
+                        if (firstCell === 'итого' || firstCell === 'total' || firstCell === '合计') continue;
+
+                        // 🔥 УМНЫЙ ПОИСК АРТИКУЛА ВО ВСЕХ КОЛОНКАХ
+                        let article = '';
+                        let articleConfidence = 'none';
+
+                        // 1. Проверяем колонку из заголовков
+                        if (columnMap.article !== undefined && columnMap.article < row.length) {
+                            const cell = String(row[columnMap.article] || '').trim();
+                            if (cell && this.isArticleLike(cell) && cell !== 'N/A') {
+                                article = cell;
+                                articleConfidence = 'header';
+                                this.articleStats.byHeader++;
+                            }
+                        }
+
+                        // 2. Ищем во всех колонках с оценкой похожести
+                        if (!article) {
+                            const candidates = [];
+                            for (let col = 0; col < Math.min(row.length, 15); col++) {
+                                const cell = String(row[col] || '').trim();
+                                if (!cell || cell === 'N/A' || cell === '无' || cell === 'None') continue;
+                                let score = 0;
+                                if (/^[A-Z]{1,2}\d{4,}/i.test(cell)) score += 10;
+                                if (/[-_\/]/.test(cell)) score += 3;
+                                if (/[A-Za-z]/.test(cell) && /\d/.test(cell)) score += 5;
+                                if (cell.length >= 4 && cell.length <= 15) score += 2;
+                                if (col < 3) score += 3;
+                                if (cell.length > 40) score -= 5;
+                                if (cell.includes(' ')) score -= 2;
+                                if (/^https?:/.test(cell)) score -= 10;
+                                if (/^(итого|total|合计)/i.test(cell)) score -= 10;
+                                if (score >= 5 && this.isArticleLike(cell)) candidates.push({ col, cell, score });
+                            }
+                            if (candidates.length > 0) {
+                                candidates.sort((a, b) => b.score - a.score);
+                                article = candidates[0].cell;
+                                articleConfidence = `auto (score: ${candidates[0].score})`;
+                                this.articleStats.byAutoSearch++;
+                            }
+                        }
+
+                        // 3. Последний шанс - первая колонка
+                        if (!article && row.length > 0) {
+                            const fc = String(row[0] || '').trim();
+                            if (fc && fc !== 'N/A' && fc.length >= 3 && fc.length <= 25 && /[A-Za-z]/.test(fc) && /\d/.test(fc) && !fc.includes(' ')) {
+                                article = fc;
+                                articleConfidence = 'first_column_fallback';
+                                this.articleStats.byFirstCol++;
+                            }
+                        }
+
+                        // 4. Извлечение из названия
+                        if (!article) {
+                            let nameForSearch = '';
+                            if (columnMap.name !== undefined && columnMap.name < row.length) nameForSearch = String(row[columnMap.name] || '').trim();
+                            else {
+                                for (let col = 0; col < Math.min(row.length, 10); col++) {
+                                    const cell = String(row[col] || '').trim();
+                                    if (cell && /[a-zA-Zа-яА-Я]{3,}/.test(cell) && cell.length > nameForSearch.length && !this.isArticleLike(cell)) nameForSearch = cell;
+                                }
+                            }
+                            if (nameForSearch) {
+                                const sm = nameForSearch.match(/^([A-Z]{1,2}\d{3,}[A-Z]?)/i);
+                                if (sm) { article = sm[1]; articleConfidence = 'extracted_from_name'; this.articleStats.byNameExtract++; }
+                            }
+                        }
+
+                        if (!article) { this.articleStats.notFound++; console.warn(`⚠️ Строка ${i + 1}: артикул не найден`); }
+
+                        // Название
+                        let name = '';
+                        if (columnMap.name !== undefined && columnMap.name < row.length) name = String(row[columnMap.name] || '').trim();
+                        if (!name || /[\u4e00-\u9fff]/.test(name)) {
+                            for (let col = 0; col < Math.min(row.length, 15); col++) {
+                                const cell = String(row[col] || '').trim();
+                                if (cell && /[a-zA-Zа-яА-Я]{3,}/.test(cell) && !this.isArticleLike(cell) && cell !== 'N/A') { name = cell; break; }
+                            }
+                        }
+                        if (!name && article) name = article;
+                        if (!name) continue;
+
+                        // Коробки
+                        let cartons = 0;
+                        if (columnMap.cartons !== undefined && columnMap.cartons < row.length) cartons = this.parseNumber(row[columnMap.cartons]);
+
+                        // Шт/кор
+                        let perCarton = 0;
+                        if (columnMap.perCarton !== undefined && columnMap.perCarton < row.length) perCarton = this.parseNumber(row[columnMap.perCarton]);
+                        if (perCarton === 0 && article) perCarton = this.getFromSkuLibrary(article, 'perCarton');
+
+                        // Всего
+                        let qty = 0;
+                        if (columnMap.totalQty !== undefined && columnMap.totalQty < row.length) qty = this.parseNumber(row[columnMap.totalQty]);
+                        if (qty === 0 && perCarton > 0 && cartons > 0) qty = perCarton * cartons;
+
+                        // Объём
+                        let volume = 0;
+                        if (columnMap.volume !== undefined && columnMap.volume < row.length) volume = this.parseNumber(row[columnMap.volume]);
+                        if (volume > 0 && volume < 0.1 && cartons > 1) { const ptv = volume * cartons; if (ptv > 0.1 && ptv < 100) volume = ptv; }
+                        if (volume === 0 && article) {
+                            const l = this.getFromSkuLibrary(article, 'length');
+                            const w = this.getFromSkuLibrary(article, 'width');
+                            const h = this.getFromSkuLibrary(article, 'height');
+                            if (l > 0 && w > 0 && h > 0 && cartons > 0) volume = (l * w * h / 1000000) * cartons;
+                        }
+
+                        totalCartons += cartons; totalQty += qty; totalVolume += volume;
+                        items.push({ article: article || 'N/A', name, cartons, perCarton, qty, volume: Math.round(volume * 1000) / 1000, row: i + 1, articleConfidence });
+                    }
+
+                    console.log('📊 Статистика поиска артикулов:', this.articleStats);
+                    const naCount = items.filter(i => i.article === 'N/A').length;
+                    if (naCount > 0) console.warn(`⚠️ ${naCount} позиций без артикула (N/A)`);
+                    console.log(`📊 Результаты: ${items.length} позиций, ${totalCartons} коробов, ${totalQty.toLocaleString()} шт, ${totalVolume.toFixed(3)} м³`);
+
+                    resolve({ success: true, items, totalCartons, totalQty, totalVolume: Math.round(totalVolume * 1000) / 1000, itemsCount: items.length, skuLibrarySize: Object.keys(this.skuLibrary).length, missingVolumeCount: items.filter(i => i.volume === 0).length, naCount });
+                } catch (err) { console.error('❌ Ошибка парсинга:', err); reject(err); }
             };
-            reader.onerror = () => reject('Ошибка чтения');
+            reader.onerror = () => reject('Ошибка чтения файла');
             reader.readAsArrayBuffer(file);
         });
     }
-    learnFromSuccess(rows, formatInfo, result) {
-        const fingerprint = this.createFingerprint(rows);
-        const structure = rows.slice(0, 5).map(row => row.length);
-        const existing = this.learningHistory.findIndex(h => h.fingerprint === fingerprint);
-        const entry = { fingerprint, structure, formatName: formatInfo.formatName, columnMap: formatInfo.columnMap, headerRowIndex: formatInfo.headerRowIndex, confidence: formatInfo.confidence, parsingConfidence: result.parsingConfidence, timestamp: Date.now(), successCount: existing >= 0 ? (this.learningHistory[existing].successCount||1)+1 : 1 };
-        if (existing >= 0) this.learningHistory[existing] = entry; else this.learningHistory.push(entry);
-        if (this.learningHistory.length > 50) { this.learningHistory.sort((a,b) => b.successCount - a.successCount); this.learningHistory = this.learningHistory.slice(0, 50); }
-        this.saveLearningHistory();
-    }
-    getStats() { return { learnedFormats: this.learningHistory.length, averageConfidence: this.learningHistory.length>0 ? this.learningHistory.reduce((s,h)=>s+h.confidence,0)/this.learningHistory.length : 0 }; }
 }
 
-const smartParser = new SmartVedParser();
+const vedParser = new FixedVedParser();
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
@@ -849,19 +921,112 @@ function renderShipmentCards(mp){const arr=mp==='Wildberries'?wbShipments:ozonSh
 function handleStatusChange(event){const select=event.target;if(!select.classList.contains('status-select'))return;const mp=select.dataset.mp,id=select.dataset.id,status=select.value;const arr=mp==='Wildberries'?wbShipments:ozonShipments;const shipment=arr.find(s=>String(s.id)===String(id));if(shipment){shipment.status=status;saveToLocalStorage();if(isOnline){const col=mp==='Wildberries'?'shipments_wb':'shipments_ozon';db.collection(col).doc(String(id)).update({status}).catch(e=>console.warn(e));}renderShipmentCards(mp);}}
 
 // ========== ВЭД ==========
-function handleVedFileSelect(file){if(!file)return;const uploadBox=document.getElementById('vedFileUploadBox');const fileName=document.getElementById('vedFileName');const parserStats=document.getElementById('parserStats');uploadBox.classList.add('has-file');fileName.textContent=`⏳ Анализирую ${file.name}...`;parserStats.style.display='none';smartParser.parseFile(file).then(result=>{if(result.needsManualMapping){showMappingInterface(result.rows,result.formatInfo);fileName.textContent=`⚠️ ${file.name} — требуется настройка`;return;}vedTempFileData={name:file.name,items:result.items,totalVolume:result.totalVolume,totalQty:result.totalQty,totalCartons:result.totalCartons,missingVolumeCount:result.missingVolumeCount,missingVolumeItems:result.missingVolumeItems,parsingConfidence:result.parsingConfidence,formatInfo:result.formatInfo};fileName.textContent=`✅ ${file.name} (${result.itemsCount} поз., ${result.totalVolume.toFixed(2)} м³)`;const format=result.formatInfo;parserStats.style.display='flex';document.getElementById('detectedFormat').textContent=format.source;const confBadge=document.getElementById('confidenceBadge');const conf=Math.round(result.parsingConfidence*100);if(conf>=80){confBadge.className='parser-confidence confidence-high';confBadge.textContent=`${conf}% ✅`;}else if(conf>=50){confBadge.className='parser-confidence confidence-medium';confBadge.textContent=`${conf}% ⚠️`;}else{confBadge.className='parser-confidence confidence-low';confBadge.textContent=`${conf}% ❌`;}document.getElementById('parserLearned').textContent=format.learned?'Да 📚':'Нет 🆕';showVedFilePreviewWithDetails(result);if(result.missingVolumeCount>0)showToast(`⚠️ У ${result.missingVolumeCount} позиций нет объёма`);else showToast(`✅ Определён формат: ${format.source} (${conf}%)`);document.getElementById('mappingInterface').style.display='none';}).catch(err=>{console.error(err);fileName.textContent=`❌ Ошибка: ${err}`;uploadBox.classList.remove('has-file');showToast('❌ '+err);});}
-function showMappingInterface(rows,formatInfo){const mi=document.getElementById('mappingInterface');const mr=document.getElementById('mappingRows');window.pendingMappingRows=rows;let ph='<div style="margin-bottom:12px;font-size:10px;color:var(--text-secondary);">Первые строки:<br>';rows.slice(0,5).forEach((row,idx)=>{ph+=`Строка ${idx+1}: ${row.slice(0,10).map(cell=>String(cell||'').slice(0,15)).join(' | ')}<br>`;});ph+='</div>';const fields=[{id:'article',label:'Артикул',required:true},{id:'name',label:'Наименование (≥6 символов)',required:false},{id:'cartons',label:'Коробов',required:true},{id:'perCarton',label:'Шт/кор',required:false},{id:'totalQty',label:'Всего',required:false},{id:'volume',label:'Объём (CBM)',required:false}];let html=ph;const maxCols=Math.max(...rows.map(row=>row.length));const colOptions='<option value="">— Не выбрано —</option>'+Array.from({length:maxCols},(_,i)=>`<option value="${i}">Колонка ${String.fromCharCode(65+i)} (${i+1})</option>`).join('');const preMapping=formatInfo?.columnMap||{};fields.forEach(field=>{const ps=preMapping[field.id]!==undefined?preMapping[field.id]:'';html+=`<div class="mapping-row"><div class="mapping-label">${field.label}${field.required?'<span style="color:#ea4335;">*</span>':''}</div><select class="mapping-select" id="mapping_${field.id}">${colOptions.replace(`value="${ps}"`,`value="${ps}" selected`)}</select></div>`;});mr.innerHTML=html;mi.style.display='block';window.pendingMappingResolve=(result)=>{vedTempFileData={name:'Настроенный файл',items:result.items,totalVolume:result.totalVolume,totalQty:result.totalQty,totalCartons:result.totalCartons,missingVolumeCount:result.missingVolumeCount,missingVolumeItems:result.missingVolumeItems,parsingConfidence:result.parsingConfidence,formatInfo:{source:'Ручная настройка',learned:false}};document.getElementById('vedFileName').textContent=`✅ Настроенный файл (${result.itemsCount} поз.)`;showVedFilePreviewWithDetails(result);mi.style.display='none';showToast('✅ Маппинг применён');};}
-function applyManualMapping(){const fields=['article','name','cartons','perCarton','totalQty','volume'];const columnMap={};fields.forEach(field=>{const select=document.getElementById('mapping_'+field);if(select&&select.value!=='')columnMap[field]=parseInt(select.value);});if(columnMap.article===undefined||columnMap.cartons===undefined){alert('Выберите артикул и короба');return;}const result=smartParser.parseWithMapping(window.pendingMappingRows,columnMap);smartParser.learnFromSuccess(window.pendingMappingRows,{formatName:'manual',columnMap,headerRowIndex:0,confidence:0.8},result);if(window.pendingMappingResolve){window.pendingMappingResolve(result);window.pendingMappingResolve=null;}}
-function showVedFilePreviewWithDetails(data){const preview=document.getElementById('vedFilePreview');const items=data.items||[];if(!items.length){preview.innerHTML='<div style="color:#ea4335;padding:12px;">Нет данных</div>';preview.classList.add('show');return;}let html=`<div style="font-weight:600;margin-bottom:12px;background:#e6f4ea;padding:10px;border-radius:8px;">📊 Итого: ${data.totalQty.toLocaleString('ru-RU')} шт · ${data.totalCartons.toLocaleString('ru-RU')} кор. · ${data.totalVolume.toFixed(2)} м³</div>`;html+='<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>';items.slice(0,15).forEach(item=>{html+=`<tr><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0,40))}</td><td class="num">${(item.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(item.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(item.qty||0).toLocaleString('ru-RU')}</td><td class="num">${item.volume>0?item.volume.toFixed(3):'—'}</td></tr>`;});html+='</tbody></table>';if(items.length>15)html+=`<div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;">... и ещё ${items.length-15} позиций</div>`;preview.innerHTML=html;preview.classList.add('show');}
-async function saveVedSupply(){const number=document.getElementById('vedNumber').value.trim();const eta=document.getElementById('vedEta').value;const supplier=document.getElementById('vedSupplier').value.trim();const warehouse=document.getElementById('vedWarehouse').value;const status=document.getElementById('vedStatus').value;const fileData=vedTempFileData;if(!number||!eta||!supplier)return alert('Заполните номер, дату и поставщика');if(!fileData)return alert('Прикрепите файл');if(fileData.missingVolumeCount>0&&fileData.totalVolume===0){pendingSupplyData={number,eta,supplier,warehouse,status,fileData};document.getElementById('modalNumber').textContent=number;document.getElementById('modalVolume').value='';document.getElementById('volumeModal').classList.add('active');return;}const supply={id:Date.now(),number,eta,supplier,warehouse,status,items:fileData.items,totalVolume:fileData.totalVolume,totalQty:fileData.totalQty,totalCartons:fileData.totalCartons,fileName:fileData.name,createdAt:new Date().toISOString(),history:[{status,date:new Date().toISOString()}]};vedSupplies.push(supply);if(isOnline){const{id,...data}=supply;try{await db.collection('ved_supplies').doc(String(id)).set(data);}catch(e){console.error(e);}}saveToLocalStorage();clearVedForm();renderAll();showToast(`✅ Поставка сохранена: ${number}`);}
-function clearVedForm(){document.getElementById('vedNumber').value='';document.getElementById('vedEta').value='';document.getElementById('vedSupplier').value='';vedTempFileData=null;document.getElementById('vedFileName').textContent='';document.getElementById('vedFileUploadBox').classList.remove('has-file');document.getElementById('vedFilePreview').innerHTML='';document.getElementById('vedFilePreview').classList.remove('show');document.getElementById('parserStats').style.display='none';document.getElementById('mappingInterface').style.display='none';}
-async function updateVedStatus(id,status){const supply=vedSupplies.find(s=>String(s.id)===String(id));if(supply){supply.status=status;supply.history=supply.history||[];supply.history.push({status,date:new Date().toISOString()});saveToLocalStorage();if(isOnline)try{await db.collection('ved_supplies').doc(String(id)).update({status,history:supply.history});}catch(e){console.error(e);}renderVedCards();renderAll();}}
-async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline)try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){console.error(e);}saveToLocalStorage();renderAll();}
-function toggleVedDetails(id){const el=document.getElementById('ved-details-'+id);if(el)el.classList.toggle('show');}
-function renderVedCards(){const container=document.getElementById('vedCards');const srt=[...vedSupplies].sort((a,b)=>(a.eta||'').localeCompare(b.eta||''));if(!srt.length){container.innerHTML='<div class="empty-state">Нет поставок</div>';renderVedKPIs();return;}let html='';for(let s of srt){const so=VED_STATUSES[s.status]||VED_STATUSES.transit;const tq=(s.items||[]).reduce((sum,i)=>sum+(i.qty||0),0);html+=`<div class="supply-card" onclick="toggleVedDetails(${s.id})"><button class="card-delete" onclick="event.stopPropagation();deleteVedSupply(${s.id})">×</button><div class="supply-number">📦 ${s.number}</div><div class="supply-supplier">🏭 ${s.supplier}</div><div class="supply-warehouse">📍 ${s.warehouse}</div><div class="supply-eta">📅 ${s.eta}</div><div class="supply-volume">📦 <b>${(s.totalVolume||0).toFixed(2)} м³</b> · ${(s.totalCartons||0).toLocaleString('ru-RU')} кор.</div><div class="supply-items-count">📋 ${(s.items||[]).length} поз. · ${tq.toLocaleString('ru-RU')} ед.</div><div style="margin-top:8px;"><span class="supply-status-badge ${so.class}">${so.label}</span><select onclick="event.stopPropagation()" onchange="updateVedStatus(${s.id},this.value)" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);">${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}</select></div><div class="supply-details" id="ved-details-${s.id}"><div style="font-size:10px;">📎 ${s.fileName}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items||[]).slice(0,20).map(i=>`<tr><td style="font-family:monospace;font-size:10px;">${escapeHtml(i.article||'—')}</td><td style="font-size:10px;">${escapeHtml((i.name||'—').slice(0,35))}</td><td class="num">${(i.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(i.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(i.qty||0).toLocaleString('ru-RU')}</td><td class="num">${(i.volume||0).toFixed(3)}</td></tr>`).join('')}${(s.items||[]).length>20?`<tr><td colspan="6" style="color:var(--text-tertiary);">... и ещё ${s.items.length-20} позиций</td></tr>`:''}</tbody></table></div></div>`;}container.innerHTML=html;renderVedKPIs();}
-function renderVedKPIs(){const total=vedSupplies.length;const it=vedSupplies.filter(s=>s.status==='transit').length;const ac=vedSupplies.filter(s=>s.status==='customs').length;const sv=vedSupplies.filter(s=>s.status==='svh').length;const ar=vedSupplies.filter(s=>s.status==='arrived').length;const ti=vedSupplies.reduce((sum,s)=>sum+(s.totalQty||0),0);const tv=vedSupplies.reduce((sum,s)=>sum+(s.totalVolume||0),0);document.getElementById('vedKpiGrid').innerHTML=`<div class="kpi-card"><div class="kpi-label">Всего</div><div class="kpi-value">${total}</div></div><div class="kpi-card" style="border-left:3px solid #1a73e8;"><div class="kpi-label">В пути</div><div class="kpi-value" style="color:#1a73e8;">${it}</div></div><div class="kpi-card" style="border-left:3px solid #f9ab00;"><div class="kpi-label">Таможня</div><div class="kpi-value" style="color:#e37400;">${ac}</div></div><div class="kpi-card" style="border-left:3px solid #ea4335;"><div class="kpi-label">На СВХ</div><div class="kpi-value" style="color:#c5221f;">${sv}</div></div><div class="kpi-card" style="border-left:3px solid #0d904f;"><div class="kpi-label">Прибыло</div><div class="kpi-value" style="color:#137333;">${ar}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">Объём</div><div class="kpi-value" style="color:var(--ved)">${tv.toFixed(1)} м³</div><div class="kpi-sub">${ti.toLocaleString('ru-RU')} ед.</div></div>`;}
+function handleVedFileSelect(file) {
+    if (!file) return;
+    const uploadBox = document.getElementById('vedFileUploadBox');
+    const fileName = document.getElementById('vedFileName');
+    const parserStats = document.getElementById('parserStats');
+    uploadBox.classList.add('has-file');
+    fileName.textContent = `⏳ Анализирую ${file.name}...`;
+    parserStats.style.display = 'none';
 
-// ========== ЛОГИСТИКА ==========
+    vedParser.parseFile(file).then(result => {
+        vedTempFileData = {
+            name: file.name, items: result.items, totalVolume: result.totalVolume,
+            totalQty: result.totalQty, totalCartons: result.totalCartons,
+            missingVolumeCount: result.missingVolumeCount, skuLibrarySize: result.skuLibrarySize
+        };
+        fileName.textContent = `✅ ${file.name} (${result.itemsCount} поз., ${result.totalVolume.toFixed(2)} м³)`;
+        parserStats.style.display = 'flex';
+        document.getElementById('parserLibrarySize').textContent = result.skuLibrarySize + ' арт.';
+        const confBadge = document.getElementById('confidenceBadge');
+        const conf = result.naCount === 0 ? 95 : result.itemsCount > 0 ? Math.round((1 - result.naCount / result.itemsCount) * 100) : 50;
+        if (conf >= 80) { confBadge.className = 'parser-confidence confidence-high'; confBadge.textContent = `${conf}% ✅`; }
+        else if (conf >= 50) { confBadge.className = 'parser-confidence confidence-medium'; confBadge.textContent = `${conf}% ⚠️`; }
+        else { confBadge.className = 'parser-confidence confidence-low'; confBadge.textContent = `${conf}% ❌`; }
+        showVedFilePreviewWithDetails(result);
+        if (result.naCount > 0) showToast(`⚠️ ${result.naCount} позиций без артикула (N/A)`);
+        else showToast(`✅ Парсинг успешен (${conf}%)`);
+    }).catch(err => {
+        console.error(err); fileName.textContent = `❌ Ошибка: ${err}`;
+        uploadBox.classList.remove('has-file'); showToast('❌ ' + err);
+    });
+}
+
+function showVedFilePreviewWithDetails(data) {
+    const preview = document.getElementById('vedFilePreview');
+    const items = data.items || [];
+    if (!items.length) { preview.innerHTML = '<div style="color:#ea4335;padding:12px;">Нет данных</div>'; preview.classList.add('show'); return; }
+    let html = `<div class="parser-summary">📊 Итого: <b>${(data.totalQty||0).toLocaleString('ru-RU')} шт</b> · <b>${(data.totalCartons||0).toLocaleString('ru-RU')} кор.</b> · <b>${(data.totalVolume||0).toFixed(2)} м³</b> · Позиций: <b>${items.length}</b></div>`;
+    if (data.naCount > 0) html += `<div class="parser-warning">⚠️ Позиций без артикула (N/A): ${data.naCount}</div>`;
+    html += '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>';
+    items.slice(0, 15).forEach(item => {
+        const naClass = item.article === 'N/A' ? ' na-highlight' : '';
+        html += `<tr class="${naClass}"><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0, 40))}</td><td class="num">${(item.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(item.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(item.qty||0).toLocaleString('ru-RU')}</td><td class="num">${item.volume > 0 ? item.volume.toFixed(3) : '—'}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    if (items.length > 15) html += `<div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;">... и ещё ${items.length - 15} позиций</div>`;
+    preview.innerHTML = html; preview.classList.add('show');
+}
+
+async function saveVedSupply() {
+    const number = document.getElementById('vedNumber').value.trim();
+    const eta = document.getElementById('vedEta').value;
+    const supplier = document.getElementById('vedSupplier').value.trim();
+    const warehouse = document.getElementById('vedWarehouse').value;
+    const status = document.getElementById('vedStatus').value;
+    const fileData = vedTempFileData;
+    if (!number || !eta || !supplier) return alert('Заполните номер, дату и поставщика');
+    if (!fileData) return alert('Прикрепите файл');
+    const supply = { id: Date.now(), number, eta, supplier, warehouse, status, items: fileData.items, totalVolume: fileData.totalVolume, totalQty: fileData.totalQty, totalCartons: fileData.totalCartons, fileName: fileData.name, createdAt: new Date().toISOString(), history: [{ status, date: new Date().toISOString() }] };
+    vedSupplies.push(supply);
+    if (isOnline) { const { id, ...data } = supply; try { await db.collection('ved_supplies').doc(String(id)).set(data); } catch (e) { console.error(e); } }
+    saveToLocalStorage(); clearVedForm(); renderAll();
+    showToast(`✅ Поставка сохранена: ${number}`);
+}
+
+function clearVedForm() {
+    document.getElementById('vedNumber').value = ''; document.getElementById('vedEta').value = '';
+    document.getElementById('vedSupplier').value = ''; vedTempFileData = null;
+    document.getElementById('vedFileName').textContent = '';
+    document.getElementById('vedFileUploadBox').classList.remove('has-file');
+    document.getElementById('vedFilePreview').innerHTML = '';
+    document.getElementById('vedFilePreview').classList.remove('show');
+    document.getElementById('parserStats').style.display = 'none';
+}
+
+async function updateVedStatus(id, status) {
+    const supply = vedSupplies.find(s => String(s.id) === String(id));
+    if (supply) { supply.status = status; supply.history = supply.history || []; supply.history.push({ status, date: new Date().toISOString() }); saveToLocalStorage(); if (isOnline) try { await db.collection('ved_supplies').doc(String(id)).update({ status, history: supply.history }); } catch (e) { console.error(e); } renderVedCards(); renderAll(); }
+}
+async function deleteVedSupply(id) { if (!confirm('Удалить?')) return; vedSupplies = vedSupplies.filter(s => String(s.id) !== String(id)); if (isOnline) try { await db.collection('ved_supplies').doc(String(id)).delete(); } catch (e) { console.error(e); } saveToLocalStorage(); renderAll(); }
+function toggleVedDetails(id) { const el = document.getElementById('ved-details-' + id); if (el) el.classList.toggle('show'); }
+
+function renderVedCards() {
+    const container = document.getElementById('vedCards');
+    const srt = [...vedSupplies].sort((a, b) => (a.eta || '').localeCompare(b.eta || ''));
+    if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKPIs(); return; }
+    let html = '';
+    for (let s of srt) {
+        const so = VED_STATUSES[s.status] || VED_STATUSES.transit;
+        const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0);
+        html += `<div class="supply-card" onclick="toggleVedDetails(${s.id})"><button class="card-delete" onclick="event.stopPropagation();deleteVedSupply(${s.id})">×</button><div class="supply-number">📦 ${s.number}</div><div class="supply-supplier">🏭 ${s.supplier}</div><div class="supply-warehouse">📍 ${s.warehouse}</div><div class="supply-eta">📅 ${s.eta}</div><div class="supply-volume">📦 <b>${(s.totalVolume || 0).toFixed(2)} м³</b> · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div><div class="supply-items-count">📋 ${(s.items || []).length} поз. · ${tq.toLocaleString('ru-RU')} ед.</div><div style="margin-top:8px;"><span class="supply-status-badge ${so.class}">${so.label}</span><select onclick="event.stopPropagation()" onchange="updateVedStatus(${s.id},this.value)" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);">${Object.entries(VED_STATUSES).map(([k, v]) => `<option value="${k}" ${s.status === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div><div class="supply-details" id="ved-details-${s.id}"><div style="font-size:10px;">📎 ${s.fileName}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items || []).slice(0, 20).map(i => `<tr class="${i.article === 'N/A' ? 'na-highlight' : ''}"><td style="font-family:monospace;font-size:10px;">${escapeHtml(i.article || '—')}</td><td style="font-size:10px;">${escapeHtml((i.name || '—').slice(0, 35))}</td><td class="num">${(i.cartons || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.perCarton || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.qty || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.volume || 0).toFixed(3)}</td></tr>`).join('')}${(s.items || []).length > 20 ? `<tr><td colspan="6" style="color:var(--text-tertiary);">... и ещё ${s.items.length - 20} позиций</td></tr>` : ''}</tbody></table></div></div>`;
+    }
+    container.innerHTML = html; renderVedKPIs();
+}
+
+function renderVedKPIs() {
+    const total = vedSupplies.length;
+    const it = vedSupplies.filter(s => s.status === 'transit').length;
+    const ac = vedSupplies.filter(s => s.status === 'customs').length;
+    const sv = vedSupplies.filter(s => s.status === 'svh').length;
+    const ar = vedSupplies.filter(s => s.status === 'arrived').length;
+    const ti = vedSupplies.reduce((sum, s) => sum + (s.totalQty || 0), 0);
+    const tv = vedSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0);
+    document.getElementById('vedKpiGrid').innerHTML = `<div class="kpi-card"><div class="kpi-label">Всего</div><div class="kpi-value">${total}</div></div><div class="kpi-card" style="border-left:3px solid #1a73e8;"><div class="kpi-label">В пути</div><div class="kpi-value" style="color:#1a73e8;">${it}</div></div><div class="kpi-card" style="border-left:3px solid #f9ab00;"><div class="kpi-label">Таможня</div><div class="kpi-value" style="color:#e37400;">${ac}</div></div><div class="kpi-card" style="border-left:3px solid #ea4335;"><div class="kpi-label">На СВХ</div><div class="kpi-value" style="color:#c5221f;">${sv}</div></div><div class="kpi-card" style="border-left:3px solid #0d904f;"><div class="kpi-label">Прибыло</div><div class="kpi-value" style="color:#137333;">${ar}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">Объём</div><div class="kpi-value" style="color:var(--ved)">${tv.toFixed(1)} м³</div><div class="kpi-sub">${ti.toLocaleString('ru-RU')} ед.</div></div>`;
+}
+
+// ========== ЛОГИСТИКА, ПРОГНОЗ, СВОДНАЯ, ПЛАН ПРОДАЖ, SKU ==========
 function updateLogCalc(){const a=parseFloat(document.getElementById('logAmount').value)||0;const rate=document.getElementById('logNDS').value==='22%'?1.22:1.07;document.getElementById('logCalcFull').textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' ₽';}
 async function addLogEntry(){const date=document.getElementById('logDate').value;const mp=document.getElementById('logMP').value;const type=document.getElementById('logType').value;const supplier=document.getElementById('logSupplier').value;const city=document.getElementById('logCity').value.trim();const qty=parseInt(document.getElementById('logQty').value)||0;const boxes=parseInt(document.getElementById('logBoxes').value)||0;const amount=parseFloat(document.getElementById('logAmount').value)||0;const nds=document.getElementById('logNDS').value;const rate=nds==='22%'?1.22:1.07;if(!date||!city||qty<=0||amount<=0)return alert('Заполните обязательные поля');const entry={id:Date.now(),date,marketplace:mp,type,supplier,city,qty,boxes,amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds,source:'Логистика'};logEntries.push(entry);if(isOnline)try{await db.collection('logistics').doc(String(entry.id)).set(entry);}catch(e){console.error(e);}saveToLocalStorage();document.getElementById('logCity').value='';document.getElementById('logQty').value='';document.getElementById('logBoxes').value='';document.getElementById('logAmount').value='';updateLogCalc();renderLog();showToast('✅ Добавлена запись');}
 function renderLog(){const fm=document.getElementById('logFilterMonth').value;const fs=document.getElementById('logFilterStatus').value;const fmp=document.getElementById('logFilterMP').value;let fl=[...logEntries];if(fm)fl=fl.filter(e=>e.date&&e.date.startsWith(fm));if(fs==='paid')fl=fl.filter(e=>e.paid);if(fs==='unpaid')fl=fl.filter(e=>!e.paid);if(fmp!=='all')fl=fl.filter(e=>e.marketplace===fmp);const srt=fl.sort((a,b)=>(b.date||'').localeCompare(a.date||''));document.getElementById('logCount').textContent=srt.length;if(!srt.length){document.getElementById('logTable').innerHTML='<div class="empty-state">Нет записей</div>';return;}let html='<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';for(let e of srt){if(!e.date)continue;html+=`<tr><td>${e.date.split('-').reverse().join('.')}</td><td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${e.marketplace}</span></td><td>${e.type||'FBO'}</td><td><select class="log-select" onchange="updateLogSupplier('${e.id}',this.value)">${SUPPLIERS.map(s=>`<option value="${s}" ${e.supplier===s?'selected':''}>${s||'—'}</option>`).join('')}</select></td><td>${e.city||''}</td><td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td><td class="num"><input class="log-edit-input" style="width:50px;text-align:center;" value="${e.boxes||0}" type="number" onchange="updateLogPallets('${e.id}',this.value)"></td><td class="num"><input class="log-edit-input" style="width:80px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" onchange="updateLogAmount('${e.id}',this.value)"></td><td class="num">${fmtPrice(e.amountFull)}</td><td><select onchange="updateLogNds('${e.id}',this.value)" style="font-size:10px;padding:2px;"><option value="22%" ${e.nds==='22%'?'selected':''}>22%</option><option value="7%" ${e.nds==='7%'?'selected':''}>7%</option></select></td><td><button class="btn-status ${e.paid?'paid':'unpaid'}" onclick="toggleLogPaid('${e.id}')">${e.paid?'Оплачен':'Не опл.'}</button></td><td><button class="btn btn-danger-sm" onclick="deleteLogEntry('${e.id}')">×</button></td></tr>`;}html+='</tbody></table>';document.getElementById('logTable').innerHTML=html;}
@@ -874,14 +1039,10 @@ async function deleteLogEntry(id){if(confirm('Удалить?')){logEntries=logE
 function resetLogFilters(){document.getElementById('logFilterMonth').value='';document.getElementById('logFilterStatus').value='all';document.getElementById('logFilterMP').value='all';renderLog();}
 function toggleLogImport(){const block=document.getElementById('logImportBlock');block.style.display=block.style.display==='none'?'block':'none';}
 function fmtPrice(n){return n?n.toLocaleString('ru-RU')+' ₽':'0 ₽';}
-
-// ========== ПРОГНОЗ ==========
 function calculateExpense(month){const ms=311000000;const me=warehouseData.baseExpense;const cs=warehouseData.salesPlan[month]||0;if(cs===0||ms===0)return 0;return me*(cs/ms);}
 function getMonthlyIncoming(month){return vedSupplies.filter(s=>{if(!s.eta)return false;const ed=new Date(s.eta);const em=MONTHS[ed.getMonth()];return em===month&&s.status==='arrived';}).reduce((sum,s)=>sum+(s.totalVolume||0),0);}
 function renderKPIs(){const forecast=calculateForecast();const cm=forecast.find(f=>f.month===MONTHS[new Date().getMonth()])||forecast[0];const clp=cm?Math.round(cm.loadPercent*100):0;const tvv=vedSupplies.reduce((sum,s)=>sum+(s.totalVolume||0),0);let wt=0,ot=0;for(let s of wbShipments)wt+=s.qty||0;for(let s of ozonShipments)ot+=s.qty||0;document.getElementById('kpiGrid').innerHTML=`<div class="kpi-card kpi-wb"><div class="kpi-label">WB за год</div><div class="kpi-value" style="color:var(--wb)">${wt.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ozon"><div class="kpi-label">Ozon за год</div><div class="kpi-value" style="color:var(--ozon)">${ot.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">ВЭД объём</div><div class="kpi-value" style="color:var(--ved)">${tvv.toFixed(1)} м³</div></div><div class="kpi-card ${clp>85?'kpi-danger':''}"><div class="kpi-label">Загрузка склада</div><div class="kpi-value" style="${clp>85?'color:var(--danger)':''}">${clp}%</div></div>`;}
 function calculateForecast(){const months=['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];let remaining=warehouseData.currentOccupancy;const result=[];for(let month of months){const incoming=getMonthlyIncoming(month);const expense=calculateExpense(month);remaining=remaining+incoming-expense;remaining=Math.max(remaining,0);const lp=remaining/warehouseData.totalCapacity;const free=warehouseData.totalCapacity-remaining;result.push({month,incoming:Math.round(incoming*100)/100,expense:Math.round(expense*100)/100,remaining:Math.round(remaining),loadPercent:lp,free:Math.round(free),status:lp>0.85?'ПЕРЕПОЛНЕНИЕ':lp>0.7?'ВЫСОКАЯ ЗАГРУЗКА':lp>0.5?'СРЕДНЯЯ ЗАГРУЗКА':'ОК'});}return result;}
-
-// ========== СВОДНАЯ ==========
 function getWeekKey(ds){if(!ds||typeof ds!=='string')return{key:'unknown-'+Math.random(),label:'—'};const d=new Date(ds+'T00:00:00');if(isNaN(d.getTime()))return{key:'unknown-'+Math.random(),label:'—'};const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-day+1);const fmt=dt=>dt.getDate().toString().padStart(2,'0')+'.'+(dt.getMonth()+1).toString().padStart(2,'0');return{key:mon.toISOString().slice(0,10),label:fmt(mon)+'-'+fmt(new Date(mon.getTime()+6*24*60*60*1000))};}
 function getCurrentWeekKey(){const now=new Date();const day=now.getDay()||7;const mon=new Date(now);mon.setDate(now.getDate()-day+1);return mon.toISOString().slice(0,10);}
 function getAllShipments(){const all=[];wbShipments.forEach(s=>all.push({...s,marketplace:'Wildberries'}));ozonShipments.forEach(s=>all.push({...s,marketplace:'Ozon'}));return all.filter(s=>s.date&&typeof s.date==='string'&&!isNaN(new Date(s.date+'T00:00:00').getTime()));}
@@ -892,24 +1053,16 @@ function exportScheduleCSV(){const all=getAllShipments();const grp={};all.forEac
 function downloadCSV(csv,fn){const b=new Blob(['\uFEFF'+csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();}
 function renderForecastTable(){const forecast=calculateForecast();const container=document.getElementById('forecastTable');if(!forecast.length||warehouseData.baseExpense===0){container.innerHTML='<div class="empty-state">Загрузите Excel-модель</div>';return;}let html='<div class="forecast-title">📊 Прогноз загрузки склада 2026</div><table><thead><tr><th>Месяц</th><th class="num">📦 Приход</th><th class="num">🚚 Расход</th><th class="num">📊 Остаток</th><th>📈 Загрузка</th><th class="num">✅ Свободно</th><th>⚠️ Статус</th></tr></thead><tbody>';for(let f of forecast){let sc='badge-info';if(f.status==='ПЕРЕПОЛНЕНИЕ')sc='badge-danger';else if(f.status==='ВЫСОКАЯ ЗАГРУЗКА')sc='badge-warning';let lc='good';if(f.loadPercent>0.85)lc='danger';else if(f.loadPercent>0.7)lc='warn';html+=`<tr><td><b>${f.month}</b></td><td class="num">${f.incoming.toFixed(2)}</td><td class="num">${f.expense.toFixed(2)}</td><td class="num"><b>${f.remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lc}" style="width:${f.loadPercent*100}%"></div></div>${Math.round(f.loadPercent*100)}%</td><td class="num">${f.free.toLocaleString('ru-RU')}</td><td><span class="badge ${sc}">${f.status}</span></td></tr>`;}html+='</tbody></table>';container.innerHTML=html;}
 function renderForecastChart(){const forecast=calculateForecast();if(!forecast.length||warehouseData.baseExpense===0){document.getElementById('forecastChart').innerHTML='<text x="300" y="100" text-anchor="middle" font-size="13" fill="#9aa0a6">Загрузите Excel-модель</text>';return;}const svg=document.getElementById('forecastChart');const months=forecast.map(f=>f.month.slice(0,3));const idata=forecast.map(f=>f.incoming);const edata=forecast.map(f=>f.expense);const maxVal=Math.max(...idata,...edata,50);const yMax=Math.ceil(maxVal/10)*10;const W=600,H=200,PL=55,PR=20,PT=15,PB=30,cw=W-PL-PR,ch=H-PT-PB;const gx=i=>PL+(cw/(months.length-1))*i;const gy=v=>PT+ch-(v/yMax)*ch;let sc='';for(let i=0;i<=4;i++){const y=PT+(ch/4)*i;const val=Math.round(yMax-(yMax/4)*i);sc+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" class="chart-grid"/><text x="${PL-8}" y="${y+4}" text-anchor="end" class="chart-axis">${val.toFixed(0)}</text>`;}let ip='',ep='';for(let i=0;i<months.length;i++){const x=gx(i);ip+=(i===0?'M':'L')+`${x},${gy(idata[i])} `;ep+=(i===0?'M':'L')+`${x},${gy(edata[i])} `;}sc+=`<path d="${ip}" class="chart-line incoming" stroke-width="2.5" fill="none"/><path d="${ep}" class="chart-line expense" stroke-width="2.5" fill="none"/>`;for(let i=0;i<months.length;i++){sc+=`<circle cx="${gx(i)}" cy="${gy(idata[i])}" r="3.5" class="chart-dot" style="fill:var(--ved);"><title>Приход ${months[i]}: ${idata[i].toFixed(2)} м³</title></circle><circle cx="${gx(i)}" cy="${gy(edata[i])}" r="3.5" class="chart-dot" style="fill:#e37400;"><title>Расход ${months[i]}: ${edata[i].toFixed(2)} м³</title></circle><text x="${gx(i)}" y="${H-8}" text-anchor="middle" class="chart-axis">${months[i]}</text>`;}svg.innerHTML=sc;}
-
-// ========== ПЛАН ПРОДАЖ ==========
 function renderSalesPlanEditor(){const tbody=document.getElementById('salesPlanEditor');const months=['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];document.getElementById('totalCapacity').value=warehouseData.totalCapacity;document.getElementById('currentOccupancy').value=warehouseData.currentOccupancy;document.getElementById('constantVolume').value=warehouseData.constantVolume;document.getElementById('baseExpense').value=warehouseData.baseExpense;let html='';let ps=0;for(let month of months){const sales=warehouseData.salesPlan[month]||0;const growth=ps>0?((sales/ps-1)*100).toFixed(1)+'%':'—';const expense=calculateExpense(month);const incoming=getMonthlyIncoming(month);const forecast=calculateForecast();const fd=forecast.find(f=>f.month===month);const remaining=fd?fd.remaining:0;const lp=fd?(fd.loadPercent*100).toFixed(0):0;html+=`<tr><td><b>${month}</b></td><td class="num"><input type="number" class="sales-plan-input" id="sales_${month}" value="${sales}" step="1000000" onchange="updateSalesPlan('${month}',this.value)"></td><td class="num">${growth}</td><td class="num">${expense.toFixed(2)}</td><td class="num">${incoming.toFixed(2)}</td><td class="num"><b>${remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lp>85?'danger':(lp>70?'warn':'good')}" style="width:${lp}%"></div></div>${lp}%</td></tr>`;ps=sales;}tbody.innerHTML=html;}
 function updateSalesPlan(month,value){warehouseData.salesPlan[month]=parseFloat(value)||0;renderSalesPlanEditor();renderForecastTable();renderForecastChart();renderKPIs();}
 async function saveSalesPlan(){saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderForecastTable();renderForecastChart();renderKPIs();showToast('✅ План сохранён');}
 async function saveWarehouseSettings(){warehouseData.totalCapacity=parseFloat(document.getElementById('totalCapacity').value)||2267;warehouseData.currentOccupancy=parseFloat(document.getElementById('currentOccupancy').value)||1408;warehouseData.constantVolume=parseFloat(document.getElementById('constantVolume').value)||85;warehouseData.baseExpense=parseFloat(document.getElementById('baseExpense').value)||51.50;saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderForecastTable();renderForecastChart();renderKPIs();showToast('✅ Настройки сохранены');}
 async function importExcelModel(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array'});const inputSheet=workbook.Sheets["02 Вводные"];let tc=0,co=0,cv=0;let sp={};if(inputSheet){const rows=XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;const ca=String(row[0]||'').toLowerCase();const cb=row[1];if(ca.includes('полезный объем')||ca.includes('полезный объём'))tc=parseFloat(cb)||0;if(ca.includes('занято')&&!ca.includes('постоянный'))co=parseFloat(cb)||0;if(ca.includes('постоянный объем')||ca.includes('постоянный объём'))cv=parseFloat(cb)||0;}let its=false;for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Месяц')&&String(row[8]||'').includes('План продаж')){its=true;continue;}if(its&&row[0]&&MONTHS.includes(String(row[0]).trim())){const month=String(row[0]).trim();const plan=parseFloat(row[8])||0;if(plan>0)sp[month]=plan;}}}const es=workbook.Sheets["03 УходимостьQ1"];let be=51.50;if(es){const rows=XLSX.utils.sheet_to_json(es,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Март')&&row[3])be=parseFloat(row[3])||51.50;}}if(tc>0)warehouseData.totalCapacity=tc;if(co>0)warehouseData.currentOccupancy=co;if(cv>0)warehouseData.constantVolume=cv;if(be>0)warehouseData.baseExpense=be;if(Object.keys(sp).length>0)warehouseData.salesPlan=sp;saveToLocalStorage();if(isOnline)db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});resolve({totalCapacity:tc,currentOccupancy:co,constantVolume:cv,baseExpense:be,salesPlanCount:Object.keys(sp).length});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения');reader.readAsArrayBuffer(file);});}
-
-// ========== ИМПОРТ ОТГРУЗОК ==========
 let showScheduleImport=false;
 function toggleScheduleImport(){showScheduleImport=!showScheduleImport;document.getElementById('scheduleImportBlock').style.display=showScheduleImport?'block':'none';}
 async function doScheduleImport(){const text=document.getElementById('scheduleImportText').value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(cols[3].replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const dp=ds.split('.');if(dp.length===3)ds=dp[2]+'-'+dp[1].padStart(2,'0')+'-'+dp[0].padStart(2,'0');if(isNaN(new Date(ds).getTime()))return;const shipment={id:Date.now()+Math.random(),date:ds,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(String(id)),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(String(id)),data);});try{await batch.commit();}catch(e){console.error(e);}}saveToLocalStorage();document.getElementById('scheduleImportText').value='';toggleScheduleImport();renderAll();showToast(`✅ WB: ${iw}, Ozon: ${io}`);}
-
-// ========== SKU ==========
 function renderSkuTable(){const tbody=document.getElementById('skuList');const items=Object.entries(skuLibrary);if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;">Нет данных</td></tr>';return;}let html='';for(const[article,data]of items){const vpb=(data.length*data.width*data.height/1000000).toFixed(6);html+=`<tr><td style="font-family:monospace;">${escapeHtml(article)}</td><td>${escapeHtml(data.name||'')}</td><td class="num">${data.length||0}</td><td class="num">${data.width||0}</td><td class="num">${data.height||0}</td><td class="num">${data.perCarton||0}</td><td class="num">${vpb}</td><td><button class="btn btn-danger-sm" onclick="deleteSku('${escapeHtml(article)}')">Удалить</button></td></tr>`;}tbody.innerHTML=html;}
 function deleteSku(article){if(confirm(`Удалить ${article}?`)){delete skuLibrary[article];saveSkuLibrary();showToast(`✅ ${article} удалён`);}}
-
-// ========== НАВИГАЦИЯ ==========
 function switchPage(page){currentPage=page;localStorage.setItem('currentPage',page);document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active','sales-active'));document.getElementById('page-'+page).classList.add('active');const map={schedule:0,wb:1,ozon:2,logistics:3,ved:4,'sales-plan':5,'sku-library':6};const cls=['active','wb-active','ozon-active','logistics-active','ved-active','sales-active','ved-active'];const btns=document.querySelectorAll('.nav-btn');if(btns[map[page]])btns[map[page]].classList.add(cls[map[page]]);if(page==='logistics'){updateLogCalc();renderLog();}if(page==='ved')renderVedCards();if(page==='sales-plan')renderSalesPlanEditor();if(page==='sku-library')renderSkuTable();}
 function renderAll(){renderSchedule();renderShipmentCards('Wildberries');renderShipmentCards('Ozon');renderLog();renderVedCards();renderSkuTable();}
 
@@ -945,8 +1098,6 @@ document.getElementById('logNDS').addEventListener('change',updateLogCalc);
 
 document.getElementById('btnSaveVed').addEventListener('click',saveVedSupply);
 document.getElementById('btnClearVed').addEventListener('click',clearVedForm);
-document.getElementById('btnApplyMapping').addEventListener('click',applyManualMapping);
-document.getElementById('btnCancelMapping').addEventListener('click',()=>{document.getElementById('mappingInterface').style.display='none';window.pendingMappingResolve=null;});
 
 document.getElementById('btnSaveWarehouseSettings').addEventListener('click',saveWarehouseSettings);
 document.getElementById('btnSaveSalesPlan').addEventListener('click',saveSalesPlan);
@@ -969,9 +1120,12 @@ vedInput.addEventListener('change',function(){if(this.files[0])handleVedFileSele
 updateLogCalc();
 loadFromFirebase();
 
-console.log('🤖 Умный парсер ВЭД v3.1 готов');
-console.log('📚 Обучено форматов:', smartParser.getStats().learnedFormats);
-console.log('🎯 Правило: наименование ≥ 6 символов');
+console.log('🔥 FixedVedParser v5.0 загружен');
+console.log('✅ Расширенные паттерны артикулов');
+console.log('✅ Умный поиск артикулов во всех колонках');
+console.log('✅ Извлечение артикулов из названий');
+console.log('✅ Статистика найденных артикулов');
+console.log('✅ Подсветка N/A позиций');
 </script>
 </body>
 </html>
