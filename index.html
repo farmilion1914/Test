@@ -23,14 +23,18 @@
             --accent-hover: #1557b0;
             --wb: #6c3a9e;
             --wb-light: #f3edf8;
+            --wb-gradient: linear-gradient(135deg, #6c3a9e 0%, #8e5cc4 100%);
             --ozon: #1a6fb5;
             --ozon-light: #e8f4fc;
+            --ozon-gradient: linear-gradient(135deg, #1a6fb5 0%, #3d9be0 100%);
             --ved: #00695c;
+            --ved-light: #e0f2f1;
             --success: #0d904f;
             --warning: #f9ab00;
             --danger: #ea4335;
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
             --shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
             --radius-sm: 12px;
             --radius-md: 16px;
             --radius-lg: 20px;
@@ -69,14 +73,18 @@
             --accent-hover: #aecbfa;
             --wb: #b388d9;
             --wb-light: #2d2438;
+            --wb-gradient: linear-gradient(135deg, #5c2d8a 0%, #7b4db5 100%);
             --ozon: #7ab8e8;
             --ozon-light: #1e2e3d;
+            --ozon-gradient: linear-gradient(135deg, #155a8a 0%, #2d8bc5 100%);
             --ved: #4db6a0;
+            --ved-light: #1e3d35;
             --success: #34a853;
             --warning: #fdd663;
             --danger: #f28b82;
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.3);
             --shadow-md: 0 4px 6px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.3);
             --input-bg: #3a3c3e;
             --table-header-bg: #3a3c3e;
             --badge-wb-bg: #2d2438;
@@ -134,7 +142,7 @@
 
         .btn { padding: 8px 16px; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
         .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: var(--accent-hover); opacity: 0.9; }
+        .btn-primary:hover { opacity: 0.9; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
         .btn-outline:hover { background: var(--surface-hover); }
         .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 14px; }
@@ -186,21 +194,280 @@
         .field input.invalid { border-color: var(--danger); background: var(--status-reject-bg); }
         .field-calc { background: var(--status-wait-bg); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--accent); text-align: right; }
 
-        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
-        .shipment-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s; position: relative; }
-        .shipment-card:hover { box-shadow: var(--shadow-md); }
-        .card-city { font-size: 16px; font-weight: 600; margin-bottom: 2px; color: var(--text-primary); }
-        .card-date { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
-        .card-qty { font-size: 28px; font-weight: 700; margin: 4px 0; letter-spacing: -0.5px; color: var(--text-primary); }
-        .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-bottom: 12px; }
-        .card-status select { width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; background: var(--input-bg); color: var(--text-primary); }
-        .card-delete { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 8px; z-index: 2; }
-        .card-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        
+        .shipment-card { 
+            background: var(--surface); 
+            border-radius: var(--radius-md); 
+            box-shadow: var(--shadow-sm); 
+            transition: all 0.2s; 
+            position: relative; 
+            overflow: hidden;
+        }
+        .shipment-card:hover { 
+            box-shadow: var(--shadow-lg); 
+            transform: translateY(-1px);
+        }
+        .shipment-card .card-accent {
+            height: 3px;
+            width: 100%;
+        }
+        .shipment-card .card-accent.wb { background: var(--wb-gradient); }
+        .shipment-card .card-accent.ozon { background: var(--ozon-gradient); }
+        .shipment-card .card-body {
+            padding: 16px 18px;
+        }
+        .shipment-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .shipment-card .card-city { 
+            font-size: 17px; 
+            font-weight: 700; 
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+        .shipment-card .card-date { 
+            font-size: 11px; 
+            color: var(--text-tertiary); 
+            margin-top: 1px;
+        }
+        .shipment-card .card-delete { 
+            background: none; 
+            border: none; 
+            color: var(--text-tertiary); 
+            cursor: pointer; 
+            font-size: 15px; 
+            padding: 4px 8px; 
+            border-radius: 6px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .shipment-card:hover .card-delete { opacity: 1; }
+        .shipment-card .card-delete:hover { 
+            background: var(--status-reject-bg); 
+            color: var(--danger); 
+        }
+        .shipment-card .card-qty { 
+            font-size: 32px; 
+            font-weight: 700; 
+            letter-spacing: -1px; 
+            color: var(--text-primary);
+            line-height: 1;
+            margin: 12px 0 4px 0;
+        }
+        .shipment-card .card-qty-label { 
+            font-size: 10px; 
+            text-transform: uppercase; 
+            color: var(--text-tertiary); 
+            letter-spacing: 0.5px; 
+            margin-bottom: 14px;
+        }
+        .shipment-card .card-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .shipment-card .card-status select { 
+            width: 100%; 
+            padding: 6px 10px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            font-size: 11px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            font-family: inherit; 
+            background: var(--input-bg); 
+            color: var(--text-primary);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .shipment-card .route-badge { 
+            font-size: 10px; 
+            color: var(--success); 
+            padding: 3px 10px; 
+            background: var(--status-sent-bg); 
+            border-radius: 10px; 
+            display: inline-block;
+            font-weight: 500;
+        }
         .status-work { background: var(--status-work-bg); color: var(--status-work-text); }
         .status-wait { background: var(--status-wait-bg); color: var(--status-wait-text); }
         .status-reject { background: var(--status-reject-bg); color: var(--status-reject-text); }
         .status-sent { background: var(--status-sent-bg); color: var(--status-sent-text); }
         .status-ready { background: var(--status-ready-bg); color: var(--status-ready-text); }
+
+        .ved-card {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .ved-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .ved-card.expanded {
+            grid-column: 1 / -1;
+            cursor: default;
+        }
+        .ved-card .card-accent {
+            height: 3px;
+            width: 100%;
+            background: var(--ved);
+            transition: background 0.3s;
+        }
+        .ved-card.match-highlight .card-accent {
+            background: var(--warning);
+            animation: accentPulse 1.5s infinite;
+        }
+        @keyframes accentPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .ved-card .card-body { padding: 16px 18px; }
+        .ved-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .ved-card .card-number { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .ved-card .card-supplier { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .ved-card .card-meta { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            font-size: 11px; 
+            color: var(--text-tertiary); 
+            margin: 8px 0;
+        }
+        .ved-card .card-meta span { display: flex; align-items: center; gap: 4px; }
+        .ved-card .card-volume { 
+            font-size: 18px; 
+            font-weight: 700; 
+            color: var(--ved); 
+            margin: 6px 0;
+        }
+        .ved-card .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--separator);
+        }
+        .ved-card .card-status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ved-card .card-delete { 
+            background: none; 
+            border: none; 
+            color: var(--text-tertiary); 
+            cursor: pointer; 
+            font-size: 15px; 
+            padding: 4px 8px; 
+            border-radius: 6px;
+            opacity: 0;
+            transition: opacity 0.15s;
+            position: absolute;
+            top: 12px;
+            right: 10px;
+            z-index: 2;
+        }
+        .ved-card:hover .card-delete { opacity: 1; }
+        .ved-card .card-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .ved-card .card-expand-icon {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            transition: transform 0.3s;
+        }
+        .ved-card.expanded .card-expand-icon {
+            transform: rotate(180deg);
+        }
+        .ved-card .card-details {
+            display: none;
+            padding: 0 18px 18px 18px;
+            border-top: 1px solid var(--separator);
+            margin-top: 4px;
+        }
+        .ved-card.expanded .card-details {
+            display: block;
+        }
+        .ved-card .card-details table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+        .ved-card .card-details th {
+            font-size: 10px;
+            padding: 10px 12px;
+            background: var(--table-header-bg);
+            text-align: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        .ved-card .card-details td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--separator);
+            color: var(--text-primary);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .ved-card .card-details td.name-cell {
+            max-width: 350px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ved-card.expanded .card-details td.name-cell {
+            max-width: 500px;
+        }
+        .ved-card .card-details .num { text-align: right; }
+        .ved-card .card-details .item-match {
+            background: var(--status-work-bg);
+            border-radius: 3px;
+        }
+        .ved-card .card-details .item-count-info {
+            text-align: center;
+            padding: 8px;
+            color: var(--text-tertiary);
+            font-size: 11px;
+            font-style: italic;
+        }
+        .ved-search {
+            margin-bottom: 16px;
+        }
+        .ved-search input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+        .ved-search input:focus {
+            outline: none;
+            border-color: var(--ved);
+        }
+        .ved-search-results {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: none;
+        }
+        .ved-search-results.show {
+            display: block;
+        }
 
         .file-upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 12px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--file-upload-bg); color: var(--text-primary); }
         .file-upload-box:hover { border-color: var(--ved); background: var(--surface-hover); }
@@ -215,23 +482,12 @@
         .file-preview th { font-size: 9px; padding: 8px; background: var(--table-header-bg); text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); color: var(--text-tertiary); }
         .file-preview td { padding: 6px 8px; border-bottom: 1px solid var(--separator); color: var(--text-primary); }
 
-        .supply-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s; position: relative; cursor: pointer; }
-        .supply-card:hover { box-shadow: var(--shadow-md); }
-        .supply-number { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
-        .supply-supplier { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
-        .supply-warehouse { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
-        .supply-eta { font-size: 12px; font-weight: 500; margin-bottom: 8px; color: var(--text-primary); }
-        .supply-volume { font-size: 14px; font-weight: 700; color: var(--ved); margin: 6px 0; }
-        .supply-status-badge { margin-top: 8px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .supply-card { display: none; }
+
         .status-transit { background: var(--status-wait-bg); color: var(--status-wait-text); }
         .status-customs { background: var(--status-work-bg); color: var(--status-work-text); }
         .status-svh { background: var(--status-reject-bg); color: var(--status-reject-text); }
         .status-arrived { background: var(--status-sent-bg); color: var(--status-sent-text); }
-        .supply-details { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--separator); }
-        .supply-details.show { display: block; }
-        .supply-details table { width: 100%; font-size: 11px; }
-        .supply-details th { text-align: left; padding: 6px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); background: var(--table-header-bg); }
-        .supply-details td { padding: 4px 8px; border-bottom: 1px solid var(--separator); color: var(--text-primary); }
 
         .table-wrap { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow-x: auto; margin-bottom: 24px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
@@ -306,8 +562,7 @@
         .chart-line.incoming { stroke: var(--ved); }
         .chart-line.expense { stroke: #e37400; stroke-dasharray: 5,3; }
         .chart-dot { cursor: pointer; }
-        .route-badge { font-size: 10px; color: var(--text-secondary); margin-top: 4px; padding: 2px 8px; background: var(--status-wait-bg); border-radius: 8px; display: inline-block; }
-        .supply-items-count { font-size: 11px; color: var(--text-secondary); margin: 4px 0; }
+        .route-badge { font-size: 10px; color: var(--success); padding: 3px 10px; background: var(--status-sent-bg); border-radius: 10px; display: inline-block; font-weight: 500; }
 
         .parser-summary { background: var(--status-sent-bg); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-primary); }
         .parser-summary b { color: var(--ved); }
@@ -557,6 +812,12 @@
             <button type="button" class="btn btn-outline btn-sm" id="btnClearVed">Очистить</button>
         </div>
     </div>
+    
+    <div class="ved-search">
+        <input type="text" id="vedArticleSearch" placeholder="Поиск по артикулу...">
+        <div class="ved-search-results" id="vedSearchResults"></div>
+    </div>
+    
     <div class="cards-grid" id="vedCards"><div class="empty-state">Нет поставок</div></div>
 </div>
 
@@ -661,6 +922,8 @@ let isOnline = false;
 let currentPage = 'schedule';
 let currentSubPage = 'weeks';
 let vedTempLists = [];
+let vedSearchQuery = '';
+let vedExpandedId = null; // ID раскрытой карточки (только одна одновременно)
 let skuLibrary = {};
 let warehouseData = {
     totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50, marchPlan: 311000000,
@@ -752,7 +1015,44 @@ function showRouteInfo() { const ci = document.getElementById('shipCityWildberri
 async function saveShipment(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (!de||!ce||!qe) return; const date = de.value, city = ce.value.trim(), qty = parseInt(qe.value)||0; if (!date||!city||qty<=0) { alert('Заполните дату, город и количество'); return; } if (!VALID_CITIES.has(city)) { alert('Город не найден в справочнике. Проверьте написание.'); return; } const linkId = generateUniqueId(); const shipment = { id: generateUniqueId(), date, city, qty, source: mp, status:'in_work', linkId }; const arr = mp==='Wildberries'?wbShipments:ozonShipments; arr.push(shipment); const logEntry = { id: generateUniqueId(), date, marketplace: mp, type: 'FBO', supplier: '', city, qty, boxes: 0, amount: 0, amountFull: 0, paid: false, nds: '22%', source: 'Авто из ' + mp, linkId }; logEntries.push(logEntry); if (isOnline) { const colShip = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(colShip).doc(shipment.id).set(shipment); await db.collection('logistics').doc(logEntry.id).set(logEntry); } catch(e) { showToast('Сохранено локально'); } } saveAllToLocalStorage(); renderAll(); clearShipmentForm(mp); showToast(city+' — '+qty.toLocaleString('ru-RU')+' ед. (+ логистика)'); }
 function clearShipmentForm(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (de) de.value = new Date().toISOString().slice(0,10); if (ce) { ce.value = ''; ce.classList.remove('invalid'); } if (qe) qe.value = ''; if (mp==='Wildberries') { const info = document.getElementById('routeInfoWildberries'); if (info) info.classList.remove('show'); } }
 async function deleteShipment(mp, id) { if (!confirm('Удалить отгрузку? Связанная запись в логистике тоже будет удалена.')) return; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const shipment = arr.find(s => String(s.id)===String(id)); const linkId = shipment ? shipment.linkId : null; if (mp==='Wildberries') wbShipments = wbShipments.filter(s => String(s.id)!==String(id)); else ozonShipments = ozonShipments.filter(s => String(s.id)!==String(id)); if (linkId) { const linkedLog = logEntries.find(l => l.linkId === linkId); if (linkedLog) { logEntries = logEntries.filter(l => l.linkId !== linkId); if (isOnline) { try { await db.collection('logistics').doc(String(linkedLog.id)).delete(); } catch(e) {} } } } if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(col).doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAll(); showToast('Отгрузка и связанная логистика удалены'); }
-function renderShipmentCards(mp) { const arr = mp==='Wildberries'?wbShipments:ozonShipments; const cid = mp==='Wildberries'?'wbCards':'ozonCards'; const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date)); const container = document.getElementById(cid); if (!container) return; if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; } let html = ''; for (let e of srt) { const cs = e.status||'in_work'; const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; const route = mp==='Wildberries'?(routesDB[e.city]||null):null; html += `<div class="shipment-card"><button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}">x</button><div class="card-city">${escapeHtml(e.city)}</div><div class="card-date">${escapeHtml(e.date)}</div><div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div><div class="card-qty-label">единиц</div>${route?`<div class="route-badge">${route.delivery}</div>`:''}<div class="card-status"><select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}">${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}</select></div></div>`; } container.innerHTML = html; }
+function renderShipmentCards(mp) { 
+    const arr = mp==='Wildberries'?wbShipments:ozonShipments; 
+    const cid = mp==='Wildberries'?'wbCards':'ozonCards'; 
+    const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date)); 
+    const container = document.getElementById(cid); 
+    if (!container) return; 
+    if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; } 
+    let html = ''; 
+    for (let e of srt) { 
+        const cs = e.status||'in_work'; 
+        const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; 
+        const route = mp==='Wildberries'?(routesDB[e.city]||null):null; 
+        const accentClass = mp==='Wildberries'?'wb':'ozon';
+        html += `<div class="shipment-card">
+            <div class="card-accent ${accentClass}"></div>
+            <div class="card-body">
+                <div class="card-header">
+                    <div>
+                        <div class="card-city">${escapeHtml(e.city)}</div>
+                        <div class="card-date">${escapeHtml(e.date)}</div>
+                    </div>
+                    <button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}">&times;</button>
+                </div>
+                <div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>
+                <div class="card-qty-label">единиц</div>
+                <div class="card-footer">
+                    <div class="card-status">
+                        <select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}">
+                            ${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    ${route ? `<div><span class="route-badge">${route.delivery}</span></div>` : ''}
+                </div>
+            </div>
+        </div>`; 
+    } 
+    container.innerHTML = html; 
+}
 function handleStatusChange(event) { const s = event.target; if (!s.classList.contains('status-select')) return; const mp = s.dataset.mp, id = s.dataset.id, st = s.value; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const sh = arr.find(x => String(x.id)===String(id)); if (sh) { sh.status = st; saveAllToLocalStorage(); if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; db.collection(col).doc(String(id)).update({status:st}).catch(()=>{}); } renderShipmentCards(mp); } }
 
 // ========== KPI-ПОЛОСЫ ==========
@@ -817,36 +1117,17 @@ function renderVedKpiStrip() {
     const totalVolume = vedSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0);
     
     strip.innerHTML = `
-        <div class="kpi-item">
-            <span class="kpi-item-label">Всего поставок:</span>
-            <span class="kpi-item-value">${total}</span>
-        </div>
+        <div class="kpi-item"><span class="kpi-item-label">Всего поставок:</span><span class="kpi-item-value">${total}</span></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">В пути:</span>
-            <span class="kpi-item-value" style="color:var(--accent);">${inTransit}</span>
-        </div>
+        <div class="kpi-item"><span class="kpi-item-label">В пути:</span><span class="kpi-item-value" style="color:var(--accent);">${inTransit}</span></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">Таможня:</span>
-            <span class="kpi-item-value" style="color:var(--warning);">${inCustoms}</span>
-        </div>
+        <div class="kpi-item"><span class="kpi-item-label">Таможня:</span><span class="kpi-item-value" style="color:var(--warning);">${inCustoms}</span></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">На СВХ:</span>
-            <span class="kpi-item-value" style="color:var(--danger);">${inSvh}</span>
-        </div>
+        <div class="kpi-item"><span class="kpi-item-label">На СВХ:</span><span class="kpi-item-value" style="color:var(--danger);">${inSvh}</span></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">Прибыло:</span>
-            <span class="kpi-item-value" style="color:var(--success);">${arrived}</span>
-        </div>
+        <div class="kpi-item"><span class="kpi-item-label">Прибыло:</span><span class="kpi-item-value" style="color:var(--success);">${arrived}</span></div>
         <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">Общий объём:</span>
-            <span class="kpi-item-value" style="color:var(--ved);">${totalVolume.toFixed(1)} м³</span>
-            <span style="font-size:11px;color:var(--text-tertiary);">(${totalQty.toLocaleString('ru-RU')} ед.)</span>
-        </div>
+        <div class="kpi-item"><span class="kpi-item-label">Общий объём:</span><span class="kpi-item-value" style="color:var(--ved);">${totalVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${totalQty.toLocaleString('ru-RU')} ед.)</span></div>
     `;
 }
 
@@ -861,8 +1142,118 @@ function clearVedForm() { ['vedNumber','vedEta','vedSupplier'].forEach(id=>{cons
 async function updateVedStatus(id,status){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.status=status;s.history=s.history||[];s.history.push({status,date:new Date().toISOString()});saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({status,history:s.history});}catch(e){}}renderVedCards();renderAll();}}
 async function toggleVedIncludeInModel(id){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.includeInModel=!s.includeInModel;saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({includeInModel:s.includeInModel});}catch(e){}}renderVedCards();renderAll();}}
 async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){}}saveAllToLocalStorage();renderAll();}
-function toggleVedDetails(id){const el=document.getElementById('ved-details-'+id);if(el)el.classList.toggle('show');}
-function renderVedCards(){const c=document.getElementById('vedCards');if(!c)return;const srt=[...vedSupplies].sort((a,b)=>{if(!a.eta&&!b.eta)return 0;if(!a.eta)return 1;if(!b.eta)return-1;return a.eta.localeCompare(b.eta);});if(!srt.length){c.innerHTML='<div class="empty-state">Нет поставок</div>';renderVedKpiStrip();return;}let h='';for(let s of srt){const so=VED_STATUSES[s.status]||VED_STATUSES.transit;const tq=(s.items||[]).reduce((sum,i)=>sum+(i.qty||0),0);const inc=s.includeInModel!==false;const li=s.listsCount?` · ${s.listsCount} списка`:'';h+=`<div class="supply-card" data-ved-id="${s.id}"><button type="button" class="card-delete" data-ved-delete="${s.id}">x</button><div class="supply-number">${escapeHtml(s.number)}</div><div class="supply-supplier">${escapeHtml(s.supplier)}</div><div class="supply-warehouse">${escapeHtml(s.warehouse)}</div><div class="supply-eta">${escapeHtml(s.eta)}</div><div class="supply-volume"><b>${(s.totalVolume||0).toFixed(2)} м³</b> · ${(s.totalCartons||0).toLocaleString('ru-RU')} кор.</div><div class="supply-items-count">${(s.items||[]).length} поз.${li} · ${tq.toLocaleString('ru-RU')} ед.</div><div style="margin-top:8px;display:flex;gap:8px;align-items:center;"><span class="supply-status-badge ${so.class}">${so.label}</span><select data-ved-status="${s.id}" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);">${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}</select><button type="button" class="include-model ${inc?'yes':'no'}" data-ved-include="${s.id}">${inc?'Вкл':'Выкл'}</button></div><div class="supply-details" id="ved-details-${s.id}"><div style="font-size:10px;">${escapeHtml(s.fileName)}</div></div></div>`;}c.innerHTML=h;renderVedKpiStrip();}
+
+// Только одна карточка раскрыта одновременно
+function toggleVedDetails(id) {
+    // Если кликнули по уже раскрытой — сворачиваем
+    if (vedExpandedId === String(id)) {
+        vedExpandedId = null;
+    } else {
+        vedExpandedId = String(id);
+    }
+    renderVedCards();
+}
+
+function renderVedCards() {
+    const container = document.getElementById('vedCards');
+    if (!container) return;
+    const srt = [...vedSupplies].sort((a,b)=>{if(!a.eta&&!b.eta)return 0;if(!a.eta)return 1;if(!b.eta)return-1;return a.eta.localeCompare(b.eta);});
+    if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKpiStrip(); return; }
+    
+    const query = vedSearchQuery.trim().toLowerCase();
+    let matchCount = 0;
+    
+    let html = '';
+    for (let s of srt) {
+        const so = VED_STATUSES[s.status] || VED_STATUSES.transit;
+        const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0);
+        const inc = s.includeInModel !== false;
+        const li = s.listsCount ? ` · ${s.listsCount} списка` : '';
+        const isExpanded = vedExpandedId === String(s.id);
+        
+        // Поиск по артикулам
+        let hasMatch = false;
+        if (query && s.items) {
+            for (const item of s.items) {
+                if (item.article && item.article.toLowerCase().includes(query)) {
+                    hasMatch = true;
+                    break;
+                }
+            }
+            if (hasMatch) matchCount++;
+        }
+        
+        const matchClass = hasMatch ? ' match-highlight' : '';
+        const expandClass = isExpanded ? ' expanded' : '';
+        
+        html += `<div class="ved-card${matchClass}${expandClass}" id="ved-card-${s.id}" data-ved-id="${s.id}">
+            <div class="card-accent"></div>
+            <button type="button" class="card-delete" data-ved-delete="${s.id}">&times;</button>
+            <div class="card-body" data-ved-toggle="${s.id}">
+                <div class="card-header">
+                    <div>
+                        <div class="card-number">${escapeHtml(s.number)}</div>
+                        <div class="card-supplier">${escapeHtml(s.supplier)}</div>
+                    </div>
+                </div>
+                <div class="card-meta">
+                    <span>${escapeHtml(s.warehouse)}</span>
+                    <span>${escapeHtml(s.eta)}</span>
+                </div>
+                <div class="card-volume">${(s.totalVolume || 0).toFixed(2)} м³ · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div>
+                <div style="font-size:11px;color:var(--text-secondary);">${(s.items || []).length} поз.${li} · ${tq.toLocaleString('ru-RU')} ед.</div>
+                <div class="card-footer">
+                    <div class="card-status-row">
+                        <span class="supply-status-badge ${so.class}" style="padding:3px 10px;border-radius:10px;font-size:10px;">${so.label}</span>
+                        <select data-ved-status="${s.id}" style="font-size:10px;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);">
+                            ${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}
+                        </select>
+                        <button type="button" class="include-model ${inc?'yes':'no'}" data-ved-include="${s.id}">${inc?'Вкл':'Выкл'}</button>
+                    </div>
+                    <span class="card-expand-icon">&#9662;</span>
+                </div>
+            </div>
+            <div class="card-details">
+                <div style="font-size:10px;color:var(--text-tertiary);padding:8px 0 4px 0;">${escapeHtml(s.fileName)}</div>
+                <table>
+                    <thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead>
+                    <tbody>
+                        ${(s.items || []).map(i => {
+                            const isMatch = query && i.article && i.article.toLowerCase().includes(query);
+                            const matchClass = isMatch ? ' item-match' : '';
+                            const naClass = i.article === 'N/A' ? ' na-highlight' : '';
+                            return `<tr class="${naClass}${matchClass}">
+                                <td style="font-family:monospace;font-size:12px;">${escapeHtml(i.article || '—')}</td>
+                                <td class="name-cell" title="${escapeHtml((i.name || '—'))}">${escapeHtml(i.name || '—')}</td>
+                                <td class="num">${(i.cartons || 0)}</td>
+                                <td class="num">${(i.perCarton || 0)}</td>
+                                <td class="num">${(i.qty || 0)}</td>
+                                <td class="num">${(i.volume || 0).toFixed(3)}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+    renderVedKpiStrip();
+    
+    // Обновляем результаты поиска
+    const searchResults = document.getElementById('vedSearchResults');
+    if (searchResults && query) {
+        searchResults.classList.add('show');
+        searchResults.textContent = `Найдено в ${matchCount} поставк${matchCount === 1 ? 'е' : matchCount >= 2 && matchCount <= 4 ? 'ах' : 'ах'}`;
+    } else if (searchResults) {
+        searchResults.classList.remove('show');
+    }
+}
+
+function handleVedSearch(query) {
+    vedSearchQuery = query;
+    vedExpandedId = null; // Сворачиваем всё при поиске
+    renderVedCards();
+}
 
 // ========== ЛОГИСТИКА ==========
 function updateLogCalc() { const ae=document.getElementById('logAmount'),ne=document.getElementById('logNDS'),ce=document.getElementById('logCalcFull'); if(!ae||!ce)return; const a=parseFloat(ae.value)||0,rate=ne&&ne.value==='22%'?1.22:1.07;ce.textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' руб.'; }
@@ -931,7 +1322,17 @@ function switchPage(page){
         switchSubPage(currentSubPage);
     }
     if (page === 'logistics') { updateLogCalc(); renderLog(); }
-    if (page === 'ved') { if(vedTempLists.length===0) vedTempLists=[null]; renderVedLists(); renderVedCards(); renderVedKpiStrip(); }
+    if (page === 'ved') { 
+        if(vedTempLists.length===0) vedTempLists=[null]; 
+        renderVedLists(); 
+        vedExpandedId = null;
+        renderVedCards(); 
+        renderVedKpiStrip(); 
+        const searchInput = document.getElementById('vedArticleSearch');
+        if (searchInput && vedSearchQuery) {
+            searchInput.value = vedSearchQuery;
+        }
+    }
 }
 
 function switchSubPage(subPage) {
@@ -971,7 +1372,14 @@ document.addEventListener('click',function(e){
     if(t.hasAttribute('data-ved-delete')){e.stopPropagation();deleteVedSupply(t.getAttribute('data-ved-delete'));return;}
     if(t.hasAttribute('data-ved-include')){e.stopPropagation();toggleVedIncludeInModel(t.getAttribute('data-ved-include'));return;}
     if(t.hasAttribute('data-ved-list-remove')){e.stopPropagation();removeVedList(parseInt(t.getAttribute('data-ved-list-remove')));return;}
-    const sc=t.closest('.supply-card');if(sc&&sc.hasAttribute('data-ved-id')){toggleVedDetails(sc.getAttribute('data-ved-id'));return;}
+    if(t.hasAttribute('data-ved-toggle')){e.stopPropagation();toggleVedDetails(t.getAttribute('data-ved-toggle'));return;}
+    const vedBody = t.closest('.ved-card .card-body');
+    if (vedBody && vedBody.hasAttribute('data-ved-toggle')) {
+        // Не переключаем если кликнули по селекту или кнопке
+        if (t.tagName === 'SELECT' || t.tagName === 'BUTTON' || t.closest('select') || t.closest('button')) return;
+        toggleVedDetails(vedBody.getAttribute('data-ved-toggle'));
+        return;
+    }
     if(t.hasAttribute('data-log-paid')){toggleLogPaid(t.getAttribute('data-log-paid'));return;}
     if(t.hasAttribute('data-log-delete')){deleteLogEntry(t.getAttribute('data-log-delete'));return;}
     if(t.hasAttribute('data-sku-delete')){deleteSku(t.getAttribute('data-sku-delete'));return;}
@@ -994,6 +1402,7 @@ document.addEventListener('input',function(e){
     const t=e.target;
     if(t.hasAttribute('data-sales-month')){updateSalesPlan(t.getAttribute('data-sales-month'),t.value);return;}
     if(t.id==='shipCityWildberries'||t.id==='shipCityOzon'||t.id==='logCity'){validateCityInput(t);}
+    if(t.id==='vedArticleSearch'){handleVedSearch(t.value);return;}
 });
 
 // ========== ПРЯМЫЕ ОБРАБОТЧИКИ ==========
@@ -1046,7 +1455,7 @@ function initApp(){
     switchPage(currentPage);
     initDirectHandlers();
     loadFromFirebase();
-    console.log('v18.0 — Тёмная тема с переключателем (🌙/☀️)');
+    console.log('v21.0 — Раскрытие ВЭД на всю ширину, без скролла');
 }
 
 document.addEventListener('DOMContentLoaded',initApp);
