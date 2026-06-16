@@ -1,3 +1,5 @@
+15.06.2026
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -234,6 +236,16 @@
         .parser-summary b { color: var(--ved); }
         .parser-warning { background: #fef7e0; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; font-size: 11px; color: #e37400; }
         .na-highlight { background: #fff3cd !important; }
+        
+        .include-model { width: 60px; text-align: center; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+        .include-model.yes { background: #e6f4ea; color: #137333; }
+        .include-model.no { background: #fce8e6; color: #c5221f; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .dashboard-card { background: var(--surface); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); }
+        .dashboard-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary); }
+        .dashboard-stat { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .dashboard-label { font-size: 11px; color: var(--text-tertiary); }
 
         @media (max-width: 768px) {
             body { padding: 12px; }
@@ -241,6 +253,7 @@
             .cards-grid { grid-template-columns: 1fr; }
             .nav-btn { font-size: 11px; padding: 8px 10px; }
             .sales-plan-input { width: 90px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -257,6 +270,7 @@
 
 <div class="nav">
     <button class="nav-btn active" data-page="schedule">📊 Сводная</button>
+    <button class="nav-btn" data-page="dashboard">📋 Дашборд</button>
     <button class="nav-btn" data-page="wb">🟣 WB</button>
     <button class="nav-btn" data-page="ozon">🔵 Ozon</button>
     <button class="nav-btn" data-page="logistics">🚚 Логистика</button>
@@ -292,6 +306,13 @@
     </div>
     <div class="table-wrap" id="scheduleTable"><div class="empty-state">Нет данных</div></div>
     <div class="table-wrap" id="forecastTable"><div class="empty-state">Загрузите Excel-модель для расчёта прогноза</div></div>
+</div>
+
+<div class="page" id="page-dashboard">
+    <h1>📋 Дашборд — Ключевые показатели</h1>
+    <p class="subtitle">Сводка для руководства: загрузка, приход, расход, прогноз</p>
+    <div class="dashboard-grid" id="dashboardGrid"></div>
+    <div class="table-wrap" id="dashboardTable"><div class="empty-state">Загрузите данные</div></div>
 </div>
 
 <div class="page" id="page-wb">
@@ -385,6 +406,7 @@
             <div class="field"><label>Поставщик</label><input type="text" id="vedSupplier" placeholder="蓉信电子"></div>
             <div class="field"><label>Склад выгрузки</label><select id="vedWarehouse"><option value="Москва">Москва</option><option value="Пушкино">Пушкино</option></select></div>
             <div class="field"><label>Статус</label><select id="vedStatus"><option value="transit">В пути</option><option value="customs">Таможня</option><option value="svh">На СВХ</option><option value="arrived">Прибыла</option></select></div>
+            <div class="field"><label>Вкл. в модель</label><select id="vedIncludeInModel"><option value="yes">Да</option><option value="no">Нет</option></select></div>
         </div>
         <div style="margin-top:14px;border-top:1px solid var(--separator);padding-top:14px;">
             <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">📎 Список товаров (Excel) — 🤖 Автоопределение всех колонок</div>
@@ -418,6 +440,7 @@
             <div class="field"><label>Текущая занятость, м³</label><input type="number" id="currentOccupancy" step="1" value="1408"></div>
             <div class="field"><label>Постоянный объём, м³</label><input type="number" id="constantVolume" step="1" value="85"></div>
             <div class="field"><label>Расход марта (база), м³</label><input type="number" id="baseExpense" step="0.01" value="51.50"></div>
+            <div class="field"><label>План марта, ₽</label><input type="number" id="marchPlan" step="1000000" value="311000000"></div>
         </div>
         <div style="margin-top:12px;">
             <button class="btn btn-primary btn-sm" id="btnSaveWarehouseSettings">💾 Сохранить настройки</button>
@@ -545,6 +568,7 @@ const VED_STATUSES = {
 
 const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const FORECAST_MONTHS = ['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
 // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
 let wbShipments = [];
@@ -558,16 +582,15 @@ let vedTempFileData = null;
 let pendingSupplyData = null;
 let skuLibrary = {};
 let warehouseData = {
-    totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50,
+    totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50, marchPlan: 311000000,
     salesPlan: {
         "Апрель": 343000000, "Май": 387000000, "Июнь": 428300000,
         "Июль": 494000000, "Август": 565000000, "Сентябрь": 629000000,
         "Октябрь": 697000000, "Ноябрь": 775000000, "Декабрь": 1149000000
     }
 };
-
 // ============================================================
-// УМНЫЙ ПАРСЕР ВЭД - ПОЛНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ v5.0
+// УМНЫЙ ПАРСЕР ВЭД v5.0
 // ============================================================
 class FixedVedParser {
     constructor() {
@@ -651,14 +674,11 @@ class FixedVedParser {
         return str === '' || str === '无' || str === 'None' || str === 'null';
     }
 
-    // 🔥 РАСШИРЕННЫЕ ПАТТЕРНЫ АРТИКУЛОВ
     isArticleLike(value) {
         if (this.isValueEmpty(value)) return false;
         const str = String(value).trim();
         if (str === 'N/A' || str === '无' || str === 'None' || str === 'null') return false;
         if (str.length < 3 || str.length > 50) return false;
-
-        // Строгие паттерны
         const strictPatterns = [
             /^[A-Z]{1,2}\d{4,}[-_\/]?\d*[A-Z]?$/i,
             /^[A-Z]{1,2}\d{4,}[-_][A-Z0-9]{2,}$/i,
@@ -668,8 +688,6 @@ class FixedVedParser {
             /^[A-Z]{1,2}\d{2,}[A-Z]?[-_\/]\d{2,}$/i
         ];
         for (const p of strictPatterns) { if (p.test(str)) return true; }
-
-        // Средние паттерны
         const mediumPatterns = [
             /^[A-Z]{1,2}\d{3,}[A-Z]?(\/|-)?\d*[A-Z]?$/i,
             /^[A-Z]{1,2}\d{3,}-\d-[A-Z]$/i,
@@ -678,8 +696,6 @@ class FixedVedParser {
             /^[A-Z]{1,2}\d{3,}[A-Z]-\d{2,}$/i
         ];
         for (const p of mediumPatterns) { if (p.test(str)) return true; }
-
-        // Нечёткие эвристики
         if (/[A-Za-z]/.test(str) && /\d/.test(str) && /[-_\/]/.test(str) && str.length <= 20) return true;
         if (/^[A-Z]{1,2}\d{3,}/i.test(str) && str.length <= 20) return true;
         const bm = str.match(/[\(\[\"']([A-Z0-9]{4,15})[\)\]\"']/i);
@@ -745,11 +761,9 @@ class FixedVedParser {
                         const firstCell = String(row[0] || '').toLowerCase();
                         if (firstCell === 'итого' || firstCell === 'total' || firstCell === '合计') continue;
 
-                        // 🔥 УМНЫЙ ПОИСК АРТИКУЛА ВО ВСЕХ КОЛОНКАХ
                         let article = '';
                         let articleConfidence = 'none';
 
-                        // 1. Проверяем колонку из заголовков
                         if (columnMap.article !== undefined && columnMap.article < row.length) {
                             const cell = String(row[columnMap.article] || '').trim();
                             if (cell && this.isArticleLike(cell) && cell !== 'N/A') {
@@ -759,7 +773,6 @@ class FixedVedParser {
                             }
                         }
 
-                        // 2. Ищем во всех колонках с оценкой похожести
                         if (!article) {
                             const candidates = [];
                             for (let col = 0; col < Math.min(row.length, 15); col++) {
@@ -785,7 +798,6 @@ class FixedVedParser {
                             }
                         }
 
-                        // 3. Последний шанс - первая колонка
                         if (!article && row.length > 0) {
                             const fc = String(row[0] || '').trim();
                             if (fc && fc !== 'N/A' && fc.length >= 3 && fc.length <= 25 && /[A-Za-z]/.test(fc) && /\d/.test(fc) && !fc.includes(' ')) {
@@ -795,7 +807,6 @@ class FixedVedParser {
                             }
                         }
 
-                        // 4. Извлечение из названия
                         if (!article) {
                             let nameForSearch = '';
                             if (columnMap.name !== undefined && columnMap.name < row.length) nameForSearch = String(row[columnMap.name] || '').trim();
@@ -811,9 +822,8 @@ class FixedVedParser {
                             }
                         }
 
-                        if (!article) { this.articleStats.notFound++; console.warn(`⚠️ Строка ${i + 1}: артикул не найден`); }
+                        if (!article) { this.articleStats.notFound++; }
 
-                        // Название
                         let name = '';
                         if (columnMap.name !== undefined && columnMap.name < row.length) name = String(row[columnMap.name] || '').trim();
                         if (!name || /[\u4e00-\u9fff]/.test(name)) {
@@ -825,21 +835,17 @@ class FixedVedParser {
                         if (!name && article) name = article;
                         if (!name) continue;
 
-                        // Коробки
                         let cartons = 0;
                         if (columnMap.cartons !== undefined && columnMap.cartons < row.length) cartons = this.parseNumber(row[columnMap.cartons]);
 
-                        // Шт/кор
                         let perCarton = 0;
                         if (columnMap.perCarton !== undefined && columnMap.perCarton < row.length) perCarton = this.parseNumber(row[columnMap.perCarton]);
                         if (perCarton === 0 && article) perCarton = this.getFromSkuLibrary(article, 'perCarton');
 
-                        // Всего
                         let qty = 0;
                         if (columnMap.totalQty !== undefined && columnMap.totalQty < row.length) qty = this.parseNumber(row[columnMap.totalQty]);
                         if (qty === 0 && perCarton > 0 && cartons > 0) qty = perCarton * cartons;
 
-                        // Объём
                         let volume = 0;
                         if (columnMap.volume !== undefined && columnMap.volume < row.length) volume = this.parseNumber(row[columnMap.volume]);
                         if (volume > 0 && volume < 0.1 && cartons > 1) { const ptv = volume * cartons; if (ptv > 0.1 && ptv < 100) volume = ptv; }
@@ -895,9 +901,9 @@ async function loadFromFirebase() {
         wbShipments = wbSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work' }));
         ozonShipments = ozSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work' }));
         logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false }));
-        vedSupplies = vedSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        vedSupplies = vedSnap.docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true }));
         weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
-        if (settingsDoc.exists) { const data = settingsDoc.data(); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; }
+        if (settingsDoc.exists) { const data = settingsDoc.data(); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.marchPlan = data.marchPlan || 311000000; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; }
         isOnline = true; updateSyncStatus('online'); saveToLocalStorage(); renderAll();
     } catch (e) { console.error('Firebase error:', e); loadFromLocalStorage(); isOnline = false; updateSyncStatus('offline'); renderAll(); }
 }
@@ -905,10 +911,10 @@ function loadFromLocalStorage() {
     wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work' }));
     ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work' }));
     logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false }));
-    vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]');
+    vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true }));
     weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
     const savedWarehouse = localStorage.getItem('warehouseData');
-    if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; }
+    if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.marchPlan = data.marchPlan || 311000000; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; }
     loadSkuLibrary();
 }
 
@@ -929,13 +935,8 @@ function handleVedFileSelect(file) {
     uploadBox.classList.add('has-file');
     fileName.textContent = `⏳ Анализирую ${file.name}...`;
     parserStats.style.display = 'none';
-
     vedParser.parseFile(file).then(result => {
-        vedTempFileData = {
-            name: file.name, items: result.items, totalVolume: result.totalVolume,
-            totalQty: result.totalQty, totalCartons: result.totalCartons,
-            missingVolumeCount: result.missingVolumeCount, skuLibrarySize: result.skuLibrarySize
-        };
+        vedTempFileData = { name: file.name, items: result.items, totalVolume: result.totalVolume, totalQty: result.totalQty, totalCartons: result.totalCartons, missingVolumeCount: result.missingVolumeCount, skuLibrarySize: result.skuLibrarySize };
         fileName.textContent = `✅ ${file.name} (${result.itemsCount} поз., ${result.totalVolume.toFixed(2)} м³)`;
         parserStats.style.display = 'flex';
         document.getElementById('parserLibrarySize').textContent = result.skuLibrarySize + ' арт.';
@@ -947,10 +948,7 @@ function handleVedFileSelect(file) {
         showVedFilePreviewWithDetails(result);
         if (result.naCount > 0) showToast(`⚠️ ${result.naCount} позиций без артикула (N/A)`);
         else showToast(`✅ Парсинг успешен (${conf}%)`);
-    }).catch(err => {
-        console.error(err); fileName.textContent = `❌ Ошибка: ${err}`;
-        uploadBox.classList.remove('has-file'); showToast('❌ ' + err);
-    });
+    }).catch(err => { console.error(err); fileName.textContent = `❌ Ошибка: ${err}`; uploadBox.classList.remove('has-file'); showToast('❌ ' + err); });
 }
 
 function showVedFilePreviewWithDetails(data) {
@@ -960,10 +958,7 @@ function showVedFilePreviewWithDetails(data) {
     let html = `<div class="parser-summary">📊 Итого: <b>${(data.totalQty||0).toLocaleString('ru-RU')} шт</b> · <b>${(data.totalCartons||0).toLocaleString('ru-RU')} кор.</b> · <b>${(data.totalVolume||0).toFixed(2)} м³</b> · Позиций: <b>${items.length}</b></div>`;
     if (data.naCount > 0) html += `<div class="parser-warning">⚠️ Позиций без артикула (N/A): ${data.naCount}</div>`;
     html += '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>';
-    items.slice(0, 15).forEach(item => {
-        const naClass = item.article === 'N/A' ? ' na-highlight' : '';
-        html += `<tr class="${naClass}"><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0, 40))}</td><td class="num">${(item.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(item.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(item.qty||0).toLocaleString('ru-RU')}</td><td class="num">${item.volume > 0 ? item.volume.toFixed(3) : '—'}</td></tr>`;
-    });
+    items.slice(0, 15).forEach(item => { const naClass = item.article === 'N/A' ? ' na-highlight' : ''; html += `<tr class="${naClass}"><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0, 40))}</td><td class="num">${(item.cartons||0).toLocaleString('ru-RU')}</td><td class="num">${(item.perCarton||0).toLocaleString('ru-RU')}</td><td class="num">${(item.qty||0).toLocaleString('ru-RU')}</td><td class="num">${item.volume > 0 ? item.volume.toFixed(3) : '—'}</td></tr>`; });
     html += '</tbody></table>';
     if (items.length > 15) html += `<div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;">... и ещё ${items.length - 15} позиций</div>`;
     preview.innerHTML = html; preview.classList.add('show');
@@ -975,10 +970,11 @@ async function saveVedSupply() {
     const supplier = document.getElementById('vedSupplier').value.trim();
     const warehouse = document.getElementById('vedWarehouse').value;
     const status = document.getElementById('vedStatus').value;
+    const includeInModel = document.getElementById('vedIncludeInModel').value === 'yes';
     const fileData = vedTempFileData;
     if (!number || !eta || !supplier) return alert('Заполните номер, дату и поставщика');
     if (!fileData) return alert('Прикрепите файл');
-    const supply = { id: Date.now(), number, eta, supplier, warehouse, status, items: fileData.items, totalVolume: fileData.totalVolume, totalQty: fileData.totalQty, totalCartons: fileData.totalCartons, fileName: fileData.name, createdAt: new Date().toISOString(), history: [{ status, date: new Date().toISOString() }] };
+    const supply = { id: Date.now(), number, eta, supplier, warehouse, status, includeInModel, items: fileData.items, totalVolume: fileData.totalVolume, totalQty: fileData.totalQty, totalCartons: fileData.totalCartons, fileName: fileData.name, createdAt: new Date().toISOString(), history: [{ status, date: new Date().toISOString() }] };
     vedSupplies.push(supply);
     if (isOnline) { const { id, ...data } = supply; try { await db.collection('ved_supplies').doc(String(id)).set(data); } catch (e) { console.error(e); } }
     saveToLocalStorage(); clearVedForm(); renderAll();
@@ -993,11 +989,16 @@ function clearVedForm() {
     document.getElementById('vedFilePreview').innerHTML = '';
     document.getElementById('vedFilePreview').classList.remove('show');
     document.getElementById('parserStats').style.display = 'none';
+    document.getElementById('vedIncludeInModel').value = 'yes';
 }
 
 async function updateVedStatus(id, status) {
     const supply = vedSupplies.find(s => String(s.id) === String(id));
     if (supply) { supply.status = status; supply.history = supply.history || []; supply.history.push({ status, date: new Date().toISOString() }); saveToLocalStorage(); if (isOnline) try { await db.collection('ved_supplies').doc(String(id)).update({ status, history: supply.history }); } catch (e) { console.error(e); } renderVedCards(); renderAll(); }
+}
+async function toggleVedIncludeInModel(id) {
+    const supply = vedSupplies.find(s => String(s.id) === String(id));
+    if (supply) { supply.includeInModel = !supply.includeInModel; saveToLocalStorage(); if (isOnline) try { await db.collection('ved_supplies').doc(String(id)).update({ includeInModel: supply.includeInModel }); } catch (e) { console.error(e); } renderVedCards(); renderAll(); }
 }
 async function deleteVedSupply(id) { if (!confirm('Удалить?')) return; vedSupplies = vedSupplies.filter(s => String(s.id) !== String(id)); if (isOnline) try { await db.collection('ved_supplies').doc(String(id)).delete(); } catch (e) { console.error(e); } saveToLocalStorage(); renderAll(); }
 function toggleVedDetails(id) { const el = document.getElementById('ved-details-' + id); if (el) el.classList.toggle('show'); }
@@ -1010,7 +1011,8 @@ function renderVedCards() {
     for (let s of srt) {
         const so = VED_STATUSES[s.status] || VED_STATUSES.transit;
         const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0);
-        html += `<div class="supply-card" onclick="toggleVedDetails(${s.id})"><button class="card-delete" onclick="event.stopPropagation();deleteVedSupply(${s.id})">×</button><div class="supply-number">📦 ${s.number}</div><div class="supply-supplier">🏭 ${s.supplier}</div><div class="supply-warehouse">📍 ${s.warehouse}</div><div class="supply-eta">📅 ${s.eta}</div><div class="supply-volume">📦 <b>${(s.totalVolume || 0).toFixed(2)} м³</b> · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div><div class="supply-items-count">📋 ${(s.items || []).length} поз. · ${tq.toLocaleString('ru-RU')} ед.</div><div style="margin-top:8px;"><span class="supply-status-badge ${so.class}">${so.label}</span><select onclick="event.stopPropagation()" onchange="updateVedStatus(${s.id},this.value)" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);">${Object.entries(VED_STATUSES).map(([k, v]) => `<option value="${k}" ${s.status === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div><div class="supply-details" id="ved-details-${s.id}"><div style="font-size:10px;">📎 ${s.fileName}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items || []).slice(0, 20).map(i => `<tr class="${i.article === 'N/A' ? 'na-highlight' : ''}"><td style="font-family:monospace;font-size:10px;">${escapeHtml(i.article || '—')}</td><td style="font-size:10px;">${escapeHtml((i.name || '—').slice(0, 35))}</td><td class="num">${(i.cartons || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.perCarton || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.qty || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.volume || 0).toFixed(3)}</td></tr>`).join('')}${(s.items || []).length > 20 ? `<tr><td colspan="6" style="color:var(--text-tertiary);">... и ещё ${s.items.length - 20} позиций</td></tr>` : ''}</tbody></table></div></div>`;
+        const inc = s.includeInModel !== false;
+        html += `<div class="supply-card" onclick="toggleVedDetails(${s.id})"><button class="card-delete" onclick="event.stopPropagation();deleteVedSupply(${s.id})">×</button><div class="supply-number">📦 ${s.number}</div><div class="supply-supplier">🏭 ${s.supplier}</div><div class="supply-warehouse">📍 ${s.warehouse}</div><div class="supply-eta">📅 ${s.eta}</div><div class="supply-volume">📦 <b>${(s.totalVolume || 0).toFixed(2)} м³</b> · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div><div class="supply-items-count">📋 ${(s.items || []).length} поз. · ${tq.toLocaleString('ru-RU')} ед.</div><div style="margin-top:8px;display:flex;gap:8px;align-items:center;"><span class="supply-status-badge ${so.class}">${so.label}</span><select onclick="event.stopPropagation()" onchange="updateVedStatus(${s.id},this.value)" style="font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);">${Object.entries(VED_STATUSES).map(([k, v]) => `<option value="${k}" ${s.status === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select><button class="include-model ${inc ? 'yes' : 'no'}" onclick="event.stopPropagation();toggleVedIncludeInModel(${s.id})">${inc ? 'Вкл' : 'Выкл'}</button></div><div class="supply-details" id="ved-details-${s.id}"><div style="font-size:10px;">📎 ${s.fileName}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items || []).slice(0, 20).map(i => `<tr class="${i.article === 'N/A' ? 'na-highlight' : ''}"><td style="font-family:monospace;font-size:10px;">${escapeHtml(i.article || '—')}</td><td style="font-size:10px;">${escapeHtml((i.name || '—').slice(0, 35))}</td><td class="num">${(i.cartons || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.perCarton || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.qty || 0).toLocaleString('ru-RU')}</td><td class="num">${(i.volume || 0).toFixed(3)}</td></tr>`).join('')}${(s.items || []).length > 20 ? `<tr><td colspan="6" style="color:var(--text-tertiary);">... и ещё ${s.items.length - 20} позиций</td></tr>` : ''}</tbody></table></div></div>`;
     }
     container.innerHTML = html; renderVedKPIs();
 }
@@ -1026,7 +1028,7 @@ function renderVedKPIs() {
     document.getElementById('vedKpiGrid').innerHTML = `<div class="kpi-card"><div class="kpi-label">Всего</div><div class="kpi-value">${total}</div></div><div class="kpi-card" style="border-left:3px solid #1a73e8;"><div class="kpi-label">В пути</div><div class="kpi-value" style="color:#1a73e8;">${it}</div></div><div class="kpi-card" style="border-left:3px solid #f9ab00;"><div class="kpi-label">Таможня</div><div class="kpi-value" style="color:#e37400;">${ac}</div></div><div class="kpi-card" style="border-left:3px solid #ea4335;"><div class="kpi-label">На СВХ</div><div class="kpi-value" style="color:#c5221f;">${sv}</div></div><div class="kpi-card" style="border-left:3px solid #0d904f;"><div class="kpi-label">Прибыло</div><div class="kpi-value" style="color:#137333;">${ar}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">Объём</div><div class="kpi-value" style="color:var(--ved)">${tv.toFixed(1)} м³</div><div class="kpi-sub">${ti.toLocaleString('ru-RU')} ед.</div></div>`;
 }
 
-// ========== ЛОГИСТИКА, ПРОГНОЗ, СВОДНАЯ, ПЛАН ПРОДАЖ, SKU ==========
+// ========== ЛОГИСТИКА ==========
 function updateLogCalc(){const a=parseFloat(document.getElementById('logAmount').value)||0;const rate=document.getElementById('logNDS').value==='22%'?1.22:1.07;document.getElementById('logCalcFull').textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' ₽';}
 async function addLogEntry(){const date=document.getElementById('logDate').value;const mp=document.getElementById('logMP').value;const type=document.getElementById('logType').value;const supplier=document.getElementById('logSupplier').value;const city=document.getElementById('logCity').value.trim();const qty=parseInt(document.getElementById('logQty').value)||0;const boxes=parseInt(document.getElementById('logBoxes').value)||0;const amount=parseFloat(document.getElementById('logAmount').value)||0;const nds=document.getElementById('logNDS').value;const rate=nds==='22%'?1.22:1.07;if(!date||!city||qty<=0||amount<=0)return alert('Заполните обязательные поля');const entry={id:Date.now(),date,marketplace:mp,type,supplier,city,qty,boxes,amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds,source:'Логистика'};logEntries.push(entry);if(isOnline)try{await db.collection('logistics').doc(String(entry.id)).set(entry);}catch(e){console.error(e);}saveToLocalStorage();document.getElementById('logCity').value='';document.getElementById('logQty').value='';document.getElementById('logBoxes').value='';document.getElementById('logAmount').value='';updateLogCalc();renderLog();showToast('✅ Добавлена запись');}
 function renderLog(){const fm=document.getElementById('logFilterMonth').value;const fs=document.getElementById('logFilterStatus').value;const fmp=document.getElementById('logFilterMP').value;let fl=[...logEntries];if(fm)fl=fl.filter(e=>e.date&&e.date.startsWith(fm));if(fs==='paid')fl=fl.filter(e=>e.paid);if(fs==='unpaid')fl=fl.filter(e=>!e.paid);if(fmp!=='all')fl=fl.filter(e=>e.marketplace===fmp);const srt=fl.sort((a,b)=>(b.date||'').localeCompare(a.date||''));document.getElementById('logCount').textContent=srt.length;if(!srt.length){document.getElementById('logTable').innerHTML='<div class="empty-state">Нет записей</div>';return;}let html='<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';for(let e of srt){if(!e.date)continue;html+=`<tr><td>${e.date.split('-').reverse().join('.')}</td><td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${e.marketplace}</span></td><td>${e.type||'FBO'}</td><td><select class="log-select" onchange="updateLogSupplier('${e.id}',this.value)">${SUPPLIERS.map(s=>`<option value="${s}" ${e.supplier===s?'selected':''}>${s||'—'}</option>`).join('')}</select></td><td>${e.city||''}</td><td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td><td class="num"><input class="log-edit-input" style="width:50px;text-align:center;" value="${e.boxes||0}" type="number" onchange="updateLogPallets('${e.id}',this.value)"></td><td class="num"><input class="log-edit-input" style="width:80px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" onchange="updateLogAmount('${e.id}',this.value)"></td><td class="num">${fmtPrice(e.amountFull)}</td><td><select onchange="updateLogNds('${e.id}',this.value)" style="font-size:10px;padding:2px;"><option value="22%" ${e.nds==='22%'?'selected':''}>22%</option><option value="7%" ${e.nds==='7%'?'selected':''}>7%</option></select></td><td><button class="btn-status ${e.paid?'paid':'unpaid'}" onclick="toggleLogPaid('${e.id}')">${e.paid?'Оплачен':'Не опл.'}</button></td><td><button class="btn btn-danger-sm" onclick="deleteLogEntry('${e.id}')">×</button></td></tr>`;}html+='</tbody></table>';document.getElementById('logTable').innerHTML=html;}
@@ -1039,10 +1041,103 @@ async function deleteLogEntry(id){if(confirm('Удалить?')){logEntries=logE
 function resetLogFilters(){document.getElementById('logFilterMonth').value='';document.getElementById('logFilterStatus').value='all';document.getElementById('logFilterMP').value='all';renderLog();}
 function toggleLogImport(){const block=document.getElementById('logImportBlock');block.style.display=block.style.display==='none'?'block':'none';}
 function fmtPrice(n){return n?n.toLocaleString('ru-RU')+' ₽':'0 ₽';}
-function calculateExpense(month){const ms=311000000;const me=warehouseData.baseExpense;const cs=warehouseData.salesPlan[month]||0;if(cs===0||ms===0)return 0;return me*(cs/ms);}
-function getMonthlyIncoming(month){return vedSupplies.filter(s=>{if(!s.eta)return false;const ed=new Date(s.eta);const em=MONTHS[ed.getMonth()];return em===month&&s.status==='arrived';}).reduce((sum,s)=>sum+(s.totalVolume||0),0);}
-function renderKPIs(){const forecast=calculateForecast();const cm=forecast.find(f=>f.month===MONTHS[new Date().getMonth()])||forecast[0];const clp=cm?Math.round(cm.loadPercent*100):0;const tvv=vedSupplies.reduce((sum,s)=>sum+(s.totalVolume||0),0);let wt=0,ot=0;for(let s of wbShipments)wt+=s.qty||0;for(let s of ozonShipments)ot+=s.qty||0;document.getElementById('kpiGrid').innerHTML=`<div class="kpi-card kpi-wb"><div class="kpi-label">WB за год</div><div class="kpi-value" style="color:var(--wb)">${wt.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ozon"><div class="kpi-label">Ozon за год</div><div class="kpi-value" style="color:var(--ozon)">${ot.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">ВЭД объём</div><div class="kpi-value" style="color:var(--ved)">${tvv.toFixed(1)} м³</div></div><div class="kpi-card ${clp>85?'kpi-danger':''}"><div class="kpi-label">Загрузка склада</div><div class="kpi-value" style="${clp>85?'color:var(--danger)':''}">${clp}%</div></div>`;}
-function calculateForecast(){const months=['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];let remaining=warehouseData.currentOccupancy;const result=[];for(let month of months){const incoming=getMonthlyIncoming(month);const expense=calculateExpense(month);remaining=remaining+incoming-expense;remaining=Math.max(remaining,0);const lp=remaining/warehouseData.totalCapacity;const free=warehouseData.totalCapacity-remaining;result.push({month,incoming:Math.round(incoming*100)/100,expense:Math.round(expense*100)/100,remaining:Math.round(remaining),loadPercent:lp,free:Math.round(free),status:lp>0.85?'ПЕРЕПОЛНЕНИЕ':lp>0.7?'ВЫСОКАЯ ЗАГРУЗКА':lp>0.5?'СРЕДНЯЯ ЗАГРУЗКА':'ОК'});}return result;}
+
+// ========== ПРОГНОЗ И МОДЕЛЬ ==========
+function getMonthlyIncoming(month) {
+    return vedSupplies
+        .filter(s => s.includeInModel !== false)
+        .filter(s => { if (!s.eta) return false; const ed = new Date(s.eta); const em = MONTHS[ed.getMonth()]; return em === month; })
+        .reduce((sum, s) => sum + (s.totalVolume || 0), 0);
+}
+
+function calculateExpense(month, prevExpense = null) {
+    const months = FORECAST_MONTHS;
+    const idx = months.indexOf(month);
+    if (idx === -1) return 0;
+    
+    if (idx === 0) {
+        // Апрель: база от марта
+        return warehouseData.baseExpense * (warehouseData.salesPlan[month] || 0) / (warehouseData.marchPlan || 311000000);
+    } else {
+        // Цепной расчёт: от предыдущего месяца
+        const prevMonth = months[idx - 1];
+        const prevSales = warehouseData.salesPlan[prevMonth] || 0;
+        const currSales = warehouseData.salesPlan[month] || 0;
+        if (prevSales === 0) return 0;
+        return (prevExpense || calculateExpense(prevMonth)) * currSales / prevSales;
+    }
+}
+
+function calculateForecast() {
+    const months = FORECAST_MONTHS;
+    let remaining = warehouseData.currentOccupancy + warehouseData.constantVolume;
+    const result = [];
+    let prevExpense = null;
+    
+    for (let month of months) {
+        const incoming = getMonthlyIncoming(month);
+        const expense = calculateExpense(month, prevExpense);
+        prevExpense = expense;
+        
+        remaining = remaining + incoming - expense;
+        remaining = Math.max(remaining, 0);
+        
+        const lp = remaining / warehouseData.totalCapacity;
+        const free = warehouseData.totalCapacity - remaining;
+        
+        let status;
+        if (lp > 0.85) status = 'ПЕРЕПОЛНЕНИЕ';
+        else if (lp > 0.7) status = 'ВЫСОКАЯ ЗАГРУЗКА';
+        else if (lp > 0.5) status = 'СРЕДНЯЯ ЗАГРУЗКА';
+        else status = 'ОК';
+        
+        result.push({ month, incoming: Math.round(incoming * 100) / 100, expense: Math.round(expense * 100) / 100, remaining: Math.round(remaining), loadPercent: lp, free: Math.round(free), status });
+    }
+    return result;
+}
+
+function renderKPIs() {
+    const forecast = calculateForecast();
+    const cm = forecast.find(f => f.month === MONTHS[new Date().getMonth()]) || forecast[0];
+    const clp = cm ? Math.round(cm.loadPercent * 100) : 0;
+    const tvv = vedSupplies.filter(s => s.includeInModel !== false).reduce((sum, s) => sum + (s.totalVolume || 0), 0);
+    let wt = 0, ot = 0;
+    for (let s of wbShipments) wt += s.qty || 0;
+    for (let s of ozonShipments) ot += s.qty || 0;
+    document.getElementById('kpiGrid').innerHTML = `<div class="kpi-card kpi-wb"><div class="kpi-label">WB за год</div><div class="kpi-value" style="color:var(--wb)">${wt.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ozon"><div class="kpi-label">Ozon за год</div><div class="kpi-value" style="color:var(--ozon)">${ot.toLocaleString('ru-RU')}</div></div><div class="kpi-card kpi-ved"><div class="kpi-label">ВЭД объём (вкл.)</div><div class="kpi-value" style="color:var(--ved)">${tvv.toFixed(1)} м³</div></div><div class="kpi-card ${clp > 85 ? 'kpi-danger' : ''}"><div class="kpi-label">Загрузка склада</div><div class="kpi-value" style="${clp > 85 ? 'color:var(--danger)' : ''}">${clp}%</div></div>`;
+}
+
+function renderDashboard() {
+    const forecast = calculateForecast();
+    const apr = forecast[0] || {};
+    const dec = forecast[forecast.length - 1] || {};
+    const totalIncoming = forecast.reduce((s, f) => s + f.incoming, 0);
+    const totalExpense = forecast.reduce((s, f) => s + f.expense, 0);
+    
+    document.getElementById('dashboardGrid').innerHTML = `
+        <div class="dashboard-card"><h3>📦 Текущий объём</h3><div class="dashboard-stat">${warehouseData.currentOccupancy.toLocaleString('ru-RU')} м³</div><div class="dashboard-label">при ёмкости ${warehouseData.totalCapacity} м³</div></div>
+        <div class="dashboard-card"><h3>📥 Приход (апрель)</h3><div class="dashboard-stat" style="color:var(--ved)">${apr.incoming?.toFixed(1) || 0} м³</div><div class="dashboard-label">подтверждённые поставки</div></div>
+        <div class="dashboard-card"><h3>📊 Загрузка (апрель)</h3><div class="dashboard-stat" style="color:${apr.loadPercent > 0.85 ? 'var(--danger)' : apr.loadPercent > 0.7 ? '#e37400' : 'var(--success)'}">${Math.round((apr.loadPercent || 0) * 100)}%</div><div class="dashboard-label">свободно ${apr.free?.toLocaleString('ru-RU') || 0} м³</div></div>
+        <div class="dashboard-card"><h3>🎯 Прогноз (декабрь)</h3><div class="dashboard-stat" style="color:${dec.loadPercent > 0.85 ? 'var(--danger)' : dec.loadPercent > 0.7 ? '#e37400' : 'var(--success)'}">${Math.round((dec.loadPercent || 0) * 100)}%</div><div class="dashboard-label">свободно ${dec.free?.toLocaleString('ru-RU') || 0} м³</div></div>
+        <div class="dashboard-card"><h3>📦 Общий приход</h3><div class="dashboard-stat" style="color:var(--ved)">${totalIncoming.toFixed(1)} м³</div><div class="dashboard-label">за апрель–декабрь</div></div>
+        <div class="dashboard-card"><h3>🚚 Общий расход</h3><div class="dashboard-stat" style="color:#e37400">${totalExpense.toFixed(1)} м³</div><div class="dashboard-label">прогноз за апрель–декабрь</div></div>
+    `;
+    
+    let html = '<table><thead><tr><th>Месяц</th><th class="num">Приход, м³</th><th class="num">Расход, м³</th><th class="num">Остаток, м³</th><th>Загрузка</th><th class="num">Свободно, м³</th><th>Статус</th></tr></thead><tbody>';
+    for (let f of forecast) {
+        let sc = 'badge-info';
+        if (f.status === 'ПЕРЕПОЛНЕНИЕ') sc = 'badge-danger';
+        else if (f.status === 'ВЫСОКАЯ ЗАГРУЗКА') sc = 'badge-warning';
+        let lc = 'good';
+        if (f.loadPercent > 0.85) lc = 'danger';
+        else if (f.loadPercent > 0.7) lc = 'warn';
+        html += `<tr><td><b>${f.month}</b></td><td class="num">${f.incoming.toFixed(2)}</td><td class="num">${f.expense.toFixed(2)}</td><td class="num"><b>${f.remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lc}" style="width:${f.loadPercent * 100}%"></div></div>${Math.round(f.loadPercent * 100)}%</td><td class="num">${f.free.toLocaleString('ru-RU')}</td><td><span class="badge ${sc}">${f.status}</span></td></tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById('dashboardTable').innerHTML = html;
+}
+
+// ========== СВОДНАЯ ==========
 function getWeekKey(ds){if(!ds||typeof ds!=='string')return{key:'unknown-'+Math.random(),label:'—'};const d=new Date(ds+'T00:00:00');if(isNaN(d.getTime()))return{key:'unknown-'+Math.random(),label:'—'};const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-day+1);const fmt=dt=>dt.getDate().toString().padStart(2,'0')+'.'+(dt.getMonth()+1).toString().padStart(2,'0');return{key:mon.toISOString().slice(0,10),label:fmt(mon)+'-'+fmt(new Date(mon.getTime()+6*24*60*60*1000))};}
 function getCurrentWeekKey(){const now=new Date();const day=now.getDay()||7;const mon=new Date(now);mon.setDate(now.getDate()-day+1);return mon.toISOString().slice(0,10);}
 function getAllShipments(){const all=[];wbShipments.forEach(s=>all.push({...s,marketplace:'Wildberries'}));ozonShipments.forEach(s=>all.push({...s,marketplace:'Ozon'}));return all.filter(s=>s.date&&typeof s.date==='string'&&!isNaN(new Date(s.date+'T00:00:00').getTime()));}
@@ -1053,18 +1148,28 @@ function exportScheduleCSV(){const all=getAllShipments();const grp={};all.forEac
 function downloadCSV(csv,fn){const b=new Blob(['\uFEFF'+csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();}
 function renderForecastTable(){const forecast=calculateForecast();const container=document.getElementById('forecastTable');if(!forecast.length||warehouseData.baseExpense===0){container.innerHTML='<div class="empty-state">Загрузите Excel-модель</div>';return;}let html='<div class="forecast-title">📊 Прогноз загрузки склада 2026</div><table><thead><tr><th>Месяц</th><th class="num">📦 Приход</th><th class="num">🚚 Расход</th><th class="num">📊 Остаток</th><th>📈 Загрузка</th><th class="num">✅ Свободно</th><th>⚠️ Статус</th></tr></thead><tbody>';for(let f of forecast){let sc='badge-info';if(f.status==='ПЕРЕПОЛНЕНИЕ')sc='badge-danger';else if(f.status==='ВЫСОКАЯ ЗАГРУЗКА')sc='badge-warning';let lc='good';if(f.loadPercent>0.85)lc='danger';else if(f.loadPercent>0.7)lc='warn';html+=`<tr><td><b>${f.month}</b></td><td class="num">${f.incoming.toFixed(2)}</td><td class="num">${f.expense.toFixed(2)}</td><td class="num"><b>${f.remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lc}" style="width:${f.loadPercent*100}%"></div></div>${Math.round(f.loadPercent*100)}%</td><td class="num">${f.free.toLocaleString('ru-RU')}</td><td><span class="badge ${sc}">${f.status}</span></td></tr>`;}html+='</tbody></table>';container.innerHTML=html;}
 function renderForecastChart(){const forecast=calculateForecast();if(!forecast.length||warehouseData.baseExpense===0){document.getElementById('forecastChart').innerHTML='<text x="300" y="100" text-anchor="middle" font-size="13" fill="#9aa0a6">Загрузите Excel-модель</text>';return;}const svg=document.getElementById('forecastChart');const months=forecast.map(f=>f.month.slice(0,3));const idata=forecast.map(f=>f.incoming);const edata=forecast.map(f=>f.expense);const maxVal=Math.max(...idata,...edata,50);const yMax=Math.ceil(maxVal/10)*10;const W=600,H=200,PL=55,PR=20,PT=15,PB=30,cw=W-PL-PR,ch=H-PT-PB;const gx=i=>PL+(cw/(months.length-1))*i;const gy=v=>PT+ch-(v/yMax)*ch;let sc='';for(let i=0;i<=4;i++){const y=PT+(ch/4)*i;const val=Math.round(yMax-(yMax/4)*i);sc+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" class="chart-grid"/><text x="${PL-8}" y="${y+4}" text-anchor="end" class="chart-axis">${val.toFixed(0)}</text>`;}let ip='',ep='';for(let i=0;i<months.length;i++){const x=gx(i);ip+=(i===0?'M':'L')+`${x},${gy(idata[i])} `;ep+=(i===0?'M':'L')+`${x},${gy(edata[i])} `;}sc+=`<path d="${ip}" class="chart-line incoming" stroke-width="2.5" fill="none"/><path d="${ep}" class="chart-line expense" stroke-width="2.5" fill="none"/>`;for(let i=0;i<months.length;i++){sc+=`<circle cx="${gx(i)}" cy="${gy(idata[i])}" r="3.5" class="chart-dot" style="fill:var(--ved);"><title>Приход ${months[i]}: ${idata[i].toFixed(2)} м³</title></circle><circle cx="${gx(i)}" cy="${gy(edata[i])}" r="3.5" class="chart-dot" style="fill:#e37400;"><title>Расход ${months[i]}: ${edata[i].toFixed(2)} м³</title></circle><text x="${gx(i)}" y="${H-8}" text-anchor="middle" class="chart-axis">${months[i]}</text>`;}svg.innerHTML=sc;}
-function renderSalesPlanEditor(){const tbody=document.getElementById('salesPlanEditor');const months=['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];document.getElementById('totalCapacity').value=warehouseData.totalCapacity;document.getElementById('currentOccupancy').value=warehouseData.currentOccupancy;document.getElementById('constantVolume').value=warehouseData.constantVolume;document.getElementById('baseExpense').value=warehouseData.baseExpense;let html='';let ps=0;for(let month of months){const sales=warehouseData.salesPlan[month]||0;const growth=ps>0?((sales/ps-1)*100).toFixed(1)+'%':'—';const expense=calculateExpense(month);const incoming=getMonthlyIncoming(month);const forecast=calculateForecast();const fd=forecast.find(f=>f.month===month);const remaining=fd?fd.remaining:0;const lp=fd?(fd.loadPercent*100).toFixed(0):0;html+=`<tr><td><b>${month}</b></td><td class="num"><input type="number" class="sales-plan-input" id="sales_${month}" value="${sales}" step="1000000" onchange="updateSalesPlan('${month}',this.value)"></td><td class="num">${growth}</td><td class="num">${expense.toFixed(2)}</td><td class="num">${incoming.toFixed(2)}</td><td class="num"><b>${remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lp>85?'danger':(lp>70?'warn':'good')}" style="width:${lp}%"></div></div>${lp}%</td></tr>`;ps=sales;}tbody.innerHTML=html;}
-function updateSalesPlan(month,value){warehouseData.salesPlan[month]=parseFloat(value)||0;renderSalesPlanEditor();renderForecastTable();renderForecastChart();renderKPIs();}
-async function saveSalesPlan(){saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderForecastTable();renderForecastChart();renderKPIs();showToast('✅ План сохранён');}
-async function saveWarehouseSettings(){warehouseData.totalCapacity=parseFloat(document.getElementById('totalCapacity').value)||2267;warehouseData.currentOccupancy=parseFloat(document.getElementById('currentOccupancy').value)||1408;warehouseData.constantVolume=parseFloat(document.getElementById('constantVolume').value)||85;warehouseData.baseExpense=parseFloat(document.getElementById('baseExpense').value)||51.50;saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderForecastTable();renderForecastChart();renderKPIs();showToast('✅ Настройки сохранены');}
-async function importExcelModel(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array'});const inputSheet=workbook.Sheets["02 Вводные"];let tc=0,co=0,cv=0;let sp={};if(inputSheet){const rows=XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;const ca=String(row[0]||'').toLowerCase();const cb=row[1];if(ca.includes('полезный объем')||ca.includes('полезный объём'))tc=parseFloat(cb)||0;if(ca.includes('занято')&&!ca.includes('постоянный'))co=parseFloat(cb)||0;if(ca.includes('постоянный объем')||ca.includes('постоянный объём'))cv=parseFloat(cb)||0;}let its=false;for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Месяц')&&String(row[8]||'').includes('План продаж')){its=true;continue;}if(its&&row[0]&&MONTHS.includes(String(row[0]).trim())){const month=String(row[0]).trim();const plan=parseFloat(row[8])||0;if(plan>0)sp[month]=plan;}}}const es=workbook.Sheets["03 УходимостьQ1"];let be=51.50;if(es){const rows=XLSX.utils.sheet_to_json(es,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Март')&&row[3])be=parseFloat(row[3])||51.50;}}if(tc>0)warehouseData.totalCapacity=tc;if(co>0)warehouseData.currentOccupancy=co;if(cv>0)warehouseData.constantVolume=cv;if(be>0)warehouseData.baseExpense=be;if(Object.keys(sp).length>0)warehouseData.salesPlan=sp;saveToLocalStorage();if(isOnline)db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});resolve({totalCapacity:tc,currentOccupancy:co,constantVolume:cv,baseExpense:be,salesPlanCount:Object.keys(sp).length});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения');reader.readAsArrayBuffer(file);});}
+
+// ========== ПЛАН ПРОДАЖ ==========
+function renderSalesPlanEditor(){const tbody=document.getElementById('salesPlanEditor');document.getElementById('totalCapacity').value=warehouseData.totalCapacity;document.getElementById('currentOccupancy').value=warehouseData.currentOccupancy;document.getElementById('constantVolume').value=warehouseData.constantVolume;document.getElementById('baseExpense').value=warehouseData.baseExpense;document.getElementById('marchPlan').value=warehouseData.marchPlan;let html='';let prevExp=null;for(let month of FORECAST_MONTHS){const sales=warehouseData.salesPlan[month]||0;const growth=prevExp&&warehouseData.salesPlan[FORECAST_MONTHS[FORECAST_MONTHS.indexOf(month)-1]]>0?((sales/(warehouseData.salesPlan[FORECAST_MONTHS[FORECAST_MONTHS.indexOf(month)-1]]||1)-1)*100).toFixed(1)+'%':'—';const expense=calculateExpense(month,prevExp);prevExp=expense;const incoming=getMonthlyIncoming(month);const forecast=calculateForecast();const fd=forecast.find(f=>f.month===month);const remaining=fd?fd.remaining:0;const lp=fd?(fd.loadPercent*100).toFixed(0):0;html+=`<tr><td><b>${month}</b></td><td class="num"><input type="number" class="sales-plan-input" id="sales_${month}" value="${sales}" step="1000000" onchange="updateSalesPlan('${month}',this.value)"></td><td class="num">${growth}</td><td class="num">${expense.toFixed(2)}</td><td class="num">${incoming.toFixed(2)}</td><td class="num"><b>${remaining.toLocaleString('ru-RU')}</b></td><td><div class="progress-bar"><div class="progress-fill ${lp>85?'danger':(lp>70?'warn':'good')}" style="width:${lp}%"></div></div>${lp}%</td></tr>`;}tbody.innerHTML=html;}
+function updateSalesPlan(month,value){warehouseData.salesPlan[month]=parseFloat(value)||0;renderSalesPlanEditor();renderForecastTable();renderForecastChart();renderKPIs();renderDashboard();}
+async function saveSalesPlan(){saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderAll();showToast('✅ План сохранён');}
+async function saveWarehouseSettings(){warehouseData.totalCapacity=parseFloat(document.getElementById('totalCapacity').value)||2267;warehouseData.currentOccupancy=parseFloat(document.getElementById('currentOccupancy').value)||1408;warehouseData.constantVolume=parseFloat(document.getElementById('constantVolume').value)||85;warehouseData.baseExpense=parseFloat(document.getElementById('baseExpense').value)||51.50;warehouseData.marchPlan=parseFloat(document.getElementById('marchPlan').value)||311000000;saveToLocalStorage();if(isOnline)try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){console.error(e);}renderAll();showToast('✅ Настройки сохранены');}
+
+// ========== ИМПОРТ EXCEL-МОДЕЛИ ==========
+async function importExcelModel(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array'});const inputSheet=workbook.Sheets["02 Вводные"];let tc=0,co=0,cv=0,mp=311000000;let sp={};if(inputSheet){const rows=XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;const ca=String(row[0]||'').toLowerCase();const cb=row[1];if(ca.includes('полезный объем')||ca.includes('полезный объём'))tc=parseFloat(cb)||0;if(ca.includes('занято')&&!ca.includes('постоянный'))co=parseFloat(cb)||0;if(ca.includes('постоянный объем')||ca.includes('постоянный объём'))cv=parseFloat(cb)||0;}let its=false;for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Месяц')&&String(row[8]||'').includes('План продаж')){its=true;continue;}if(its&&row[0]&&MONTHS.includes(String(row[0]).trim())){const month=String(row[0]).trim();const plan=parseFloat(row[8])||0;if(plan>0)sp[month]=plan;}}}const es=workbook.Sheets["03 УходимостьQ1"];if(es){const rows=XLSX.utils.sheet_to_json(es,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Март')&&row[3])warehouseData.baseExpense=parseFloat(row[3])||51.50;if(String(row[0]||'').includes('Март')&&row[1])mp=parseFloat(row[1])||311000000;}}if(tc>0)warehouseData.totalCapacity=tc;if(co>0)warehouseData.currentOccupancy=co;if(cv>0)warehouseData.constantVolume=cv;if(mp>0)warehouseData.marchPlan=mp;if(Object.keys(sp).length>0)warehouseData.salesPlan=sp;saveToLocalStorage();if(isOnline)db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});resolve({totalCapacity:tc,currentOccupancy:co,constantVolume:cv,baseExpense:warehouseData.baseExpense,marchPlan:warehouseData.marchPlan,salesPlanCount:Object.keys(sp).length});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения');reader.readAsArrayBuffer(file);});}
+
+// ========== ИМПОРТ ОТГРУЗОК ==========
 let showScheduleImport=false;
 function toggleScheduleImport(){showScheduleImport=!showScheduleImport;document.getElementById('scheduleImportBlock').style.display=showScheduleImport?'block':'none';}
 async function doScheduleImport(){const text=document.getElementById('scheduleImportText').value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(cols[3].replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const dp=ds.split('.');if(dp.length===3)ds=dp[2]+'-'+dp[1].padStart(2,'0')+'-'+dp[0].padStart(2,'0');if(isNaN(new Date(ds).getTime()))return;const shipment={id:Date.now()+Math.random(),date:ds,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(String(id)),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(String(id)),data);});try{await batch.commit();}catch(e){console.error(e);}}saveToLocalStorage();document.getElementById('scheduleImportText').value='';toggleScheduleImport();renderAll();showToast(`✅ WB: ${iw}, Ozon: ${io}`);}
+
+// ========== SKU ==========
 function renderSkuTable(){const tbody=document.getElementById('skuList');const items=Object.entries(skuLibrary);if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;">Нет данных</td></tr>';return;}let html='';for(const[article,data]of items){const vpb=(data.length*data.width*data.height/1000000).toFixed(6);html+=`<tr><td style="font-family:monospace;">${escapeHtml(article)}</td><td>${escapeHtml(data.name||'')}</td><td class="num">${data.length||0}</td><td class="num">${data.width||0}</td><td class="num">${data.height||0}</td><td class="num">${data.perCarton||0}</td><td class="num">${vpb}</td><td><button class="btn btn-danger-sm" onclick="deleteSku('${escapeHtml(article)}')">Удалить</button></td></tr>`;}tbody.innerHTML=html;}
 function deleteSku(article){if(confirm(`Удалить ${article}?`)){delete skuLibrary[article];saveSkuLibrary();showToast(`✅ ${article} удалён`);}}
-function switchPage(page){currentPage=page;localStorage.setItem('currentPage',page);document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active','sales-active'));document.getElementById('page-'+page).classList.add('active');const map={schedule:0,wb:1,ozon:2,logistics:3,ved:4,'sales-plan':5,'sku-library':6};const cls=['active','wb-active','ozon-active','logistics-active','ved-active','sales-active','ved-active'];const btns=document.querySelectorAll('.nav-btn');if(btns[map[page]])btns[map[page]].classList.add(cls[map[page]]);if(page==='logistics'){updateLogCalc();renderLog();}if(page==='ved')renderVedCards();if(page==='sales-plan')renderSalesPlanEditor();if(page==='sku-library')renderSkuTable();}
-function renderAll(){renderSchedule();renderShipmentCards('Wildberries');renderShipmentCards('Ozon');renderLog();renderVedCards();renderSkuTable();}
+
+// ========== НАВИГАЦИЯ ==========
+function switchPage(page){currentPage=page;localStorage.setItem('currentPage',page);document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active','sales-active'));document.getElementById('page-'+page).classList.add('active');const map={schedule:0,dashboard:1,wb:2,ozon:3,logistics:4,ved:5,'sales-plan':6,'sku-library':7};const cls=['active','active','wb-active','ozon-active','logistics-active','ved-active','sales-active','ved-active'];const btns=document.querySelectorAll('.nav-btn');if(btns[map[page]])btns[map[page]].classList.add(cls[map[page]]);if(page==='logistics'){updateLogCalc();renderLog();}if(page==='ved')renderVedCards();if(page==='sales-plan')renderSalesPlanEditor();if(page==='sku-library')renderSkuTable();if(page==='dashboard')renderDashboard();}
+function renderAll(){renderSchedule();renderShipmentCards('Wildberries');renderShipmentCards('Ozon');renderLog();renderVedCards();renderSkuTable();renderDashboard();}
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.getElementById('logDate').value=new Date().toISOString().slice(0,10);
@@ -1101,12 +1206,12 @@ document.getElementById('btnClearVed').addEventListener('click',clearVedForm);
 
 document.getElementById('btnSaveWarehouseSettings').addEventListener('click',saveWarehouseSettings);
 document.getElementById('btnSaveSalesPlan').addEventListener('click',saveSalesPlan);
-document.getElementById('btnResetSalesPlan').addEventListener('click',()=>{if(confirm('Сбросить план?')){warehouseData.salesPlan={"Апрель":343000000,"Май":387000000,"Июнь":428300000,"Июль":494000000,"Август":565000000,"Сентябрь":629000000,"Октябрь":697000000,"Ноябрь":775000000,"Декабрь":1149000000};renderSalesPlanEditor();renderForecastTable();renderForecastChart();showToast('✅ План сброшен');}});
-document.getElementById('btnImportExcelModel').addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='.xlsx,.xls';input.onchange=async(e)=>{const file=e.target.files[0];if(!file)return;try{showToast('⏳ Импорт...');const result=await importExcelModel(file);showToast(`✅ Импортировано`);renderAll();renderSalesPlanEditor();}catch(err){alert('Ошибка: '+err);}};input.click();});
+document.getElementById('btnResetSalesPlan').addEventListener('click',()=>{if(confirm('Сбросить план?')){warehouseData.salesPlan={"Апрель":343000000,"Май":387000000,"Июнь":428300000,"Июль":494000000,"Август":565000000,"Сентябрь":629000000,"Октябрь":697000000,"Ноябрь":775000000,"Декабрь":1149000000};renderSalesPlanEditor();renderAll();showToast('✅ План сброшен');}});
+document.getElementById('btnImportExcelModel').addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='.xlsx,.xls';input.onchange=async(e)=>{const file=e.target.files[0];if(!file)return;try{showToast('⏳ Импорт...');const result=await importExcelModel(file);showToast(`✅ Импортировано: план ${result.salesPlanCount} мес., ёмкость ${result.totalCapacity} м³`);renderAll();renderSalesPlanEditor();}catch(err){alert('Ошибка: '+err);}};input.click();});
 document.getElementById('btnImportExcelForSettings').addEventListener('click',()=>{document.getElementById('btnImportExcelModel').click();});
 document.getElementById('btnAddSku').addEventListener('click',()=>{const article=document.getElementById('skuArticle').value.trim();const name=document.getElementById('skuName').value.trim();const length=parseFloat(document.getElementById('skuLength').value);const width=parseFloat(document.getElementById('skuWidth').value);const height=parseFloat(document.getElementById('skuHeight').value);const perCarton=parseFloat(document.getElementById('skuPerCarton').value);if(!article)return alert('Введите артикул');if(isNaN(length)||isNaN(width)||isNaN(height))return alert('Введите габариты');addSkuToLibrary(article,name,length,width,height,perCarton);document.getElementById('skuArticle').value='';document.getElementById('skuName').value='';document.getElementById('skuLength').value='';document.getElementById('skuWidth').value='';document.getElementById('skuHeight').value='';document.getElementById('skuPerCarton').value='';showToast(`✅ ${article} добавлен`);});
 
-document.getElementById('modalConfirm').addEventListener('click',()=>{const volume=parseFloat(document.getElementById('modalVolume').value);if(isNaN(volume)||volume<=0)return alert('Введите корректный объём');if(pendingSupplyData){pendingSupplyData.fileData.totalVolume=volume;const supply={id:Date.now(),number:pendingSupplyData.number,eta:pendingSupplyData.eta,supplier:pendingSupplyData.supplier,warehouse:pendingSupplyData.warehouse,status:pendingSupplyData.status,items:pendingSupplyData.fileData.items,totalVolume:volume,totalQty:pendingSupplyData.fileData.totalQty,totalCartons:pendingSupplyData.fileData.totalCartons,fileName:pendingSupplyData.fileData.name,createdAt:new Date().toISOString(),history:[{status:pendingSupplyData.status,date:new Date().toISOString()}]};vedSupplies.push(supply);if(isOnline){const{id,...data}=supply;try{db.collection('ved_supplies').doc(String(id)).set(data);}catch(e){console.error(e);}}saveToLocalStorage();clearVedForm();renderAll();showToast(`✅ Поставка сохранена: ${supply.number}`);pendingSupplyData=null;document.getElementById('volumeModal').classList.remove('active');}});
+document.getElementById('modalConfirm').addEventListener('click',()=>{const volume=parseFloat(document.getElementById('modalVolume').value);if(isNaN(volume)||volume<=0)return alert('Введите корректный объём');if(pendingSupplyData){pendingSupplyData.fileData.totalVolume=volume;const supply={id:Date.now(),number:pendingSupplyData.number,eta:pendingSupplyData.eta,supplier:pendingSupplyData.supplier,warehouse:pendingSupplyData.warehouse,status:pendingSupplyData.status,includeInModel:true,items:pendingSupplyData.fileData.items,totalVolume:volume,totalQty:pendingSupplyData.fileData.totalQty,totalCartons:pendingSupplyData.fileData.totalCartons,fileName:pendingSupplyData.fileData.name,createdAt:new Date().toISOString(),history:[{status:pendingSupplyData.status,date:new Date().toISOString()}]};vedSupplies.push(supply);if(isOnline){const{id,...data}=supply;try{db.collection('ved_supplies').doc(String(id)).set(data);}catch(e){console.error(e);}}saveToLocalStorage();clearVedForm();renderAll();showToast(`✅ Поставка сохранена: ${supply.number}`);pendingSupplyData=null;document.getElementById('volumeModal').classList.remove('active');}});
 document.getElementById('modalCancel').addEventListener('click',()=>{pendingSupplyData=null;document.getElementById('volumeModal').classList.remove('active');});
 
 const vedBox=document.getElementById('vedFileUploadBox');
@@ -1120,12 +1225,9 @@ vedInput.addEventListener('change',function(){if(this.files[0])handleVedFileSele
 updateLogCalc();
 loadFromFirebase();
 
-console.log('🔥 FixedVedParser v5.0 загружен');
-console.log('✅ Расширенные паттерны артикулов');
-console.log('✅ Умный поиск артикулов во всех колонках');
-console.log('✅ Извлечение артикулов из названий');
-console.log('✅ Статистика найденных артикулов');
-console.log('✅ Подсветка N/A позиций');
-</script>
-</body>
-</html>
+console.log('🔥 Приложение загружено v6.0');
+console.log('✅ Дашборд для руководства');
+console.log('✅ Цепная формула расхода');
+console.log('✅ Флаг "включать в модель" для поставок');
+console.log('✅ Учёт постоянного объёма');
+console.log('✅ План марта настраиваемый');
