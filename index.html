@@ -50,8 +50,8 @@
             --modal-overlay: rgba(0,0,0,0.5);
             --status-work-bg: #fef7e0;
             --status-work-text: #e37400;
-            --status-wait-bg: #e8f0fe;
-            --status-wait-text: #1a73e8;
+            --status-wait-bg: #f1f3f4;
+            --status-wait-text: #5f6368;
             --status-reject-bg: #fce8e6;
             --status-reject-text: #c5221f;
             --status-sent-bg: #e6f4ea;
@@ -97,8 +97,8 @@
             --modal-overlay: rgba(0,0,0,0.7);
             --status-work-bg: #3d3520;
             --status-work-text: #fdd663;
-            --status-wait-bg: #1e2e3d;
-            --status-wait-text: #8ab4f8;
+            --status-wait-bg: #3a3c3e;
+            --status-wait-text: #9aa0a6;
             --status-reject-bg: #3d2020;
             --status-reject-text: #f28b82;
             --status-sent-bg: #1e3d2e;
@@ -132,7 +132,7 @@
         .theme-toggle { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 16px; cursor: pointer; transition: all 0.2s; color: var(--text-primary); }
         .theme-toggle:hover { background: var(--surface-hover); }
 
-        button, .btn, .nav-btn, .sub-nav-btn, .chip, .card-delete, .include-model, .btn-status {
+        button, .btn, .nav-btn, .sub-nav-btn, .chip, .card-delete, .card-edit, .include-model, .btn-status {
             pointer-events: auto !important;
             cursor: pointer !important;
             user-select: none;
@@ -234,21 +234,35 @@
             color: var(--text-tertiary); 
             margin-top: 1px;
         }
-        .shipment-card .card-delete { 
+        .shipment-card .card-actions {
+            display: flex;
+            gap: 2px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .shipment-card:hover .card-actions { opacity: 1; }
+        .shipment-card .card-delete, .shipment-card .card-edit { 
             background: none; 
             border: none; 
             color: var(--text-tertiary); 
             cursor: pointer; 
-            font-size: 15px; 
-            padding: 4px 8px; 
+            font-size: 14px; 
+            padding: 4px 6px; 
             border-radius: 6px;
-            opacity: 0;
-            transition: opacity 0.15s;
         }
-        .shipment-card:hover .card-delete { opacity: 1; }
         .shipment-card .card-delete:hover { 
             background: var(--status-reject-bg); 
             color: var(--danger); 
+        }
+        .shipment-card .card-edit:hover {
+            background: var(--status-wait-bg);
+            color: var(--accent);
+        }
+        .shipment-card .card-qty-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0 4px 0;
         }
         .shipment-card .card-qty { 
             font-size: 32px; 
@@ -256,7 +270,23 @@
             letter-spacing: -1px; 
             color: var(--text-primary);
             line-height: 1;
-            margin: 12px 0 4px 0;
+        }
+        .shipment-card .card-qty-input {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--text-primary);
+            line-height: 1;
+            width: 120px;
+            padding: 4px 8px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            background: var(--input-bg);
+            font-family: inherit;
+        }
+        .shipment-card .card-qty-input:focus {
+            outline: none;
+            border-color: var(--accent);
         }
         .shipment-card .card-qty-label { 
             font-size: 10px; 
@@ -279,11 +309,15 @@
             font-weight: 500; 
             cursor: pointer; 
             font-family: inherit; 
-            background: var(--input-bg); 
-            color: var(--text-primary);
             appearance: none;
             -webkit-appearance: none;
         }
+        /* ЦВЕТНЫЕ СТАТУСЫ ДЛЯ СЕЛЕКТОВ */
+        .card-status select.status-work { background: var(--status-work-bg) !important; color: var(--status-work-text) !important; border-color: var(--status-work-text) !important; }
+        .card-status select.status-wait { background: var(--status-wait-bg) !important; color: var(--status-wait-text) !important; border-color: var(--status-wait-text) !important; }
+        .card-status select.status-reject { background: var(--status-reject-bg) !important; color: var(--status-reject-text) !important; border-color: var(--status-reject-text) !important; }
+        .card-status select.status-sent { background: var(--status-sent-bg) !important; color: var(--status-sent-text) !important; border-color: var(--status-sent-text) !important; }
+        .card-status select.status-ready { background: var(--status-ready-bg) !important; color: var(--status-ready-text) !important; border-color: var(--status-ready-text) !important; }
         .shipment-card .route-badge { 
             font-size: 10px; 
             color: var(--success); 
@@ -293,11 +327,6 @@
             display: inline-block;
             font-weight: 500;
         }
-        .status-work { background: var(--status-work-bg); color: var(--status-work-text); }
-        .status-wait { background: var(--status-wait-bg); color: var(--status-wait-text); }
-        .status-reject { background: var(--status-reject-bg); color: var(--status-reject-text); }
-        .status-sent { background: var(--status-sent-bg); color: var(--status-sent-text); }
-        .status-ready { background: var(--status-ready-bg); color: var(--status-ready-text); }
 
         .ved-card {
             background: var(--surface);
@@ -434,13 +463,6 @@
         .ved-card .card-details .item-match {
             background: var(--status-work-bg);
             border-radius: 3px;
-        }
-        .ved-card .card-details .item-count-info {
-            text-align: center;
-            padding: 8px;
-            color: var(--text-tertiary);
-            font-size: 11px;
-            font-style: italic;
         }
         .ved-search {
             margin-bottom: 16px;
@@ -619,19 +641,16 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ==================== СВОДНАЯ ==================== -->
+<!-- СВОДНАЯ -->
 <div class="page active" id="page-schedule">
     <h1>Сводная</h1>
     <p class="subtitle">Загруженность склада, упаковки, прогноз и справочник</p>
-    
     <div class="kpi-strip" id="kpiStrip"></div>
-    
     <div class="sub-nav">
         <button type="button" class="sub-nav-btn active" data-sub-page="weeks">Загруженность по неделям</button>
         <button type="button" class="sub-nav-btn" data-sub-page="forecast">Прогноз загрузки</button>
         <button type="button" class="sub-nav-btn" data-sub-page="reference">Справочник</button>
     </div>
-    
     <div class="sub-page active" id="sub-page-weeks">
         <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
             <button type="button" class="btn btn-primary btn-sm" id="btnImportSchedule">Импорт отгрузок</button>
@@ -644,7 +663,6 @@
         </div>
         <div class="table-wrap" id="scheduleTable"><div class="empty-state">Нет данных</div></div>
     </div>
-    
     <div class="sub-page" id="sub-page-forecast">
         <div class="form-card">
             <div class="form-row">
@@ -661,7 +679,6 @@
             </div>
             <div class="settings-note">Изменение настроек или плана продаж автоматически пересчитывает прогноз</div>
         </div>
-        
         <div class="section-title">План продаж и прогноз</div>
         <div class="table-wrap">
             <table>
@@ -669,7 +686,6 @@
                 <tbody id="salesPlanEditor"></tbody>
             </table>
         </div>
-        
         <div class="chart-card">
             <div class="chart-header">
                 <div class="chart-title">График прихода и расхода</div>
@@ -681,7 +697,6 @@
             <svg class="chart-svg" id="forecastChart" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
     </div>
-    
     <div class="sub-page" id="sub-page-reference">
         <div class="form-card">
             <div class="form-row">
@@ -705,10 +720,10 @@
     </div>
 </div>
 
-<!-- ==================== WB ==================== -->
+<!-- WB -->
 <div class="page" id="page-wb">
     <h1>Wildberries</h1>
-    <p class="subtitle">Карточки отгрузок с выбором статуса. При сохранении — автосоздание записи в логистике.</p>
+    <p class="subtitle">Карточки отгрузок с выбором статуса и редактированием количества</p>
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Дата</label><input type="date" id="shipDateWildberries"></div>
@@ -728,10 +743,10 @@
     <div class="cards-grid" id="wbCards"><div class="empty-state">Нет отгрузок</div></div>
 </div>
 
-<!-- ==================== OZON ==================== -->
+<!-- OZON -->
 <div class="page" id="page-ozon">
     <h1>Ozon</h1>
-    <p class="subtitle">Карточки отгрузок с выбором статуса. При сохранении — автосоздание записи в логистике.</p>
+    <p class="subtitle">Карточки отгрузок с выбором статуса и редактированием количества</p>
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Дата</label><input type="date" id="shipDateOzon"></div>
@@ -746,7 +761,7 @@
     <div class="cards-grid" id="ozonCards"><div class="empty-state">Нет отгрузок</div></div>
 </div>
 
-<!-- ==================== ЛОГИСТИКА ==================== -->
+<!-- ЛОГИСТИКА -->
 <div class="page" id="page-logistics">
     <h1>Логистика</h1>
     <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты. Импорт создаёт отгрузки WB/Ozon. Удаление — каскадное.</p>
@@ -785,13 +800,11 @@
     <div class="table-wrap" id="logTable"><div class="empty-state">Нет записей</div></div>
 </div>
 
-<!-- ==================== ВЭД ==================== -->
+<!-- ВЭД -->
 <div class="page" id="page-ved">
     <h1>ВЭД — Поставки из Китая</h1>
     <p class="subtitle">Умный парсер: автоопределение артикула, наименования, коробов, шт/кор, всего, объёма. До 4 списков в одной поставке.</p>
-    
     <div class="kpi-strip" id="vedKpiStrip"></div>
-    
     <div class="form-card">
         <div class="form-row">
             <div class="field"><label>Номер поставки</label><input type="text" id="vedNumber" placeholder="W-1603-3003"></div>
@@ -812,12 +825,10 @@
             <button type="button" class="btn btn-outline btn-sm" id="btnClearVed">Очистить</button>
         </div>
     </div>
-    
     <div class="ved-search">
         <input type="text" id="vedArticleSearch" placeholder="Поиск по артикулу...">
         <div class="ved-search-results" id="vedSearchResults"></div>
     </div>
-    
     <div class="cards-grid" id="vedCards"><div class="empty-state">Нет поставок</div></div>
 </div>
 
@@ -923,7 +934,8 @@ let currentPage = 'schedule';
 let currentSubPage = 'weeks';
 let vedTempLists = [];
 let vedSearchQuery = '';
-let vedExpandedId = null; // ID раскрытой карточки (только одна одновременно)
+let vedExpandedId = null;
+let editingShipmentId = null;
 let skuLibrary = {};
 let warehouseData = {
     totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50, marchPlan: 311000000,
@@ -949,8 +961,8 @@ function validateCityInput(inputEl) {
 // ========== УНИВЕРСАЛЬНАЯ ЗАГРУЗКА/СОХРАНЕНИЕ ==========
 function loadAllFromLocalStorage() {
     try {
-        wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null }));
-        ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null }));
+        wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Wildberries' }));
+        ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Ozon' }));
         logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false, linkId: e.linkId || null }));
         vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true }));
         weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}');
@@ -990,8 +1002,8 @@ async function loadFromFirebase() {
         let capDoc = { exists: false }, settingsDoc = { exists: false };
         try { capDoc = await db.collection('settings').doc('capacities').get(); } catch (e) {}
         try { settingsDoc = await db.collection('settings').doc('warehouseData').get(); } catch (e) {}
-        wbShipments = snapshots['shipments_wb'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null }));
-        ozonShipments = snapshots['shipments_ozon'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null }));
+        wbShipments = snapshots['shipments_wb'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Wildberries' }));
+        ozonShipments = snapshots['shipments_ozon'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Ozon' }));
         logEntries = snapshots['logistics'].docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false, linkId: d.data().linkId || null }));
         vedSupplies = snapshots['ved_supplies'].docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true }));
         weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
@@ -1015,6 +1027,27 @@ function showRouteInfo() { const ci = document.getElementById('shipCityWildberri
 async function saveShipment(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (!de||!ce||!qe) return; const date = de.value, city = ce.value.trim(), qty = parseInt(qe.value)||0; if (!date||!city||qty<=0) { alert('Заполните дату, город и количество'); return; } if (!VALID_CITIES.has(city)) { alert('Город не найден в справочнике. Проверьте написание.'); return; } const linkId = generateUniqueId(); const shipment = { id: generateUniqueId(), date, city, qty, source: mp, status:'in_work', linkId }; const arr = mp==='Wildberries'?wbShipments:ozonShipments; arr.push(shipment); const logEntry = { id: generateUniqueId(), date, marketplace: mp, type: 'FBO', supplier: '', city, qty, boxes: 0, amount: 0, amountFull: 0, paid: false, nds: '22%', source: 'Авто из ' + mp, linkId }; logEntries.push(logEntry); if (isOnline) { const colShip = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(colShip).doc(shipment.id).set(shipment); await db.collection('logistics').doc(logEntry.id).set(logEntry); } catch(e) { showToast('Сохранено локально'); } } saveAllToLocalStorage(); renderAll(); clearShipmentForm(mp); showToast(city+' — '+qty.toLocaleString('ru-RU')+' ед. (+ логистика)'); }
 function clearShipmentForm(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (de) de.value = new Date().toISOString().slice(0,10); if (ce) { ce.value = ''; ce.classList.remove('invalid'); } if (qe) qe.value = ''; if (mp==='Wildberries') { const info = document.getElementById('routeInfoWildberries'); if (info) info.classList.remove('show'); } }
 async function deleteShipment(mp, id) { if (!confirm('Удалить отгрузку? Связанная запись в логистике тоже будет удалена.')) return; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const shipment = arr.find(s => String(s.id)===String(id)); const linkId = shipment ? shipment.linkId : null; if (mp==='Wildberries') wbShipments = wbShipments.filter(s => String(s.id)!==String(id)); else ozonShipments = ozonShipments.filter(s => String(s.id)!==String(id)); if (linkId) { const linkedLog = logEntries.find(l => l.linkId === linkId); if (linkedLog) { logEntries = logEntries.filter(l => l.linkId !== linkId); if (isOnline) { try { await db.collection('logistics').doc(String(linkedLog.id)).delete(); } catch(e) {} } } } if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(col).doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAll(); showToast('Отгрузка и связанная логистика удалены'); }
+
+function startEditQty(mp, id) { editingShipmentId = String(id); renderShipmentCards(mp); setTimeout(() => { const input = document.getElementById('qty-input-' + id); if (input) { input.focus(); input.select(); } }, 50); }
+function cancelEditQty(mp) { editingShipmentId = null; renderShipmentCards(mp); }
+async function saveEditQty(mp, id) {
+    const input = document.getElementById('qty-input-' + id); if (!input) return;
+    const newQty = parseInt(input.value) || 0; if (newQty <= 0) { showToast('Количество должно быть больше 0'); return; }
+    const arr = mp === 'Wildberries' ? wbShipments : ozonShipments;
+    const shipment = arr.find(s => String(s.id) === String(id));
+    if (shipment) {
+        const oldQty = shipment.qty; shipment.qty = newQty;
+        if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) logEntry.qty = newQty; }
+        if (isOnline) {
+            const col = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon';
+            try { await db.collection(col).doc(String(id)).update({ qty: newQty }); } catch(e) {}
+            if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) { try { await db.collection('logistics').doc(String(logEntry.id)).update({ qty: newQty }); } catch(e) {} } }
+        }
+        saveAllToLocalStorage(); showToast('Количество изменено: ' + oldQty.toLocaleString('ru-RU') + ' → ' + newQty.toLocaleString('ru-RU'));
+    }
+    editingShipmentId = null; renderShipmentCards(mp); renderAll();
+}
+
 function renderShipmentCards(mp) { 
     const arr = mp==='Wildberries'?wbShipments:ozonShipments; 
     const cid = mp==='Wildberries'?'wbCards':'ozonCards'; 
@@ -1028,17 +1061,18 @@ function renderShipmentCards(mp) {
         const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; 
         const route = mp==='Wildberries'?(routesDB[e.city]||null):null; 
         const accentClass = mp==='Wildberries'?'wb':'ozon';
+        const isEditing = editingShipmentId === String(e.id);
         html += `<div class="shipment-card">
             <div class="card-accent ${accentClass}"></div>
             <div class="card-body">
                 <div class="card-header">
-                    <div>
-                        <div class="card-city">${escapeHtml(e.city)}</div>
-                        <div class="card-date">${escapeHtml(e.date)}</div>
+                    <div><div class="card-city">${escapeHtml(e.city)}</div><div class="card-date">${escapeHtml(e.date)}</div></div>
+                    <div class="card-actions">
+                        <button type="button" class="card-edit" data-edit-mp="${mp}" data-edit-id="${e.id}" title="Редактировать количество">✎</button>
+                        <button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}" title="Удалить">&times;</button>
                     </div>
-                    <button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}">&times;</button>
                 </div>
-                <div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>
+                ${isEditing ? `<div class="card-qty-row"><input type="number" class="card-qty-input" id="qty-input-${e.id}" value="${e.qty}" min="1" onkeydown="if(event.key==='Enter')saveEditQty('${mp}','${e.id}'); if(event.key==='Escape')cancelEditQty('${mp}');" onblur="saveEditQty('${mp}','${e.id}')"></div>` : `<div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>`}
                 <div class="card-qty-label">единиц</div>
                 <div class="card-footer">
                     <div class="card-status">
@@ -1055,81 +1089,20 @@ function renderShipmentCards(mp) {
 }
 function handleStatusChange(event) { const s = event.target; if (!s.classList.contains('status-select')) return; const mp = s.dataset.mp, id = s.dataset.id, st = s.value; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const sh = arr.find(x => String(x.id)===String(id)); if (sh) { sh.status = st; saveAllToLocalStorage(); if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; db.collection(col).doc(String(id)).update({status:st}).catch(()=>{}); } renderShipmentCards(mp); } }
 
-// ========== KPI-ПОЛОСЫ ==========
+// ========== KPI-ПОЛОСА ==========
 function renderKpiStrip() {
-    const strip = document.getElementById('kpiStrip');
-    if (!strip) return;
-    const cwk = getCurrentWeekKey();
-    const all = getAllShipments();
-    let weekWb = 0, weekOzon = 0;
+    const strip = document.getElementById('kpiStrip'); if (!strip) return;
+    const cwk = getCurrentWeekKey(); const all = getAllShipments(); let weekWb = 0, weekOzon = 0;
     all.forEach(s => { const wk = getWeekKey(s.date); if (wk.key === cwk) { if (s.marketplace === 'Wildberries') weekWb += s.qty || 0; else weekOzon += s.qty || 0; } });
-    const weekTotal = weekWb + weekOzon;
-    const weekCap = weekCapacities[cwk] || 0;
-    const packPct = weekCap > 0 ? Math.round((weekTotal / weekCap) * 100) : null;
-    const occupied = warehouseData.currentOccupancy;
-    const totalCap = warehouseData.totalCapacity;
-    const free = totalCap - occupied;
-    const loadPct = Math.round((occupied / totalCap) * 100);
-    const transitSupplies = vedSupplies.filter(s => s.status === 'transit');
-    const transitVolume = transitSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0);
-    const transitCount = transitSupplies.length;
-    
-    strip.innerHTML = `
-        <div class="kpi-item">
-            <span class="kpi-item-label">Текущая неделя:</span>
-            <span class="kpi-item-value">${weekTotal > 0 ? weekTotal.toLocaleString('ru-RU') + ' ед.' : 'Нет отгрузок'}</span>
-            ${weekTotal > 0 ? `<span style="font-size:11px;color:var(--text-tertiary);">(WB: ${weekWb.toLocaleString('ru-RU')} · Ozon: ${weekOzon.toLocaleString('ru-RU')})</span>` : ''}
-        </div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">Загрузка упаковки:</span>
-            ${weekCap > 0 
-                ? `<span class="kpi-item-value" style="color:${packPct > 100 ? 'var(--danger)' : packPct > 80 ? 'var(--warning)' : 'var(--success)'}">${packPct}%</span>
-                   <span style="font-size:11px;color:var(--text-tertiary);">(${weekTotal.toLocaleString('ru-RU')} из ${weekCap.toLocaleString('ru-RU')} ед.)</span>`
-                : `<span class="kpi-item-value" style="color:var(--text-tertiary);">—</span>
-                   <span style="font-size:11px;color:var(--text-tertiary);">(способность не задана)</span>`
-            }
-        </div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">Загрузка склада:</span>
-            <span class="kpi-item-value" style="color:${loadPct > 85 ? 'var(--danger)' : loadPct > 70 ? 'var(--warning)' : 'var(--success)'}">${loadPct}%</span>
-            <span style="font-size:11px;color:var(--text-tertiary);">(занято ${occupied.toLocaleString('ru-RU')} / свободно ${free.toLocaleString('ru-RU')} из ${totalCap.toLocaleString('ru-RU')} м³)</span>
-        </div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item">
-            <span class="kpi-item-label">ВЭД в пути:</span>
-            <span class="kpi-item-value" style="color:var(--ved);">${transitVolume.toFixed(1)} м³</span>
-            <span style="font-size:11px;color:var(--text-tertiary);">(${transitCount} поставк${transitCount === 1 ? 'а' : transitCount >= 2 && transitCount <= 4 ? 'и' : 'ок'})</span>
-        </div>
-    `;
+    let weekCap = weekCapacities[cwk] || 0;
+    if (!weekCap) { const cwkDate = new Date(cwk + 'T00:00:00'); let bestKey = null; let bestDiff = Infinity; for (const [key, val] of Object.entries(weekCapacities)) { if (!val) continue; const keyDate = new Date(key + 'T00:00:00'); const diff = Math.abs(keyDate.getTime() - cwkDate.getTime()); if (diff < bestDiff && diff <= 3 * 24 * 60 * 60 * 1000) { bestDiff = diff; bestKey = key; } } if (bestKey) weekCap = weekCapacities[bestKey] || 0; }
+    const weekTotal = weekWb + weekOzon; const packPct = weekCap > 0 ? Math.round((weekTotal / weekCap) * 100) : null;
+    const occupied = warehouseData.currentOccupancy; const totalCap = warehouseData.totalCapacity; const free = totalCap - occupied; const loadPct = Math.round((occupied / totalCap) * 100);
+    const transitSupplies = vedSupplies.filter(s => s.status === 'transit'); const transitVolume = transitSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0); const transitCount = transitSupplies.length;
+    strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Текущая неделя:</span><span class="kpi-item-value">${weekTotal > 0 ? weekTotal.toLocaleString('ru-RU') + ' ед.' : 'Нет отгрузок'}</span>${weekTotal > 0 ? `<span style="font-size:11px;color:var(--text-tertiary);">(WB: ${weekWb.toLocaleString('ru-RU')} · Ozon: ${weekOzon.toLocaleString('ru-RU')})</span>` : ''}</div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Загрузка упаковки:</span>${weekCap > 0 ? `<span class="kpi-item-value" style="color:${packPct > 100 ? 'var(--danger)' : packPct > 80 ? 'var(--warning)' : 'var(--success)'}">${packPct}%</span><span style="font-size:11px;color:var(--text-tertiary);">(${weekTotal.toLocaleString('ru-RU')} из ${weekCap.toLocaleString('ru-RU')} ед.)</span>` : `<span class="kpi-item-value" style="color:var(--text-tertiary);">—</span><span style="font-size:11px;color:var(--text-tertiary);">(способность не задана)</span>`}</div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Загрузка склада:</span><span class="kpi-item-value" style="color:${loadPct > 85 ? 'var(--danger)' : loadPct > 70 ? 'var(--warning)' : 'var(--success)'}">${loadPct}%</span><span style="font-size:11px;color:var(--text-tertiary);">(занято ${occupied.toLocaleString('ru-RU')} / свободно ${free.toLocaleString('ru-RU')} из ${totalCap.toLocaleString('ru-RU')} м³)</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">ВЭД в пути:</span><span class="kpi-item-value" style="color:var(--ved);">${transitVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${transitCount} поставк${transitCount === 1 ? 'а' : transitCount >= 2 && transitCount <= 4 ? 'и' : 'ок'})</span></div>`;
 }
 
-function renderVedKpiStrip() {
-    const strip = document.getElementById('vedKpiStrip');
-    if (!strip) return;
-    const total = vedSupplies.length;
-    const inTransit = vedSupplies.filter(s => s.status === 'transit').length;
-    const inCustoms = vedSupplies.filter(s => s.status === 'customs').length;
-    const inSvh = vedSupplies.filter(s => s.status === 'svh').length;
-    const arrived = vedSupplies.filter(s => s.status === 'arrived').length;
-    const totalQty = vedSupplies.reduce((sum, s) => sum + (s.totalQty || 0), 0);
-    const totalVolume = vedSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0);
-    
-    strip.innerHTML = `
-        <div class="kpi-item"><span class="kpi-item-label">Всего поставок:</span><span class="kpi-item-value">${total}</span></div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item"><span class="kpi-item-label">В пути:</span><span class="kpi-item-value" style="color:var(--accent);">${inTransit}</span></div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item"><span class="kpi-item-label">Таможня:</span><span class="kpi-item-value" style="color:var(--warning);">${inCustoms}</span></div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item"><span class="kpi-item-label">На СВХ:</span><span class="kpi-item-value" style="color:var(--danger);">${inSvh}</span></div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item"><span class="kpi-item-label">Прибыло:</span><span class="kpi-item-value" style="color:var(--success);">${arrived}</span></div>
-        <div class="kpi-divider"></div>
-        <div class="kpi-item"><span class="kpi-item-label">Общий объём:</span><span class="kpi-item-value" style="color:var(--ved);">${totalVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${totalQty.toLocaleString('ru-RU')} ед.)</span></div>
-    `;
-}
+function renderVedKpiStrip() { const strip = document.getElementById('vedKpiStrip'); if (!strip) return; const total = vedSupplies.length; const inTransit = vedSupplies.filter(s => s.status === 'transit').length; const inCustoms = vedSupplies.filter(s => s.status === 'customs').length; const inSvh = vedSupplies.filter(s => s.status === 'svh').length; const arrived = vedSupplies.filter(s => s.status === 'arrived').length; const totalQty = vedSupplies.reduce((sum, s) => sum + (s.totalQty || 0), 0); const totalVolume = vedSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0); strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Всего поставок:</span><span class="kpi-item-value">${total}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">В пути:</span><span class="kpi-item-value" style="color:var(--accent);">${inTransit}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Таможня:</span><span class="kpi-item-value" style="color:var(--warning);">${inCustoms}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">На СВХ:</span><span class="kpi-item-value" style="color:var(--danger);">${inSvh}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Прибыло:</span><span class="kpi-item-value" style="color:var(--success);">${arrived}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Общий объём:</span><span class="kpi-item-value" style="color:var(--ved);">${totalVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${totalQty.toLocaleString('ru-RU')} ед.)</span></div>`; }
 
 // ========== ВЭД ==========
 function renderVedLists() { const container = document.getElementById('vedListsContainer'); const btnAdd = document.getElementById('btnAddVedList'); const summary = document.getElementById('vedTotalSummary'); if (!container) return; let html = ''; for (let i = 0; i < vedTempLists.length; i++) { const list = vedTempLists[i]; html += `<div class="ved-list-item"><div class="ved-list-header"><span class="ved-list-title">Список ${i + 1}</span><span class="ved-list-status">${list ? '' + list.name + ' (' + list.itemsCount + ' поз., ' + list.totalVolume.toFixed(2) + ' м³)' : 'Ожидает файл'}</span><button type="button" class="file-delete" data-ved-list-remove="${i}">x</button></div>`; if (list) { html += `<div class="file-preview show" style="margin-top:4px;max-height:200px;"><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>`; list.items.slice(0, 8).forEach(item => { const naClass = item.article === 'N/A' ? ' na-highlight' : ''; html += `<tr class="${naClass}"><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0, 30))}</td><td class="num">${(item.cartons||0)}</td><td class="num">${(item.perCarton||0)}</td><td class="num">${(item.qty||0)}</td><td class="num">${item.volume > 0 ? item.volume.toFixed(3) : '—'}</td></tr>`; }); if (list.items.length > 8) html += `<tr><td colspan="6" style="font-size:10px;color:var(--text-tertiary);">... и ещё ${list.items.length - 8} позиций</td></tr>`; html += '</tbody></table></div>'; } else { html += `<div class="file-upload-box" data-ved-list-index="${i}"><div style="font-size:12px;">Перетащите файл или нажмите</div><div style="font-size:10px;color:var(--text-tertiary);">Excel (.xlsx, .xls) или CSV</div><input type="file" accept=".xlsx,.xls,.csv" data-ved-list-input="${i}"></div>`; } html += '</div>'; } container.innerHTML = html; if (btnAdd) btnAdd.style.display = vedTempLists.length < MAX_VED_LISTS ? 'inline-block' : 'none'; updateVedTotalSummary(); container.querySelectorAll('input[type="file"]').forEach(input => { input.addEventListener('change', function() { if (this.files[0]) handleVedFileForList(parseInt(this.dataset.vedListInput), this.files[0]); }); }); container.querySelectorAll('.file-upload-box').forEach(box => { const index = parseInt(box.dataset.vedListIndex); box.addEventListener('click', function(e) { if (e.target.tagName === 'INPUT') return; const input = box.querySelector('input[type="file"]'); if (input) input.click(); }); box.addEventListener('dragover', e => { e.preventDefault(); box.style.borderColor = 'var(--ved)'; }); box.addEventListener('dragleave', () => { box.style.borderColor = ''; }); box.addEventListener('drop', e => { e.preventDefault(); box.style.borderColor = ''; const file = e.dataTransfer.files[0]; if (file) handleVedFileForList(index, file); }); }); }
@@ -1142,118 +1115,9 @@ function clearVedForm() { ['vedNumber','vedEta','vedSupplier'].forEach(id=>{cons
 async function updateVedStatus(id,status){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.status=status;s.history=s.history||[];s.history.push({status,date:new Date().toISOString()});saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({status,history:s.history});}catch(e){}}renderVedCards();renderAll();}}
 async function toggleVedIncludeInModel(id){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.includeInModel=!s.includeInModel;saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({includeInModel:s.includeInModel});}catch(e){}}renderVedCards();renderAll();}}
 async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){}}saveAllToLocalStorage();renderAll();}
-
-// Только одна карточка раскрыта одновременно
-function toggleVedDetails(id) {
-    // Если кликнули по уже раскрытой — сворачиваем
-    if (vedExpandedId === String(id)) {
-        vedExpandedId = null;
-    } else {
-        vedExpandedId = String(id);
-    }
-    renderVedCards();
-}
-
-function renderVedCards() {
-    const container = document.getElementById('vedCards');
-    if (!container) return;
-    const srt = [...vedSupplies].sort((a,b)=>{if(!a.eta&&!b.eta)return 0;if(!a.eta)return 1;if(!b.eta)return-1;return a.eta.localeCompare(b.eta);});
-    if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKpiStrip(); return; }
-    
-    const query = vedSearchQuery.trim().toLowerCase();
-    let matchCount = 0;
-    
-    let html = '';
-    for (let s of srt) {
-        const so = VED_STATUSES[s.status] || VED_STATUSES.transit;
-        const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0);
-        const inc = s.includeInModel !== false;
-        const li = s.listsCount ? ` · ${s.listsCount} списка` : '';
-        const isExpanded = vedExpandedId === String(s.id);
-        
-        // Поиск по артикулам
-        let hasMatch = false;
-        if (query && s.items) {
-            for (const item of s.items) {
-                if (item.article && item.article.toLowerCase().includes(query)) {
-                    hasMatch = true;
-                    break;
-                }
-            }
-            if (hasMatch) matchCount++;
-        }
-        
-        const matchClass = hasMatch ? ' match-highlight' : '';
-        const expandClass = isExpanded ? ' expanded' : '';
-        
-        html += `<div class="ved-card${matchClass}${expandClass}" id="ved-card-${s.id}" data-ved-id="${s.id}">
-            <div class="card-accent"></div>
-            <button type="button" class="card-delete" data-ved-delete="${s.id}">&times;</button>
-            <div class="card-body" data-ved-toggle="${s.id}">
-                <div class="card-header">
-                    <div>
-                        <div class="card-number">${escapeHtml(s.number)}</div>
-                        <div class="card-supplier">${escapeHtml(s.supplier)}</div>
-                    </div>
-                </div>
-                <div class="card-meta">
-                    <span>${escapeHtml(s.warehouse)}</span>
-                    <span>${escapeHtml(s.eta)}</span>
-                </div>
-                <div class="card-volume">${(s.totalVolume || 0).toFixed(2)} м³ · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div>
-                <div style="font-size:11px;color:var(--text-secondary);">${(s.items || []).length} поз.${li} · ${tq.toLocaleString('ru-RU')} ед.</div>
-                <div class="card-footer">
-                    <div class="card-status-row">
-                        <span class="supply-status-badge ${so.class}" style="padding:3px 10px;border-radius:10px;font-size:10px;">${so.label}</span>
-                        <select data-ved-status="${s.id}" style="font-size:10px;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);">
-                            ${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}
-                        </select>
-                        <button type="button" class="include-model ${inc?'yes':'no'}" data-ved-include="${s.id}">${inc?'Вкл':'Выкл'}</button>
-                    </div>
-                    <span class="card-expand-icon">&#9662;</span>
-                </div>
-            </div>
-            <div class="card-details">
-                <div style="font-size:10px;color:var(--text-tertiary);padding:8px 0 4px 0;">${escapeHtml(s.fileName)}</div>
-                <table>
-                    <thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead>
-                    <tbody>
-                        ${(s.items || []).map(i => {
-                            const isMatch = query && i.article && i.article.toLowerCase().includes(query);
-                            const matchClass = isMatch ? ' item-match' : '';
-                            const naClass = i.article === 'N/A' ? ' na-highlight' : '';
-                            return `<tr class="${naClass}${matchClass}">
-                                <td style="font-family:monospace;font-size:12px;">${escapeHtml(i.article || '—')}</td>
-                                <td class="name-cell" title="${escapeHtml((i.name || '—'))}">${escapeHtml(i.name || '—')}</td>
-                                <td class="num">${(i.cartons || 0)}</td>
-                                <td class="num">${(i.perCarton || 0)}</td>
-                                <td class="num">${(i.qty || 0)}</td>
-                                <td class="num">${(i.volume || 0).toFixed(3)}</td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>`;
-    }
-    container.innerHTML = html;
-    renderVedKpiStrip();
-    
-    // Обновляем результаты поиска
-    const searchResults = document.getElementById('vedSearchResults');
-    if (searchResults && query) {
-        searchResults.classList.add('show');
-        searchResults.textContent = `Найдено в ${matchCount} поставк${matchCount === 1 ? 'е' : matchCount >= 2 && matchCount <= 4 ? 'ах' : 'ах'}`;
-    } else if (searchResults) {
-        searchResults.classList.remove('show');
-    }
-}
-
-function handleVedSearch(query) {
-    vedSearchQuery = query;
-    vedExpandedId = null; // Сворачиваем всё при поиске
-    renderVedCards();
-}
+function toggleVedDetails(id) { if (vedExpandedId === String(id)) { vedExpandedId = null; } else { vedExpandedId = String(id); } renderVedCards(); }
+function renderVedCards() { const container = document.getElementById('vedCards'); if (!container) return; const srt = [...vedSupplies].sort((a,b)=>{if(!a.eta&&!b.eta)return 0;if(!a.eta)return 1;if(!b.eta)return-1;return a.eta.localeCompare(b.eta);}); if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKpiStrip(); return; } const query = vedSearchQuery.trim().toLowerCase(); let matchCount = 0; let html = ''; for (let s of srt) { const so = VED_STATUSES[s.status] || VED_STATUSES.transit; const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0); const inc = s.includeInModel !== false; const li = s.listsCount ? ` · ${s.listsCount} списка` : ''; const isExpanded = vedExpandedId === String(s.id); let hasMatch = false; if (query && s.items) { for (const item of s.items) { if (item.article && item.article.toLowerCase().includes(query)) { hasMatch = true; break; } } if (hasMatch) matchCount++; } const matchClass = hasMatch ? ' match-highlight' : ''; const expandClass = isExpanded ? ' expanded' : ''; html += `<div class="ved-card${matchClass}${expandClass}" id="ved-card-${s.id}" data-ved-id="${s.id}"><div class="card-accent"></div><button type="button" class="card-delete" data-ved-delete="${s.id}">&times;</button><div class="card-body" data-ved-toggle="${s.id}"><div class="card-header"><div><div class="card-number">${escapeHtml(s.number)}</div><div class="card-supplier">${escapeHtml(s.supplier)}</div></div></div><div class="card-meta"><span>${escapeHtml(s.warehouse)}</span><span>${escapeHtml(s.eta)}</span></div><div class="card-volume">${(s.totalVolume || 0).toFixed(2)} м³ · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div><div style="font-size:11px;color:var(--text-secondary);">${(s.items || []).length} поз.${li} · ${tq.toLocaleString('ru-RU')} ед.</div><div class="card-footer"><div class="card-status-row"><span class="supply-status-badge ${so.class}" style="padding:3px 10px;border-radius:10px;font-size:10px;">${so.label}</span><select data-ved-status="${s.id}" style="font-size:10px;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);">${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}</select><button type="button" class="include-model ${inc?'yes':'no'}" data-ved-include="${s.id}">${inc?'Вкл':'Выкл'}</button></div><span class="card-expand-icon">&#9662;</span></div></div><div class="card-details"><div style="font-size:10px;color:var(--text-tertiary);padding:8px 0 4px 0;">${escapeHtml(s.fileName)}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items || []).map(i => { const isMatch = query && i.article && i.article.toLowerCase().includes(query); const mClass = isMatch ? ' item-match' : ''; const naClass = i.article === 'N/A' ? ' na-highlight' : ''; return `<tr class="${naClass}${mClass}"><td style="font-family:monospace;font-size:12px;">${escapeHtml(i.article || '—')}</td><td class="name-cell" title="${escapeHtml((i.name || '—'))}">${escapeHtml(i.name || '—')}</td><td class="num">${(i.cartons || 0)}</td><td class="num">${(i.perCarton || 0)}</td><td class="num">${(i.qty || 0)}</td><td class="num">${(i.volume || 0).toFixed(3)}</td></tr>`; }).join('')}</tbody></table></div></div>`; } container.innerHTML = html; renderVedKpiStrip(); const searchResults = document.getElementById('vedSearchResults'); if (searchResults && query) { searchResults.classList.add('show'); searchResults.textContent = `Найдено в ${matchCount} поставк${matchCount === 1 ? 'е' : matchCount >= 2 && matchCount <= 4 ? 'ах' : 'ах'}`; } else if (searchResults) { searchResults.classList.remove('show'); } }
+function handleVedSearch(query) { vedSearchQuery = query; vedExpandedId = null; renderVedCards(); }
 
 // ========== ЛОГИСТИКА ==========
 function updateLogCalc() { const ae=document.getElementById('logAmount'),ne=document.getElementById('logNDS'),ce=document.getElementById('logCalcFull'); if(!ae||!ce)return; const a=parseFloat(ae.value)||0,rate=ne&&ne.value==='22%'?1.22:1.07;ce.textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' руб.'; }
@@ -1282,10 +1146,10 @@ let sdt=null;function updateSalesPlan(m,v){warehouseData.salesPlan[m]=parseFloat
 async function saveWarehouseSettings(){const tcEl=document.getElementById('totalCapacity'),coEl=document.getElementById('currentOccupancy'),cvEl=document.getElementById('constantVolume'),beEl=document.getElementById('baseExpense'),mpEl=document.getElementById('marchPlan');if(tcEl)warehouseData.totalCapacity=parseFloat(tcEl.value)||2267;if(coEl)warehouseData.currentOccupancy=parseFloat(coEl.value)||1408;if(cvEl)warehouseData.constantVolume=parseFloat(cvEl.value)||85;if(beEl)warehouseData.baseExpense=parseFloat(beEl.value)||51.50;if(mpEl)warehouseData.marchPlan=parseFloat(mpEl.value)||311000000;saveAllToLocalStorage();if(isOnline){try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){showToast('Сохранено локально');return;}}renderForecastTab();renderKpiStrip();showToast('Настройки сохранены');}
 function renderForecastChart(){const svg=document.getElementById('forecastChart');if(!svg)return;const fc=calculateForecast();if(!fc.length||warehouseData.baseExpense===0){svg.innerHTML='<text x="300" y="110" text-anchor="middle" font-size="13" fill="var(--text-tertiary)">Загрузите данные</text>';return;}const months=fc.map(f=>f.month.slice(0,3));const idata=fc.map(f=>f.incoming);const edata=fc.map(f=>f.expense);const maxVal=Math.max(...idata,...edata,50);const yMax=Math.ceil(maxVal/10)*10;const W=600,H=220,PL=55,PR=20,PT=15,PB=30,cw=W-PL-PR,ch=H-PT-PB;const gx=i=>PL+(cw/(months.length-1))*i;const gy=v=>PT+ch-(v/yMax)*ch;let sc='';for(let i=0;i<=4;i++){const y=PT+(ch/4)*i;const val=Math.round(yMax-(yMax/4)*i);sc+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" class="chart-grid"/><text x="${PL-8}" y="${y+4}" text-anchor="end" class="chart-axis">${val.toFixed(0)}</text>`;}let ip='',ep='';for(let i=0;i<months.length;i++){const x=gx(i);ip+=(i===0?'M':'L')+`${x},${gy(idata[i])} `;ep+=(i===0?'M':'L')+`${x},${gy(edata[i])} `;}sc+=`<path d="${ip}" class="chart-line incoming"/><path d="${ep}" class="chart-line expense"/>`;for(let i=0;i<months.length;i++){sc+=`<circle cx="${gx(i)}" cy="${gy(idata[i])}" r="3.5" class="chart-dot" style="fill:var(--ved);"><title>Приход ${months[i]}: ${idata[i].toFixed(2)} м³</title></circle><circle cx="${gx(i)}" cy="${gy(edata[i])}" r="3.5" class="chart-dot" style="fill:#e37400;"><title>Расход ${months[i]}: ${edata[i].toFixed(2)} м³</title></circle><text x="${gx(i)}" y="${H-8}" text-anchor="middle" class="chart-axis">${months[i]}</text>`;}svg.innerHTML=sc;}
 
-// ========== НЕДЕЛИ ==========
-function getWeekKey(ds){if(!ds||typeof ds!=='string')return{key:'unknown-'+Math.random(),label:'—'};const n=normalizeDateString(ds);if(!n)return{key:'unknown-'+Math.random(),label:'—'};const d=new Date(n+'T00:00:00');if(isNaN(d.getTime()))return{key:'unknown-'+Math.random(),label:'—'};const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-day+1);const fmt=dt=>dt.getDate().toString().padStart(2,'0')+'.'+(dt.getMonth()+1).toString().padStart(2,'0');return{key:mon.toISOString().slice(0,10),label:fmt(mon)+'-'+fmt(new Date(mon.getTime()+6*24*60*60*1000))};}
-function getCurrentWeekKey(){const now=new Date();const day=now.getDay()||7;const mon=new Date(now);mon.setDate(now.getDate()-day+1);return mon.toISOString().slice(0,10);}
-function getAllShipments(){const all=[];wbShipments.forEach(s=>all.push({...s,marketplace:'Wildberries'}));ozonShipments.forEach(s=>all.push({...s,marketplace:'Ozon'}));return all.filter(s=>s.date&&typeof s.date==='string'&&!isNaN(new Date(s.date+'T00:00:00').getTime()));}
+// ========== НЕДЕЛИ (UTC) ==========
+function getWeekKey(ds) { if (!ds || typeof ds !== 'string') return { key: 'unknown-' + Math.random(), label: '—' }; const n = normalizeDateString(ds); if (!n) return { key: 'unknown-' + Math.random(), label: '—' }; const parts = n.split('-'); const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]); const date = new Date(Date.UTC(y, m, d)); if (isNaN(date.getTime())) return { key: 'unknown-' + Math.random(), label: '—' }; const day = date.getUTCDay(); const daysFromMonday = day === 0 ? 6 : day - 1; const mon = new Date(Date.UTC(y, m, d - daysFromMonday)); const fmt = dt => dt.getUTCDate().toString().padStart(2, '0') + '.' + (dt.getUTCMonth() + 1).toString().padStart(2, '0'); const sun = new Date(Date.UTC(mon.getUTCFullYear(), mon.getUTCMonth(), mon.getUTCDate() + 6)); return { key: mon.toISOString().slice(0, 10), label: fmt(mon) + '-' + fmt(sun) }; }
+function getCurrentWeekKey() { const now = new Date(); const y = now.getUTCFullYear(), m = now.getUTCMonth(), d = now.getUTCDate(); const date = new Date(Date.UTC(y, m, d)); const day = date.getUTCDay(); const daysFromMonday = day === 0 ? 6 : day - 1; const mon = new Date(Date.UTC(y, m, d - daysFromMonday)); return mon.toISOString().slice(0, 10); }
+function getAllShipments(){const all=[];wbShipments.forEach(s=>all.push({...s,marketplace:s.marketplace||s.source||'Wildberries'}));ozonShipments.forEach(s=>all.push({...s,marketplace:s.marketplace||s.source||'Ozon'}));return all.filter(s=>s.date&&typeof s.date==='string'&&!isNaN(new Date(s.date+'T00:00:00').getTime()));}
 function renderSchedule(){const tc=document.getElementById('scheduleTable'),wc=document.getElementById('scheduleWeekCount'),tr=document.getElementById('scheduleTotalRows');if(!tc)return;const all=getAllShipments();const grp={};all.forEach(s=>{const wk=getWeekKey(s.date);if(!grp[wk.key])grp[wk.key]={label:wk.label,wb:0,ozon:0,details:[]};if(s.marketplace==='Wildberries')grp[wk.key].wb+=s.qty;else grp[wk.key].ozon+=s.qty;grp[wk.key].details.push(s);});const weeks=Object.keys(grp).sort().reverse();const cwk=getCurrentWeekKey();if(wc)wc.textContent=weeks.filter(k=>!k.startsWith('unknown')).length;if(tr)tr.textContent=all.length;if(!weeks.length){tc.innerHTML='<div class="empty-state">Нет данных</div>';}else{let html='<table><thead><tr><th>Неделя</th><th class="num">WB</th><th class="num">Ozon</th><th class="num">Всего</th><th>Способность</th><th>Загрузка</th></tr></thead><tbody>';for(let key of weeks){const g=grp[key],t=g.wb+g.ozon,cap=weekCapacities[key]||0;const pct=cap>0?Math.round(t/cap*100):0;const bc=pct>100?'danger':pct>80?'warn':'good';const isCurrent=key===cwk;const rc=isCurrent?'week-row current':'week-row';const hasDetails=g.details.length>0;const wid='week-'+key.replace(/[^a-zA-Z0-9]/g,'-');html+=`<tr class="${rc}" data-week-toggle="${wid}"><td><b>${g.label}</b>${isCurrent?' <span class="badge badge-info">текущая</span>':''}${hasDetails?'<span class="toggle-icon" id="icon-'+wid+'">&#9662;</span>':''}</td><td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td><td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td><td class="num"><b>${t.toLocaleString('ru-RU')}</b></td><td><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" data-week-cap="${key}"></td><td><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;">${cap>0?pct+'%':'—'}</span></td></tr>`;if(hasDetails){const byCity={};g.details.forEach(d=>{const ck=d.city+'|'+d.marketplace;if(!byCity[ck])byCity[ck]=0;byCity[ck]+=d.qty;});html+=`<tr id="${wid}" style="display:none;background:var(--surface-hover);"><td colspan="6" style="padding:8px 16px;font-size:11px;color:var(--text-secondary);">`;for(let[ck,qty]of Object.entries(byCity)){const[city,mp]=ck.split('|');html+=`<span class="badge ${mp==='Wildberries'?'badge-wb':'badge-ozon'}" style="margin:2px;">${escapeHtml(city)}: ${qty.toLocaleString('ru-RU')} шт</span> `;}html+='</td></tr>';}}html+='</tbody></table>';tc.innerHTML=html;}}
 function toggleWeekDetails(wid){const el=document.getElementById(wid);const icon=document.getElementById('icon-'+wid);if(el){el.style.display=el.style.display==='none'?'table-row':'none';if(icon)icon.classList.toggle('open');}}
 async function updateWeekCapacity(key,val){weekCapacities[key]=parseInt(val)||0;if(isOnline){try{await db.collection('settings').doc('capacities').set({capacities:weekCapacities},{merge:true});}catch(e){}}saveAllToLocalStorage();renderSchedule();renderKpiStrip();}
@@ -1304,82 +1168,39 @@ function deleteSku(article){if(confirm('Удалить '+article+'?')){delete sk
 
 // ========== НАВИГАЦИЯ ==========
 function switchPage(page){
-    currentPage = page;
-    localStorage.setItem('currentPage', page);
+    currentPage = page; localStorage.setItem('currentPage', page);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => {
-        b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active');
-    });
-    const pageEl = document.getElementById('page-' + page);
-    if (pageEl) pageEl.classList.add('active');
-    const map = {schedule:0,wb:1,ozon:2,logistics:3,ved:4};
-    const cls = ['active','wb-active','ozon-active','logistics-active','ved-active'];
-    const btns = document.querySelectorAll('.nav-btn');
-    if (btns[map[page]]) btns[map[page]].classList.add(cls[map[page]]);
-    
-    if (page === 'schedule') {
-        renderKpiStrip();
-        switchSubPage(currentSubPage);
-    }
+    document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active'); });
+    const pageEl = document.getElementById('page-' + page); if (pageEl) pageEl.classList.add('active');
+    const map = {schedule:0,wb:1,ozon:2,logistics:3,ved:4}; const cls = ['active','wb-active','ozon-active','logistics-active','ved-active'];
+    const btns = document.querySelectorAll('.nav-btn'); if (btns[map[page]]) btns[map[page]].classList.add(cls[map[page]]);
+    if (page === 'schedule') { renderKpiStrip(); switchSubPage(currentSubPage); }
     if (page === 'logistics') { updateLogCalc(); renderLog(); }
-    if (page === 'ved') { 
-        if(vedTempLists.length===0) vedTempLists=[null]; 
-        renderVedLists(); 
-        vedExpandedId = null;
-        renderVedCards(); 
-        renderVedKpiStrip(); 
-        const searchInput = document.getElementById('vedArticleSearch');
-        if (searchInput && vedSearchQuery) {
-            searchInput.value = vedSearchQuery;
-        }
-    }
+    if (page === 'ved') { if(vedTempLists.length===0) vedTempLists=[null]; renderVedLists(); vedExpandedId = null; renderVedCards(); renderVedKpiStrip(); const searchInput = document.getElementById('vedArticleSearch'); if (searchInput && vedSearchQuery) { searchInput.value = vedSearchQuery; } }
 }
-
 function switchSubPage(subPage) {
-    currentSubPage = subPage;
-    localStorage.setItem('currentSubPage', subPage);
+    currentSubPage = subPage; localStorage.setItem('currentSubPage', subPage);
     document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active'));
-    const subPageEl = document.getElementById('sub-page-' + subPage);
-    if (subPageEl) subPageEl.classList.add('active');
-    const subBtns = document.querySelectorAll('.sub-nav-btn');
-    const subMap = {weeks:0, forecast:1, reference:2};
-    if (subBtns[subMap[subPage]]) subBtns[subMap[subPage]].classList.add('active');
-    
-    if (subPage === 'weeks') renderSchedule();
-    if (subPage === 'forecast') renderForecastTab();
-    if (subPage === 'reference') renderSkuTable();
+    const subPageEl = document.getElementById('sub-page-' + subPage); if (subPageEl) subPageEl.classList.add('active');
+    const subBtns = document.querySelectorAll('.sub-nav-btn'); const subMap = {weeks:0, forecast:1, reference:2}; if (subBtns[subMap[subPage]]) subBtns[subMap[subPage]].classList.add('active');
+    if (subPage === 'weeks') renderSchedule(); if (subPage === 'forecast') renderForecastTab(); if (subPage === 'reference') renderSkuTable();
 }
-
 function renderAll() {
-    if (currentPage === 'schedule') {
-        renderKpiStrip();
-        if (currentSubPage === 'weeks') renderSchedule();
-        if (currentSubPage === 'forecast') renderForecastTab();
-        if (currentSubPage === 'reference') renderSkuTable();
-    }
-    renderShipmentCards('Wildberries');
-    renderShipmentCards('Ozon');
-    renderLog();
-    renderVedCards();
-    renderVedKpiStrip();
+    if (currentPage === 'schedule') { renderKpiStrip(); if (currentSubPage === 'weeks') renderSchedule(); if (currentSubPage === 'forecast') renderForecastTab(); if (currentSubPage === 'reference') renderSkuTable(); }
+    renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); renderVedCards(); renderVedKpiStrip();
 }
 
 // ========== ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ==========
 document.addEventListener('click',function(e){
     const t = e.target;
     if(t.classList.contains('card-delete')&&t.dataset.mp&&t.dataset.id){e.stopPropagation();deleteShipment(t.dataset.mp,t.dataset.id);return;}
+    if(t.classList.contains('card-edit')&&t.dataset.editMp&&t.dataset.editId){e.stopPropagation();startEditQty(t.dataset.editMp,t.dataset.editId);return;}
     if(t.hasAttribute('data-ved-delete')){e.stopPropagation();deleteVedSupply(t.getAttribute('data-ved-delete'));return;}
     if(t.hasAttribute('data-ved-include')){e.stopPropagation();toggleVedIncludeInModel(t.getAttribute('data-ved-include'));return;}
     if(t.hasAttribute('data-ved-list-remove')){e.stopPropagation();removeVedList(parseInt(t.getAttribute('data-ved-list-remove')));return;}
     if(t.hasAttribute('data-ved-toggle')){e.stopPropagation();toggleVedDetails(t.getAttribute('data-ved-toggle'));return;}
-    const vedBody = t.closest('.ved-card .card-body');
-    if (vedBody && vedBody.hasAttribute('data-ved-toggle')) {
-        // Не переключаем если кликнули по селекту или кнопке
-        if (t.tagName === 'SELECT' || t.tagName === 'BUTTON' || t.closest('select') || t.closest('button')) return;
-        toggleVedDetails(vedBody.getAttribute('data-ved-toggle'));
-        return;
-    }
+    const vedBody = t.closest('.ved-card .card-body'); if (vedBody && vedBody.hasAttribute('data-ved-toggle')) { if (t.tagName === 'SELECT' || t.tagName === 'BUTTON' || t.closest('select') || t.closest('button')) return; toggleVedDetails(vedBody.getAttribute('data-ved-toggle')); return; }
     if(t.hasAttribute('data-log-paid')){toggleLogPaid(t.getAttribute('data-log-paid'));return;}
     if(t.hasAttribute('data-log-delete')){deleteLogEntry(t.getAttribute('data-log-delete'));return;}
     if(t.hasAttribute('data-sku-delete')){deleteSku(t.getAttribute('data-sku-delete'));return;}
@@ -1455,7 +1276,7 @@ function initApp(){
     switchPage(currentPage);
     initDirectHandlers();
     loadFromFirebase();
-    console.log('v21.0 — Раскрытие ВЭД на всю ширину, без скролла');
+    console.log('v28.0 — Цветные селекты статусов с !important');
 }
 
 document.addEventListener('DOMContentLoaded',initApp);
