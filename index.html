@@ -9,16 +9,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- XLSX загружается асинхронно -->
-    <script>
-        (function() {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-            script.async = true;
-            document.head.appendChild(script);
-        })();
-    </script>
-
     <style>
         :root {
             --bg: #f2f4f7;
@@ -126,15 +116,6 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        /* Оптимизация производительности */
-        .shipment-card, .ved-card, .analytics-card {
-            will-change: transform;
-            transform: translateZ(0);
-        }
-        .cards-grid { contain: layout style; }
-        .table-wrap { contain: paint style; }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Inter', sans-serif;
             background: var(--bg);
@@ -202,6 +183,7 @@
         .sub-nav-btn { flex: 1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; font-family: inherit; text-align: center; white-space: nowrap; min-width: 80px; }
         .sub-nav-btn:hover { background: var(--surface-hover); }
         .sub-nav-btn.active { background: var(--accent); color: #fff; }
+
         #page-wb .sub-nav-btn.active { background: var(--wb); color: #fff; }
         #page-wb .sub-nav-btn:hover { background: var(--wb-light); }
         #page-ozon .sub-nav-btn.active { background: var(--ozon); color: #fff; }
@@ -224,12 +206,22 @@
         .field input.invalid { border-color: var(--danger); background: var(--status-reject-bg); }
         .field-calc { background: var(--status-wait-bg); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--accent); text-align: right; }
 
-        .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
         @media (max-width: 900px) { .analytics-grid { grid-template-columns: 1fr; } }
         .analytics-card {
-            background: var(--surface); border-radius: var(--radius-md); padding: 20px;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--analytics-border);
-            position: relative; overflow: hidden; transition: all 0.3s;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--analytics-border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
         }
         .analytics-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
         .analytics-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
@@ -246,6 +238,26 @@
         .analytics-card .ac-metric-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); line-height: 1.2; }
         .analytics-card .ac-metric-label { font-size: 9px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-top: 4px; }
         .analytics-card .ac-subtitle { font-size: 10px; color: var(--text-tertiary); margin-top: 8px; }
+
+        .analytics-history-block {
+            background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            border: 1px solid var(--analytics-border); margin-bottom: 20px; overflow: hidden;
+        }
+        .analytics-history-block .ah-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .analytics-history-block .ah-header:hover { background: var(--surface-hover); }
+        .analytics-history-block .ah-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .analytics-history-block .ah-toggle { font-size: 12px; color: var(--text-tertiary); transition: transform 0.2s; }
+        .analytics-history-block.expanded .ah-toggle { transform: rotate(180deg); }
+        .analytics-history-block .ah-body { display: none; padding: 0 20px 20px 20px; overflow-x: auto; }
+        .analytics-history-block.expanded .ah-body { display: block; }
+        .analytics-history-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .analytics-history-table th { font-size: 10px; padding: 10px 12px; text-align: left; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 2px solid var(--border); white-space: nowrap; letter-spacing: 0.5px; }
+        .analytics-history-table td { padding: 8px 12px; border-bottom: 1px solid var(--separator); white-space: nowrap; }
+        .analytics-history-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .analytics-history-table .trend-up { color: var(--success); }
+        .analytics-history-table .trend-down { color: var(--danger); }
+        .analytics-history-table .month-current { background: var(--status-wait-bg); font-weight: 600; }
+        .analytics-history-table .highlight-cell { font-weight: 700; color: var(--accent); }
 
         .stock-upload-area {
             border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 40px 20px;
@@ -305,6 +317,80 @@
         .shipment-card .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-bottom: 14px; }
         .shipment-card .card-footer { display: flex; flex-direction: column; gap: 8px; }
         .shipment-card .card-status select { width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; appearance: none; -webkit-appearance: none; }
+        .card-status select.status-work { background: var(--status-work-bg) !important; color: var(--status-work-text) !important; border-color: var(--status-work-text) !important; }
+        .card-status select.status-wait { background: var(--status-wait-bg) !important; color: var(--status-wait-text) !important; border-color: var(--status-wait-text) !important; }
+        .card-status select.status-reject { background: var(--status-reject-bg) !important; color: var(--status-reject-text) !important; border-color: var(--status-reject-text) !important; }
+        .card-status select.status-sent { background: var(--status-sent-bg) !important; color: var(--status-sent-text) !important; border-color: var(--status-sent-text) !important; }
+        .card-status select.status-ready { background: var(--status-ready-bg) !important; color: var(--status-ready-text) !important; border-color: var(--status-ready-text) !important; }
+        .shipment-card .route-badge { font-size: 10px; color: var(--success); padding: 3px 10px; background: var(--status-sent-bg); border-radius: 10px; display: inline-block; font-weight: 500; }
+
+        .stock-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .stock-badge.high { background: var(--status-sent-bg); color: var(--success); }
+        .stock-badge.medium { background: var(--status-work-bg); color: var(--warning); }
+        .stock-badge.low { background: var(--status-reject-bg); color: var(--danger); }
+        .stock-badge.zero { background: var(--status-wait-bg); color: var(--text-tertiary); }
+        .stock-empty-filter { text-align: center; padding: 30px; color: var(--text-tertiary); font-size: 13px; }
+        .stock-match-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 600; margin: 1px; }
+        .stock-match-indicator.wb-match { background: var(--badge-wb-bg); color: var(--wb); }
+        .stock-match-indicator.ozon-match { background: var(--badge-ozon-bg); color: var(--ozon); }
+        .stock-match-indicator.no-match { background: var(--status-wait-bg); color: var(--text-tertiary); }
+        .stock-diff-positive { color: var(--success); font-weight: 600; }
+        .stock-diff-negative { color: var(--danger); font-weight: 600; }
+        .stock-diff-zero { color: var(--text-tertiary); }
+
+        .ved-card { background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); transition: all 0.3s; position: relative; overflow: hidden; cursor: pointer; }
+        .ved-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .ved-card.expanded { grid-column: 1 / -1; cursor: default; }
+        .ved-card .card-accent { height: 3px; width: 100%; background: var(--ved); transition: background 0.3s; }
+        .ved-card.match-highlight .card-accent { background: var(--warning); animation: accentPulse 1.5s infinite; }
+        @keyframes accentPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .ved-card .card-body { padding: 16px 18px; }
+        .ved-card .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .ved-card .card-number { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .ved-card .card-supplier { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .ved-card .card-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text-tertiary); margin: 8px 0; }
+        .ved-card .card-meta span { display: flex; align-items: center; gap: 4px; }
+        .ved-card .card-volume { font-size: 18px; font-weight: 700; color: var(--ved); margin: 6px 0; }
+        .ved-card .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--separator); }
+        .ved-card .card-status-row { display: flex; align-items: center; gap: 8px; }
+        .ved-card .card-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 15px; padding: 4px 8px; border-radius: 6px; opacity: 0; transition: opacity 0.15s; position: absolute; top: 12px; right: 10px; z-index: 2; }
+        .ved-card:hover .card-delete { opacity: 1; }
+        .ved-card .card-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .ved-card .card-expand-icon { font-size: 11px; color: var(--text-tertiary); transition: transform 0.3s; }
+        .ved-card.expanded .card-expand-icon { transform: rotate(180deg); }
+        .ved-card .card-details { display: none; padding: 0 18px 18px 18px; border-top: 1px solid var(--separator); margin-top: 4px; }
+        .ved-card.expanded .card-details { display: block; }
+        .ved-card .card-details table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .ved-card .card-details th { font-size: 10px; padding: 10px 12px; background: var(--table-header-bg); text-align: left; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 2px solid var(--border); white-space: nowrap; }
+        .ved-card .card-details td { padding: 8px 12px; border-bottom: 1px solid var(--separator); color: var(--text-primary); font-size: 12px; white-space: nowrap; }
+        .ved-card .card-details td.name-cell { max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ved-card.expanded .card-details td.name-cell { max-width: 500px; }
+        .ved-card .card-details .num { text-align: right; }
+        .ved-card .card-details .item-match { background: var(--status-work-bg); border-radius: 3px; }
+        .ved-search { margin-bottom: 16px; }
+        .ved-search input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-family: inherit; background: var(--input-bg); color: var(--text-primary); }
+        .ved-search input:focus { outline: none; border-color: var(--ved); }
+        .ved-search-results { font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: none; }
+        .ved-search-results.show { display: block; }
+
+        .file-upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 12px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--file-upload-bg); color: var(--text-primary); }
+        .file-upload-box:hover { border-color: var(--ved); background: var(--surface-hover); }
+        .file-upload-box.has-file { border-color: var(--success); background: var(--status-sent-bg); border-style: solid; }
+        .file-upload-box input[type="file"] { display: none; }
+        .file-name { font-size: 12px; font-weight: 600; color: var(--success); margin-top: 4px; }
+        .file-delete { position: absolute; top: 6px; right: 10px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 6px; z-index: 2; }
+        .file-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .file-preview { margin-top: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 11px; max-height: 400px; overflow-y: auto; display: none; }
+        .file-preview.show { display: block; }
+        .file-preview table { width: 100%; font-size: 11px; border-collapse: collapse; }
+        .file-preview th { font-size: 9px; padding: 8px; background: var(--table-header-bg); text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); color: var(--text-tertiary); }
+        .file-preview td { padding: 6px 8px; border-bottom: 1px solid var(--separator); color: var(--text-primary); }
+
+        .supply-card { display: none; }
+        .status-transit { background: var(--status-wait-bg); color: var(--status-wait-text); }
+        .status-customs { background: var(--status-work-bg); color: var(--status-work-text); }
+        .status-svh { background: var(--status-reject-bg); color: var(--status-reject-text); }
+        .status-arrived { background: var(--status-sent-bg); color: var(--status-sent-text); }
 
         .table-wrap { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow-x: auto; margin-bottom: 24px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
@@ -317,6 +403,9 @@
         .badge-wb { background: var(--badge-wb-bg); color: var(--wb); }
         .badge-ozon { background: var(--badge-ozon-bg); color: var(--ozon); }
         .badge-info { background: var(--status-wait-bg); color: var(--accent); }
+        .badge-success { background: var(--status-sent-bg); color: var(--success); }
+        .badge-warning { background: var(--status-work-bg); color: var(--warning); }
+        .badge-danger { background: var(--status-reject-bg); color: var(--danger); }
 
         .kpi-strip { display: flex; gap: 16px; flex-wrap: wrap; background: var(--surface); border-radius: var(--radius-md); padding: 14px 20px; box-shadow: var(--shadow-sm); margin-bottom: 20px; align-items: center; }
         .kpi-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
@@ -328,13 +417,71 @@
         .toast.show { opacity: 1; transform: translateY(0); }
         .empty-state { text-align: center; padding: 40px; color: var(--text-tertiary); font-size: 13px; }
 
+        .progress-bar { height: 4px; border-radius: 2px; background: var(--separator); margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 2px; }
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+        .capacity-input { width: 70px; text-align: center; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--input-bg); color: var(--text-primary); }
+        .capacity-input:focus { outline: none; border-color: var(--accent); }
+        .sales-plan-input { width: 120px; padding: 6px 8px; text-align: right; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-family: inherit; background: var(--input-bg); color: var(--text-primary); }
+        .sales-plan-input:focus { outline: none; border-color: var(--accent); }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+        .filters select, .filters input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--input-bg); color: var(--text-primary); }
+        .chip { display: inline-flex; align-items: center; gap: 4px; background: var(--separator); padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 500; cursor: pointer; color: var(--text-primary); }
+        .chip:hover { background: var(--border); }
+        .import-area { margin-bottom: 16px; }
+        .import-area textarea { width: 100%; height: 100px; font-family: 'SF Mono', monospace; font-size: 11px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; resize: vertical; background: var(--input-bg); color: var(--text-primary); }
+        .week-row { cursor: pointer; }
+        .week-row.current { background: var(--status-wait-bg); }
+        .toggle-icon { display: inline-block; transition: transform 0.2s; font-size: 10px; margin-left: 4px; color: var(--text-tertiary); }
+        .toggle-icon.open { transform: rotate(180deg); }
+        .log-edit-input { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--input-bg); color: var(--text-primary); font-family: inherit; }
+        .log-edit-input:focus { outline: none; border-color: var(--accent); }
+        .log-select { padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--input-bg); color: var(--text-primary); font-family: inherit; }
+        .route-info { background: var(--route-info-bg); border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 12px; display: none; color: var(--text-primary); }
+        .route-info.show { display: block; }
+        .route-chip { background: var(--status-sent-bg); color: var(--success); padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; display: inline-block; margin: 2px; }
+
         .chart-card { background: var(--surface); border-radius: var(--radius-lg); padding: 20px 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .chart-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .chart-legend { display: flex; gap: 16px; font-size: 11px; color: var(--text-secondary); align-items: center; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .legend-dot.incoming { background: var(--ved); }
+        .legend-dot.expense { background: #e37400; }
         .chart-svg { width: 100%; height: 240px; background: var(--chart-bg); border-radius: 12px; }
+        .chart-grid { stroke: var(--border); stroke-width: 0.5; }
+        .chart-axis { font-size: 9px; fill: var(--text-tertiary); }
+        .chart-line { fill: none; stroke-width: 2.5; }
+        .chart-line.incoming { stroke: var(--ved); }
+        .chart-line.expense { stroke: #e37400; stroke-dasharray: 5,3; }
+        .chart-dot { cursor: pointer; }
+        .route-badge { font-size: 10px; color: var(--success); padding: 3px 10px; background: var(--status-sent-bg); border-radius: 10px; display: inline-block; font-weight: 500; }
+
+        .parser-summary { background: var(--status-sent-bg); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-primary); }
+        .parser-summary b { color: var(--ved); }
+        .na-highlight { background: #fff3cd !important; color: #1a1c1e !important; }
+        .include-model { width: 60px; text-align: center; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+        .include-model.yes { background: var(--status-sent-bg); color: var(--success); }
+        .include-model.no { background: var(--status-reject-bg); color: var(--danger); }
+        .section-title { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid var(--separator); color: var(--text-primary); }
+        .settings-note { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+        .ved-lists-container { display: flex; flex-direction: column; gap: 8px; }
+        .ved-list-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--file-upload-bg); }
+        .ved-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .ved-list-title { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
+        .ved-list-status { font-size: 11px; color: var(--text-primary); }
+        .btn-add-list { margin-top: 6px; padding: 6px 14px; background: var(--ved); color: #fff; border: none; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+        .btn-add-list:hover { opacity: 0.9; }
+        .btn-add-list:disabled { background: #ccc; cursor: not-allowed; }
+        a { color: var(--accent); }
 
         @media (max-width: 768px) {
             body { padding: 12px; }
             .cards-grid { grid-template-columns: 1fr; }
             .nav-btn { font-size: 11px; padding: 8px 10px; }
+            .sales-plan-input { width: 90px; }
             .kpi-strip { flex-direction: column; align-items: flex-start; gap: 8px; }
             .kpi-divider { width: 100%; height: 1px; }
         }
@@ -403,11 +550,47 @@
             <button type="button" class="stock-file-remove" id="msStockFileRemove">✕</button>
         </div>
         <div class="stock-stats-strip" id="msStockStats"></div>
+        <div class="analytics-grid" id="msStockComparisonGrid" style="display:none;">
+            <div class="analytics-card wb-card" id="msWbComparisonCard">
+                <div class="ac-label"><span class="ac-icon">W</span>Совпадения с WB</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msWbMatchCount">0</div><div class="ac-metric-label">Позиций</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msWbMatchBalance">0</div><div class="ac-metric-label">Общий остаток WB</div></div>
+                </div>
+            </div>
+            <div class="analytics-card ozon-card" id="msOzonComparisonCard">
+                <div class="ac-label"><span class="ac-icon">O</span>Совпадения с Ozon</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msOzonMatchCount">0</div><div class="ac-metric-label">Позиций</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msOzonMatchBalance">0</div><div class="ac-metric-label">Общий остаток Ozon</div></div>
+                </div>
+            </div>
+            <div class="analytics-card total-card">
+                <div class="ac-label"><span class="ac-icon">∑</span>Сводка</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msMatchTotal">0</div><div class="ac-metric-label">Всего совпадений</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msUnmatchedCount">0</div><div class="ac-metric-label">Без привязки</div></div>
+                </div>
+            </div>
+        </div>
         <div class="stock-filters" id="msStockFilters" style="display:none;">
             <input type="text" id="msStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
-            <select id="msStockBalanceFilter"><option value="all">Все остатки</option><option value="positive">Остаток > 0</option><option value="zero">Остаток = 0</option><option value="negative">Остаток < 0</option></select>
-            <select id="msStockWaitingFilter"><option value="all">Всё ожидание</option><option value="positive">Ожидание > 0</option><option value="zero">Ожидание = 0</option></select>
-            <select id="msStockMatchFilter"><option value="all">Все позиции</option><option value="matched">С привязкой к площадкам</option><option value="unmatched">Без привязки</option></select>
+            <select id="msStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="msStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
+            <select id="msStockMatchFilter">
+                <option value="all">Все позиции</option>
+                <option value="matched">С привязкой к площадкам</option>
+                <option value="unmatched">Без привязки</option>
+            </select>
             <button type="button" class="btn btn-outline btn-sm" id="btnExportMsStock">Экспорт CSV</button>
             <button type="button" class="chip" id="btnResetMsStockFilters">Сброс</button>
         </div>
@@ -442,8 +625,17 @@
         <div class="stock-stats-strip" id="wbStockStats"></div>
         <div class="stock-filters" id="wbStockFilters" style="display:none;">
             <input type="text" id="wbStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
-            <select id="wbStockBalanceFilter"><option value="all">Все остатки</option><option value="positive">Остаток > 0</option><option value="zero">Остаток = 0</option><option value="negative">Остаток < 0</option></select>
-            <select id="wbStockWaitingFilter"><option value="all">Всё ожидание</option><option value="positive">Ожидание > 0</option><option value="zero">Ожидание = 0</option></select>
+            <select id="wbStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="wbStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
             <button type="button" class="btn btn-outline btn-sm" id="btnExportWbStock">Экспорт CSV</button>
             <button type="button" class="chip" id="btnResetWbStockFilters">Сброс</button>
         </div>
@@ -478,8 +670,17 @@
         <div class="stock-stats-strip" id="ozonStockStats"></div>
         <div class="stock-filters" id="ozonStockFilters" style="display:none;">
             <input type="text" id="ozonStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
-            <select id="ozonStockBalanceFilter"><option value="all">Все остатки</option><option value="positive">Остаток > 0</option><option value="zero">Остаток = 0</option><option value="negative">Остаток < 0</option></select>
-            <select id="ozonStockWaitingFilter"><option value="all">Всё ожидание</option><option value="positive">Ожидание > 0</option><option value="zero">Ожидание = 0</option></select>
+            <select id="ozonStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="ozonStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
             <button type="button" class="btn btn-outline btn-sm" id="btnExportOzonStock">Экспорт CSV</button>
             <button type="button" class="chip" id="btnResetOzonStockFilters">Сброс</button>
         </div>
@@ -492,6 +693,13 @@
     <h1>Логистика</h1>
     <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты. Импорт создаёт отгрузки WB/Ozon. Удаление — каскадное.</p>
     <div class="analytics-grid" id="logAnalyticsGrid"></div>
+    <div class="analytics-history-block" id="logHistoryBlock">
+        <div class="ah-header" id="logHistoryHeader">
+            <span class="ah-title">📅 История за 12 месяцев</span>
+            <span class="ah-toggle">▼</span>
+        </div>
+        <div class="ah-body" id="logHistoryBody"></div>
+    </div>
     <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;">
         <button type="button" class="btn btn-outline btn-sm" id="btnToggleLogImport">Импорт</button>
         <button type="button" class="btn btn-outline btn-sm" id="btnExportLog">CSV</button>
@@ -519,6 +727,16 @@
 <datalist id="cityList"></datalist>
 
 <script>
+// ========== АСИНХРОННАЯ ЗАГРУЗКА XLSX ==========
+(function() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+    script.async = true;
+    script.onload = function() { console.log('XLSX загружен асинхронно'); };
+    script.onerror = function() { console.warn('Не удалось загрузить XLSX. Импорт Excel будет недоступен.'); };
+    document.head.appendChild(script);
+})();
+
 // ========== FIREBASE ==========
 const firebaseConfig = {
   apiKey: "AIzaSyBCGOXZtpRY_aWOkcUWuW34uJBsNgrgdDA",
@@ -531,165 +749,51 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Включаем кэширование Firebase для офлайн-доступа
 try {
-    db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-} catch(e) {}
-
-// ========== УТИЛИТЫ ДЛЯ ПЛАВНОСТИ ==========
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => { clearTimeout(timeout); func(...args); };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-let renderScheduled = false;
-function renderAllOptimized() {
-    if (renderScheduled) return;
-    renderScheduled = true;
-    
-    requestAnimationFrame(() => {
-        if (currentPage === 'schedule') {
-            renderKpiStrip();
-            requestAnimationFrame(() => {
-                if (currentSubPage === 'weeks') renderSchedule();
-                else if (currentSubPage === 'forecast') renderForecastTab();
-                else if (currentSubPage === 'stock') renderMsStock();
-            });
-        }
-        
-        requestIdleCallback(() => {
-            if (currentPage === 'wb' && currentWbSubPage === 'stock') renderWbStock();
-            if (currentPage === 'ozon' && currentOzonSubPage === 'stock') renderOzonStock();
-            renderShipmentCards('Wildberries');
-            renderShipmentCards('Ozon');
-            renderLog();
-            renderLogAnalytics();
-            renderVedCards();
-            renderVedKpiStrip();
-        }, { timeout: 200 });
-        
-        renderScheduled = false;
+    db.settings({
+        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
     });
+} catch(e) {
+    console.warn('Не удалось настроить кэш Firebase:', e);
 }
 
 // ========== ТЕМА ==========
-function initTheme() { 
-    const saved = localStorage.getItem('theme'); 
-    if (saved === 'dark') { 
-        document.body.classList.add('dark-theme'); 
-        document.getElementById('themeToggle').textContent = '☀️'; 
-    } 
-}
-function toggleTheme() { 
-    const isDark = document.body.classList.toggle('dark-theme'); 
-    localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
-    document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙'; 
-}
+function initTheme() { const saved = localStorage.getItem('theme'); if (saved === 'dark') { document.body.classList.add('dark-theme'); document.getElementById('themeToggle').textContent = '☀️'; } }
+function toggleTheme() { const isDark = document.body.classList.toggle('dark-theme'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙'; }
 
 // ========== КОНСТАНТЫ ==========
 const routesDB = {
-    'Казань':{schedule:'В любой день',delivery:'1-2 дня'},'Краснодар':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},
-    'Невинномысск':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},'Екатеринбург':{schedule:'Ср-Сб, Сб-Вт, Вт-Пт',delivery:'2-3 дня'},
-    'Санкт-Петербург':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},'Челябинск':{schedule:'Ср-Сб, Сб-Вт',delivery:'2-3 дня'},
-    'Минск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},'Тула':{schedule:'В любой день',delivery:'день в день'},
-    'Коледино':{schedule:'В любой день',delivery:'день в день'},'Электросталь':{schedule:'В любой день',delivery:'день в день'},
-    'Волгоград':{schedule:'Ср-Пт',delivery:'2-3 дня'},'Владимир':{schedule:'В любой день',delivery:'2 дня'},
-    'Рязань':{schedule:'В любой день',delivery:'день в день'},'Воронеж':{schedule:'Пн-Чт, Ср-Сб, Пт-Пн',delivery:'3-4 дня'},
-    'Новосибирск':{schedule:'Пн-Сб, Пт-Ср',delivery:'5-6 дней'},'Сарапул':{schedule:'Пн-Чт',delivery:'4 дня'},
-    'Котовск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},'Питер':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},
-    'Шушары':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},'Чехов':{schedule:'В любой день',delivery:'день в день'},
-    'Чехов 1':{schedule:'В любой день',delivery:'день в день'},'Чехов 2':{schedule:'В любой день',delivery:'день в день'},
-    'Хоругвино':{schedule:'В любой день',delivery:'1-2 дня'},'Петровское':{schedule:'В любой день',delivery:'1-2 дня'},
-    'Радумля':{schedule:'В любой день',delivery:'1-2 дня'},'Ногинск':{schedule:'В любой день',delivery:'1-2 дня'},
-    'Фреш':{schedule:'В любой день',delivery:'1-2 дня'},'Пушкино':{schedule:'В любой день',delivery:'1-2 дня'},
-    'Пушкино 1':{schedule:'В любой день',delivery:'1-2 дня'},'Пушкино 2':{schedule:'В любой день',delivery:'1-2 дня'},
-    'Жуковский':{schedule:'В любой день',delivery:'1-2 дня'},'Домодедово':{schedule:'В любой день',delivery:'1-2 дня'},
-    'Софьино':{schedule:'В любой день',delivery:'1-2 дня'},'Гривно':{schedule:'В любой день',delivery:'1-2 дня'},
-    'Ватутинки':{schedule:'В любой день',delivery:'1-2 дня'},'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
+    'Казань':{schedule:'В любой день',delivery:'1-2 дня'},'Краснодар':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},'Невинномысск':{schedule:'Пн-Ср, Ср-Пт, Пт-Вс',delivery:'2-3 дня'},'Екатеринбург':{schedule:'Ср-Сб, Сб-Вт, Вт-Пт',delivery:'2-3 дня'},'Санкт-Петербург':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},'Челябинск':{schedule:'Ср-Сб, Сб-Вт',delivery:'2-3 дня'},'Минск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},'Тула':{schedule:'В любой день',delivery:'день в день'},'Коледино':{schedule:'В любой день',delivery:'день в день'},'Электросталь':{schedule:'В любой день',delivery:'день в день'},'Волгоград':{schedule:'Ср-Пт',delivery:'2-3 дня'},'Владимир':{schedule:'В любой день',delivery:'2 дня'},'Рязань':{schedule:'В любой день',delivery:'день в день'},'Воронеж':{schedule:'Пн-Чт, Ср-Сб, Пт-Пн',delivery:'3-4 дня'},'Новосибирск':{schedule:'Пн-Сб, Пт-Ср',delivery:'5-6 дней'},'Сарапул':{schedule:'Пн-Чт',delivery:'4 дня'},'Котовск':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},'Питер':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},'Шушары':{schedule:'Пн-Вт, Вт-Ср, Чт-Пт, Пт-Вс',delivery:'1-2 дня'},'Чехов':{schedule:'В любой день',delivery:'день в день'},'Чехов 1':{schedule:'В любой день',delivery:'день в день'},'Чехов 2':{schedule:'В любой день',delivery:'день в день'},'Хоругвино':{schedule:'В любой день',delivery:'1-2 дня'},'Петровское':{schedule:'В любой день',delivery:'1-2 дня'},'Радумля':{schedule:'В любой день',delivery:'1-2 дня'},'Ногинск':{schedule:'В любой день',delivery:'1-2 дня'},'Фреш':{schedule:'В любой день',delivery:'1-2 дня'},'Пушкино':{schedule:'В любой день',delivery:'1-2 дня'},'Пушкино 1':{schedule:'В любой день',delivery:'1-2 дня'},'Пушкино 2':{schedule:'В любой день',delivery:'1-2 дня'},'Жуковский':{schedule:'В любой день',delivery:'1-2 дня'},'Домодедово':{schedule:'В любой день',delivery:'1-2 дня'},'Софьино':{schedule:'В любой день',delivery:'1-2 дня'},'Гривно':{schedule:'В любой день',delivery:'1-2 дня'},'Ватутинки':{schedule:'В любой день',delivery:'1-2 дня'},'Великий Камень (Минск)':{schedule:'Пн-Пт — след. день',delivery:'2 дня'},
 };
 const VALID_CITIES = new Set(Object.keys(routesDB));
 const STATUSES = [
-    { value: 'in_work', label: 'В работе', class: 'status-work' },
-    { value: 'waiting', label: 'Ожидает', class: 'status-wait' },
-    { value: 'rejected', label: 'Не принят', class: 'status-reject' },
-    { value: 'sent', label: 'Отправлено', class: 'status-sent' },
-    { value: 'ready', label: 'Готово', class: 'status-ready' }
+    { value: 'in_work', label: 'В работе', class: 'status-work' },{ value: 'waiting', label: 'Ожидает', class: 'status-wait' },{ value: 'rejected', label: 'Не принят', class: 'status-reject' },{ value: 'sent', label: 'Отправлено', class: 'status-sent' },{ value: 'ready', label: 'Готово', class: 'status-ready' }
 ];
-const VED_STATUSES = { 
-    transit: { label: 'В пути', class: 'status-transit' }, 
-    customs: { label: 'Таможня', class: 'status-customs' }, 
-    svh: { label: 'На СВХ', class: 'status-svh' }, 
-    arrived: { label: 'Прибыла', class: 'status-arrived' } 
-};
+const VED_STATUSES = { transit: { label: 'В пути', class: 'status-transit' }, customs: { label: 'Таможня', class: 'status-customs' }, svh: { label: 'На СВХ', class: 'status-svh' }, arrived: { label: 'Прибыла', class: 'status-arrived' } };
 const SUPPLIERS = ['', 'Большие Амбиции', 'ИП Орищенко', 'НордТрансСклад', 'Тессар'];
 const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const FORECAST_MONTHS = ['Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const MAX_VED_LISTS = 4;
 
 // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
-let wbShipments = []; let ozonShipments = []; let logEntries = []; let vedSupplies = []; 
-let weekCapacities = {}; let isOnline = false;
-let currentPage = 'schedule'; let currentSubPage = 'weeks'; 
-let vedTempLists = []; let vedSearchQuery = ''; let vedExpandedId = null;
+let wbShipments = []; let ozonShipments = []; let logEntries = []; let vedSupplies = []; let weekCapacities = {}; let isOnline = false;
+let currentPage = 'schedule'; let currentSubPage = 'weeks'; let vedTempLists = []; let vedSearchQuery = ''; let vedExpandedId = null;
 let editingShipmentId = null; let logHistoryExpanded = false;
 let wbStockData = []; let ozonStockData = []; let msStockData = [];
 let currentWbSubPage = 'shipments'; let currentOzonSubPage = 'shipments';
-let warehouseData = { 
-    totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, 
-    baseExpense: 51.50, marchPlan: 311000000, 
-    salesPlan: { "Апрель": 343000000, "Май": 387000000, "Июнь": 428300000, 
-                 "Июль": 494000000, "Август": 565000000, "Сентябрь": 629000000, 
-                 "Октябрь": 697000000, "Ноябрь": 775000000, "Декабрь": 1149000000 } 
-};
+let warehouseData = { totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50, marchPlan: 311000000, salesPlan: { "Апрель": 343000000, "Май": 387000000, "Июнь": 428300000, "Июль": 494000000, "Август": 565000000, "Сентябрь": 629000000, "Октябрь": 697000000, "Ноябрь": 775000000, "Декабрь": 1149000000 } };
 
 // ========== БЕЗОПАСНАЯ РАБОТА С DOM ==========
 function safeGetElement(id) { const el = document.getElementById(id); if (!el) console.warn('safeGetElement: #' + id + ' не найден'); return el; }
-function safeAddEventListener(id, event, handler) { const el = safeGetElement(id); if (el) el.addEventListener(event, handler); }
+function safeAddEventListener(id, event, handler) { const el = safeGetElement(id); if (el) { el.addEventListener(event, handler); } }
 
 // ========== ВАЛИДАЦИЯ ГОРОДОВ ==========
 function validateCityInput(inputEl) { if (!inputEl) return; const city = inputEl.value.trim(); if (city.length === 0) { inputEl.classList.remove('invalid'); return; } if (!VALID_CITIES.has(city)) { inputEl.classList.add('invalid'); } else { inputEl.classList.remove('invalid'); } }
 
 // ========== УНИВЕРСАЛЬНАЯ ЗАГРУЗКА/СОХРАНЕНИЕ ==========
-function loadAllFromLocalStorage() { 
-    try { 
-        wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Wildberries' })); 
-        ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Ozon' })); 
-        logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false, linkId: e.linkId || null })); 
-        vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true })); 
-        weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}'); 
-        wbStockData = JSON.parse(localStorage.getItem('wbStock') || '[]'); 
-        ozonStockData = JSON.parse(localStorage.getItem('ozonStock') || '[]'); 
-        msStockData = JSON.parse(localStorage.getItem('msStock') || '[]'); 
-        const savedWarehouse = localStorage.getItem('warehouseData'); 
-        if (savedWarehouse) { 
-            const data = JSON.parse(savedWarehouse); 
-            warehouseData.totalCapacity = data.totalCapacity || 2267; 
-            warehouseData.currentOccupancy = data.currentOccupancy || 1408; 
-            warehouseData.constantVolume = data.constantVolume || 85; 
-            warehouseData.baseExpense = data.baseExpense || 51.50; 
-            warehouseData.marchPlan = data.marchPlan || 311000000; 
-            warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; 
-        } 
-    } catch (e) { console.error('Ошибка загрузки из localStorage:', e); } 
-}
-function saveAllToLocalStorage() { 
-    try { 
-        localStorage.setItem('wb', JSON.stringify(wbShipments)); 
-        localStorage.setItem('ozon', JSON.stringify(ozonShipments)); 
-        localStorage.setItem('log', JSON.stringify(logEntries)); 
-        localStorage.setItem('ved', JSON.stringify(vedSupplies)); 
-        localStorage.setItem('cap', JSON.stringify(weekCapacities)); 
-        localStorage.setItem('warehouseData', JSON.stringify(warehouseData)); 
-        localStorage.setItem('wbStock', JSON.stringify(wbStockData)); 
-        localStorage.setItem('ozonStock', JSON.stringify(ozonStockData)); 
-        localStorage.setItem('msStock', JSON.stringify(msStockData)); 
-        localStorage.setItem('currentPage', currentPage); 
-        localStorage.setItem('currentSubPage', currentSubPage); 
-    } catch (e) { console.error('Ошибка сохранения в localStorage:', e); showToast('Ошибка сохранения'); } 
-}
+function loadAllFromLocalStorage() { try { wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Wildberries' })); ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Ozon' })); logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false, linkId: e.linkId || null })); vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true })); weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}'); wbStockData = JSON.parse(localStorage.getItem('wbStock') || '[]'); ozonStockData = JSON.parse(localStorage.getItem('ozonStock') || '[]'); msStockData = JSON.parse(localStorage.getItem('msStock') || '[]'); const savedWarehouse = localStorage.getItem('warehouseData'); if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.marchPlan = data.marchPlan || 311000000; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; } } catch (e) { console.error('Ошибка загрузки из localStorage:', e); } }
+function saveAllToLocalStorage() { try { localStorage.setItem('wb', JSON.stringify(wbShipments)); localStorage.setItem('ozon', JSON.stringify(ozonShipments)); localStorage.setItem('log', JSON.stringify(logEntries)); localStorage.setItem('ved', JSON.stringify(vedSupplies)); localStorage.setItem('cap', JSON.stringify(weekCapacities)); localStorage.setItem('warehouseData', JSON.stringify(warehouseData)); localStorage.setItem('wbStock', JSON.stringify(wbStockData)); localStorage.setItem('ozonStock', JSON.stringify(ozonStockData)); localStorage.setItem('msStock', JSON.stringify(msStockData)); localStorage.setItem('currentPage', currentPage); localStorage.setItem('currentSubPage', currentSubPage); } catch (e) { console.error('Ошибка сохранения в localStorage:', e); showToast('Ошибка сохранения'); } }
 
 // ========== FIREBASE ОПТИМИЗИРОВАННЫЙ ==========
 async function loadFromFirebase() {
@@ -699,16 +803,18 @@ async function loadFromFirebase() {
     const emergencyFallback = setTimeout(() => {
         if (!emergencyFired) {
             emergencyFired = true;
+            console.warn('Firebase timeout — переключение на localStorage');
             loadAllFromLocalStorage();
             isOnline = false;
             updateSyncStatus('offline');
-            renderAllOptimized();
-            showToast('Офлайн-режим');
+            renderAllDebounced();
+            showToast('Офлайн-режим (таймаут)');
         }
     }, TIMEOUT);
     
     try {
         updateSyncStatus('loading');
+        
         const [wbSnap, ozonSnap, logSnap, vedSnap, capDoc, settingsDoc, wbStockDoc, ozonStockDoc, msStockDoc] = 
             await Promise.all([
                 db.collection('shipments_wb').orderBy('date').get().catch(() => ({ empty: true, docs: [] })),
@@ -730,6 +836,7 @@ async function loadFromFirebase() {
         logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false, linkId: d.data().linkId || null }));
         vedSupplies = vedSnap.docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true }));
         weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
+        
         if (settingsDoc.exists) {
             const d = settingsDoc.data();
             warehouseData.totalCapacity = d.totalCapacity || 2267;
@@ -746,17 +853,31 @@ async function loadFromFirebase() {
         isOnline = true;
         updateSyncStatus('online');
         saveAllToLocalStorage();
-        renderAllOptimized();
-        showToast('Синхронизировано');
+        renderAllDebounced();
+        showToast('Данные синхронизированы');
+        
     } catch (e) {
         clearTimeout(emergencyFallback);
         if (!emergencyFired) {
+            console.error('Firebase error:', e);
             loadAllFromLocalStorage();
             isOnline = false;
             updateSyncStatus('offline');
-            renderAllOptimized();
+            renderAllDebounced();
+            showToast('Офлайн-режим');
         }
     }
+}
+
+// ========== ЗАЩИТА ОТ ДВОЙНОГО РЕНДЕРИНГА ==========
+let renderScheduled = false;
+function renderAllDebounced() {
+    if (renderScheduled) return;
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+        renderAll();
+        renderScheduled = false;
+    });
 }
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ==========
@@ -768,367 +889,315 @@ function updateSyncStatus(s) { const el = document.getElementById('syncStatus'),
 function formatAmount(n) { if (n >= 1000000) return (n / 1000000).toFixed(2) + ' млн'; if (n >= 1000) return (n / 1000).toFixed(0) + ' тыс.'; return n.toLocaleString('ru-RU'); }
 
 // ========== WB / OZON ==========
-function showRouteInfo() { 
-    const ci = document.getElementById('shipCityWildberries'); if (!ci) return; 
-    validateCityInput(ci); const city = ci.value.trim(); const route = routesDB[city]; 
-    const info = document.getElementById('routeInfoWildberries'); 
-    if (route && info) { 
-        info.classList.add('show'); 
-        safeGetElement('routeTitleWildberries').textContent = city; 
-        safeGetElement('routeDetailWildberries').textContent = 'Срок: ' + route.delivery; 
-        safeGetElement('routeScheduleWildberries').innerHTML = route.schedule.split(', ').map(x => `<span class="route-chip">${x}</span>`).join(''); 
-    } else if (info) { info.classList.remove('show'); } 
-}
-async function saveShipment(mp) { 
-    const de = document.getElementById('shipDate'+mp), ce = document.getElementById('shipCity'+mp), qe = document.getElementById('shipQty'+mp); 
-    if (!de||!ce||!qe) return; const date = de.value, city = ce.value.trim(), qty = parseInt(qe.value)||0; 
-    if (!date||!city||qty<=0) { alert('Заполните дату, город и количество'); return; } 
-    if (!VALID_CITIES.has(city)) { alert('Город не найден в справочнике'); return; } 
-    const linkId = generateUniqueId(); 
-    const shipment = { id: generateUniqueId(), date, city, qty, source: mp, status:'in_work', linkId }; 
-    (mp==='Wildberries'?wbShipments:ozonShipments).push(shipment); 
-    logEntries.push({ id: generateUniqueId(), date, marketplace: mp, type: 'FBO', supplier: '', city, qty, boxes: 0, amount: 0, amountFull: 0, paid: false, nds: '22%', source: 'Авто из ' + mp, linkId }); 
-    if (isOnline) { 
-        try { await Promise.all([db.collection(mp==='Wildberries'?'shipments_wb':'shipments_ozon').doc(shipment.id).set(shipment), db.collection('logistics').doc(linkId).set(logEntries[logEntries.length-1])]); } catch(e) {} 
-    } 
-    saveAllToLocalStorage(); renderAllOptimized(); clearShipmentForm(mp); showToast(city+' — '+qty.toLocaleString('ru-RU')+' ед.'); 
-}
-function clearShipmentForm(mp) { 
-    safeGetElement('shipDate'+mp).value = new Date().toISOString().slice(0,10); 
-    const ce = safeGetElement('shipCity'+mp); if (ce) { ce.value = ''; ce.classList.remove('invalid'); } 
-    safeGetElement('shipQty'+mp).value = ''; 
-    if (mp==='Wildberries') { const info = document.getElementById('routeInfoWildberries'); if (info) info.classList.remove('show'); } 
-}
-async function deleteShipment(mp, id) { 
-    if (!confirm('Удалить?')) return; 
-    const arr = mp==='Wildberries'?wbShipments:ozonShipments; 
-    const shipment = arr.find(s => String(s.id)===String(id)); 
-    const linkId = shipment?.linkId; 
-    if (mp==='Wildberries') wbShipments = wbShipments.filter(s => String(s.id)!==String(id)); 
-    else ozonShipments = ozonShipments.filter(s => String(s.id)!==String(id)); 
-    if (linkId) { 
-        logEntries = logEntries.filter(l => l.linkId !== linkId); 
-        if (isOnline) { try { await db.collection('logistics').doc(String(linkId)).delete(); } catch(e) {} } 
-    } 
-    if (isOnline) { try { await db.collection(mp==='Wildberries'?'shipments_wb':'shipments_ozon').doc(String(id)).delete(); } catch(e) {} } 
-    saveAllToLocalStorage(); renderAllOptimized(); showToast('Удалено'); 
-}
-function renderShipmentCards(mp) { 
-    const arr = mp==='Wildberries'?wbShipments:ozonShipments; 
-    const cid = mp==='Wildberries'?'wbCards':'ozonCards'; 
-    const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date)); 
-    const container = document.getElementById(cid); 
-    if (!container) return; 
-    if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; } 
-    let html = ''; 
-    for (let e of srt) { 
-        const cs = e.status||'in_work'; const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; 
-        const route = mp==='Wildberries'?(routesDB[e.city]||null):null; 
-        html += `<div class="shipment-card"><div class="card-accent ${mp==='Wildberries'?'wb':'ozon'}"></div><div class="card-body"><div class="card-header"><div><div class="card-city">${escapeHtml(e.city)}</div><div class="card-date">${escapeHtml(e.date)}</div></div><div class="card-actions"><button type="button" class="card-edit" data-edit-mp="${mp}" data-edit-id="${e.id}">✎</button><button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}">&times;</button></div></div><div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div><div class="card-qty-label">единиц</div><div class="card-footer"><div class="card-status"><select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}">${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}</select></div>${route ? `<div><span class="route-badge">${route.delivery}</span></div>` : ''}</div></div></div>`; 
-    } 
-    container.innerHTML = html; 
-}
-function handleStatusChange(event) { 
-    const s = event.target; if (!s.classList.contains('status-select')) return; 
-    const mp = s.dataset.mp, id = s.dataset.id, st = s.value; 
-    const sh = (mp==='Wildberries'?wbShipments:ozonShipments).find(x => String(x.id)===String(id)); 
-    if (sh) { sh.status = st; saveAllToLocalStorage(); if (isOnline) { db.collection(mp==='Wildberries'?'shipments_wb':'shipments_ozon').doc(String(id)).update({status:st}).catch(()=>{}); } } 
-}
+function showRouteInfo() { const ci = document.getElementById('shipCityWildberries'); if (!ci) return; validateCityInput(ci); const city = ci.value.trim(); const route = routesDB[city]; const info = document.getElementById('routeInfoWildberries'); if (route && info) { info.classList.add('show'); const t = document.getElementById('routeTitleWildberries'); const d = document.getElementById('routeDetailWildberries'); const s = document.getElementById('routeScheduleWildberries'); if (t) t.textContent = city; if (d) d.textContent = 'Срок: ' + route.delivery; if (s) s.innerHTML = route.schedule.split(', ').map(x => `<span class="route-chip">${x}</span>`).join(''); } else if (info) { info.classList.remove('show'); } }
+async function saveShipment(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (!de||!ce||!qe) return; const date = de.value, city = ce.value.trim(), qty = parseInt(qe.value)||0; if (!date||!city||qty<=0) { alert('Заполните дату, город и количество'); return; } if (!VALID_CITIES.has(city)) { alert('Город не найден в справочнике. Проверьте написание.'); return; } const linkId = generateUniqueId(); const shipment = { id: generateUniqueId(), date, city, qty, source: mp, status:'in_work', linkId }; const arr = mp==='Wildberries'?wbShipments:ozonShipments; arr.push(shipment); const logEntry = { id: generateUniqueId(), date, marketplace: mp, type: 'FBO', supplier: '', city, qty, boxes: 0, amount: 0, amountFull: 0, paid: false, nds: '22%', source: 'Авто из ' + mp, linkId }; logEntries.push(logEntry); if (isOnline) { const colShip = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(colShip).doc(shipment.id).set(shipment); await db.collection('logistics').doc(logEntry.id).set(logEntry); } catch(e) { showToast('Сохранено локально'); } } saveAllToLocalStorage(); renderAllDebounced(); clearShipmentForm(mp); showToast(city+' — '+qty.toLocaleString('ru-RU')+' ед. (+ логистика)'); }
+function clearShipmentForm(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (de) de.value = new Date().toISOString().slice(0,10); if (ce) { ce.value = ''; ce.classList.remove('invalid'); } if (qe) qe.value = ''; if (mp==='Wildberries') { const info = document.getElementById('routeInfoWildberries'); if (info) info.classList.remove('show'); } }
+async function deleteShipment(mp, id) { if (!confirm('Удалить отгрузку? Связанная запись в логистике тоже будет удалена.')) return; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const shipment = arr.find(s => String(s.id)===String(id)); const linkId = shipment ? shipment.linkId : null; if (mp==='Wildberries') wbShipments = wbShipments.filter(s => String(s.id)!==String(id)); else ozonShipments = ozonShipments.filter(s => String(s.id)!==String(id)); if (linkId) { const linkedLog = logEntries.find(l => l.linkId === linkId); if (linkedLog) { logEntries = logEntries.filter(l => l.linkId !== linkId); if (isOnline) { try { await db.collection('logistics').doc(String(linkedLog.id)).delete(); } catch(e) {} } } } if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(col).doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAllDebounced(); showToast('Отгрузка и связанная логистика удалены'); }
+function startEditQty(mp, id) { editingShipmentId = String(id); renderShipmentCards(mp); setTimeout(() => { const input = document.getElementById('qty-input-' + id); if (input) { input.focus(); input.select(); } }, 50); }
+function cancelEditQty(mp) { editingShipmentId = null; renderShipmentCards(mp); }
+async function saveEditQty(mp, id) { const input = document.getElementById('qty-input-' + id); if (!input) return; const newQty = parseInt(input.value) || 0; if (newQty <= 0) { showToast('Количество должно быть больше 0'); return; } const arr = mp === 'Wildberries' ? wbShipments : ozonShipments; const shipment = arr.find(s => String(s.id) === String(id)); if (shipment) { const oldQty = shipment.qty; shipment.qty = newQty; if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) logEntry.qty = newQty; } if (isOnline) { const col = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon'; try { await db.collection(col).doc(String(id)).update({ qty: newQty }); } catch(e) {} if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) { try { await db.collection('logistics').doc(String(logEntry.id)).update({ qty: newQty }); } catch(e) {} } } } saveAllToLocalStorage(); showToast('Количество изменено: ' + oldQty.toLocaleString('ru-RU') + ' → ' + newQty.toLocaleString('ru-RU')); } editingShipmentId = null; renderShipmentCards(mp); renderAllDebounced(); }
+function renderShipmentCards(mp) { const arr = mp==='Wildberries'?wbShipments:ozonShipments; const cid = mp==='Wildberries'?'wbCards':'ozonCards'; const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date)); const container = document.getElementById(cid); if (!container) return; if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; } let html = ''; for (let e of srt) { const cs = e.status||'in_work'; const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; const route = mp==='Wildberries'?(routesDB[e.city]||null):null; const accentClass = mp==='Wildberries'?'wb':'ozon'; const isEditing = editingShipmentId === String(e.id); html += `<div class="shipment-card"><div class="card-accent ${accentClass}"></div><div class="card-body"><div class="card-header"><div><div class="card-city">${escapeHtml(e.city)}</div><div class="card-date">${escapeHtml(e.date)}</div></div><div class="card-actions"><button type="button" class="card-edit" data-edit-mp="${mp}" data-edit-id="${e.id}" title="Редактировать количество">✎</button><button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}" title="Удалить">&times;</button></div></div>${isEditing ? `<div class="card-qty-row"><input type="number" class="card-qty-input" id="qty-input-${e.id}" value="${e.qty}" min="1" onkeydown="if(event.key==='Enter')saveEditQty('${mp}','${e.id}'); if(event.key==='Escape')cancelEditQty('${mp}');" onblur="saveEditQty('${mp}','${e.id}')"></div>` : `<div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>`}<div class="card-qty-label">единиц</div><div class="card-footer"><div class="card-status"><select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}">${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}</select></div>${route ? `<div><span class="route-badge">${route.delivery}</span></div>` : ''}</div></div></div>`; } container.innerHTML = html; }
+function handleStatusChange(event) { const s = event.target; if (!s.classList.contains('status-select')) return; const mp = s.dataset.mp, id = s.dataset.id, st = s.value; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const sh = arr.find(x => String(x.id)===String(id)); if (sh) { sh.status = st; saveAllToLocalStorage(); if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; db.collection(col).doc(String(id)).update({status:st}).catch(()=>{}); } renderShipmentCards(mp); } }
 
 // ========== ПАРСЕР ОСТАТКОВ ==========
 class StockParserJS {
-    parseStockReport(file) { 
-        return new Promise((resolve, reject) => { 
-            const reader = new FileReader(); 
-            reader.onload = (e) => { 
-                try { 
-                    const data = new Uint8Array(e.target.result); 
-                    const workbook = XLSX.read(data, { type: 'array', cellFormula: false, cellNF: true }); 
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]]; 
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false }); 
-                    const { headerRowIndex, columnIndices } = this.findHeaderRow(rows); 
-                    if (!columnIndices || Object.keys(columnIndices).length < 2) throw new Error("Не удалось найти заголовки"); 
-                    resolve({ items: this.parseDataRows(rows, headerRowIndex, columnIndices), fileName: file.name }); 
-                } catch (err) { reject(err); } 
-            }; 
-            reader.onerror = () => reject('Ошибка чтения'); 
-            reader.readAsArrayBuffer(file); 
-        }); 
-    }
-    findHeaderRow(rows) { 
-        for (let i = 0; i < Math.min(20, rows.length); i++) { 
-            const row = rows[i]; if (!row) continue; 
-            let matchCount = 0; const indices = {}; 
-            for (let col = 0; col < row.length; col++) { 
-                const cell = String(row[col] || '').trim(); 
-                if (cell.includes('Артикул')) { indices['Артикул'] = col; matchCount++; } 
-                if (cell.includes('Наименование') || cell.includes('Номенклатура')) { indices['Наименование'] = col; matchCount++; } 
-                if (cell.includes('Ожидание') || cell.includes('В пути')) { indices['Ожидание'] = col; matchCount++; } 
-                if (cell.includes('Остаток') || cell.includes('Доступно')) { indices['Остаток'] = col; matchCount++; } 
-            } 
-            if (matchCount >= 2) return { headerRowIndex: i, columnIndices: indices }; 
-        } 
-        return { headerRowIndex: 0, columnIndices: null }; 
-    }
-    parseDataRows(rows, headerRowIndex, columnIndices) { 
-        const items = []; 
-        for (let i = headerRowIndex + 1; i < rows.length; i++) { 
-            const row = rows[i]; if (!row) continue; 
-            const article = this.getCellString(row, columnIndices['Артикул']); 
-            const name = this.getCellString(row, columnIndices['Наименование']); 
-            if (!article && !name) continue; 
-            if (name === 'Итого' || article === 'Итого') continue; 
-            items.push({ article: article.trim(), name: name.trim(), waiting: this.getCellNumber(row, columnIndices['Ожидание']), balance: this.getCellNumber(row, columnIndices['Остаток']) }); 
-        } 
-        return items; 
-    }
-    getCellString(row, colIndex) { if (colIndex === undefined || colIndex >= row.length) return ''; const cell = row[colIndex]; return cell ? String(cell).trim() : ''; }
-    getCellNumber(row, colIndex) { if (colIndex === undefined || colIndex >= row.length) return 0; const cell = row[colIndex]; if (!cell) return 0; if (typeof cell === 'number') return Math.round(cell); const num = parseInt(String(cell).replace(/[^\d.-]/g, ''), 10); return isNaN(num) ? 0 : num; }
+    constructor() { this.requiredColumns = ["Артикул", "Наименование", "Ожидание", "Остаток"]; }
+    parseStockReport(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = (e) => { try { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array', cellFormula: false, cellNF: true }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false }); const { headerRowIndex, columnIndices } = this.findHeaderRow(rows); if (!columnIndices || Object.keys(columnIndices).length < 2) { throw new Error("Не удалось найти заголовки"); } const items = this.parseDataRows(rows, headerRowIndex, columnIndices); resolve({ items, fileName: file.name, totalBalance: items.reduce((s, i) => s + i.balance, 0), totalWaiting: items.reduce((s, i) => s + i.waiting, 0), itemsWithBalance: items.filter(i => i.balance > 0).length, itemsWithWaiting: items.filter(i => i.waiting > 0).length }); } catch (err) { reject(err); } }; reader.onerror = () => reject('Ошибка чтения файла'); reader.readAsArrayBuffer(file); }); }
+    findHeaderRow(rows) { for (let i = 0; i < Math.min(20, rows.length); i++) { const row = rows[i]; if (!row) continue; let matchCount = 0; const indices = {}; for (let col = 0; col < row.length; col++) { const cell = String(row[col] || '').trim(); if (cell.includes('Артикул')) { indices['Артикул'] = col; matchCount++; } if (cell.includes('Наименование') || cell.includes('Номенклатура') || cell.includes('Название')) { indices['Наименование'] = col; matchCount++; } if (cell.includes('Ожидание') || cell.includes('В пути') || cell.includes('В ожидании')) { indices['Ожидание'] = col; matchCount++; } if (cell.includes('Остаток') || cell.includes('Доступно') || cell.includes('На складе')) { indices['Остаток'] = col; matchCount++; } } if (matchCount >= 2) { return { headerRowIndex: i, columnIndices: indices }; } } return { headerRowIndex: 0, columnIndices: null }; }
+    parseDataRows(rows, headerRowIndex, columnIndices) { const items = []; for (let i = headerRowIndex + 1; i < rows.length; i++) { const row = rows[i]; if (!row) continue; const article = this.getCellString(row, columnIndices['Артикул']); const name = this.getCellString(row, columnIndices['Наименование']); if (this.isCategoryRow(article, name)) continue; if (this.isEmptyRow(article, name)) continue; if (name === 'Итого' || article === 'Итого') continue; if (article.trim().length === 0 && name.trim().length === 0) continue; const waiting = this.getCellNumber(row, columnIndices['Ожидание']); const balance = this.getCellNumber(row, columnIndices['Остаток']); items.push({ article: article.trim(), name: name.trim(), waiting, balance }); } return items; }
+    getCellString(row, colIndex) { if (colIndex === undefined || colIndex >= row.length) return ''; const cell = row[colIndex]; if (cell === undefined || cell === null) return ''; return String(cell).trim(); }
+    getCellNumber(row, colIndex) { if (colIndex === undefined || colIndex >= row.length) return 0; const cell = row[colIndex]; if (cell === undefined || cell === null) return 0; if (typeof cell === 'number') return Math.round(cell); const str = String(cell).trim(); if (!str) return 0; const num = parseInt(str.replace(/[^\d.-]/g, ''), 10); return isNaN(num) ? 0 : num; }
+    isCategoryRow(article, name) { if (!article || !name) return false; if (article.includes('/') && article.split('/').length > 1) { if (!/^[A-Za-z]\d+/.test(article)) return true; if (name.trim().length === 0 || name.startsWith('ТОВАРЫ')) return true; } if (name.includes('/') && name.split('/').length > 1) return true; return false; }
+    isEmptyRow(article, name) { return (!article || article.trim().length === 0) && (!name || name.trim().length === 0); }
 }
 const stockParser = new StockParserJS();
 
-// ========== ОСТАТКИ ==========
-async function handleStockFileUpload(mp, file) { 
-    try { 
-        const result = await stockParser.parseStockReport(file); 
-        if (mp === 'WB') { wbStockData = result.items; safeGetElement('wbStockFileInfo').style.display = 'flex'; safeGetElement('wbStockUpload').classList.add('has-file'); renderWbStock(); } 
-        else if (mp === 'OZON') { ozonStockData = result.items; safeGetElement('ozonStockFileInfo').style.display = 'flex'; safeGetElement('ozonStockUpload').classList.add('has-file'); renderOzonStock(); } 
-        saveAllToLocalStorage(); showToast(mp + ': загружено ' + result.items.length + ' позиций'); 
-    } catch (err) { showToast('Ошибка: ' + err.message); } 
-}
-function renderWbStock() { renderStockTable('WB'); }
-function renderOzonStock() { renderStockTable('Ozon'); }
-function renderStockTable(mp) { 
-    const data = mp === 'WB' ? wbStockData : ozonStockData; 
-    const container = document.getElementById(mp === 'WB' ? 'wbStockTable' : 'ozonStockTable'); 
-    const filtersEl = document.getElementById(mp === 'WB' ? 'wbStockFilters' : 'ozonStockFilters'); 
-    if (!container) return; 
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Загрузите файл</div>'; if (filtersEl) filtersEl.style.display = 'none'; return; } 
-    if (filtersEl) filtersEl.style.display = 'flex'; 
-    let html = '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Остаток</th></tr></thead><tbody>'; 
-    for (const item of data.slice(0, 100)) { html += `<tr><td>${escapeHtml(item.article)}</td><td>${escapeHtml(item.name)}</td><td class="num">${item.balance.toLocaleString('ru-RU')}</td></tr>`; } 
-    html += '</tbody></table>'; container.innerHTML = html; 
-}
-async function handleMsStockFileUpload(file) { 
-    try { 
-        const result = await stockParser.parseStockReport(file); 
-        msStockData = result.items; 
-        saveAllToLocalStorage(); 
-        safeGetElement('msStockFileInfo').style.display = 'flex'; 
-        safeGetElement('msStockUpload').classList.add('has-file'); 
-        renderMsStock(); 
-        showToast('МС: загружено ' + result.items.length + ' позиций'); 
-    } catch (err) { showToast('Ошибка: ' + err.message); } 
-}
-function renderMsStock() { 
-    const container = document.getElementById('msStockTable'); 
-    if (!container) return; 
-    if (!msStockData.length) { container.innerHTML = '<div class="empty-state">Загрузите файл</div>'; return; } 
-    let html = '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Остаток</th></tr></thead><tbody>'; 
-    for (const item of msStockData.slice(0, 100)) { html += `<tr><td>${escapeHtml(item.article)}</td><td>${escapeHtml(item.name)}</td><td class="num">${item.balance.toLocaleString('ru-RU')}</td></tr>`; } 
-    html += '</tbody></table>'; container.innerHTML = html; 
-}
+// ========== ОСТАТКИ WB / OZON ==========
+async function handleStockFileUpload(mp, file) { try { const result = await stockParser.parseStockReport(file); if (mp === 'WB') { wbStockData = result.items; document.getElementById('wbStockFileName').textContent = result.fileName + ' (' + result.items.length + ' поз.)'; document.getElementById('wbStockFileInfo').style.display = 'flex'; document.getElementById('wbStockUpload').classList.add('has-file'); renderWbStock(); } else if (mp === 'OZON') { ozonStockData = result.items; document.getElementById('ozonStockFileName').textContent = result.fileName + ' (' + result.items.length + ' поз.)'; document.getElementById('ozonStockFileInfo').style.display = 'flex'; document.getElementById('ozonStockUpload').classList.add('has-file'); renderOzonStock(); } saveAllToLocalStorage(); if (isOnline) { const docId = mp === 'WB' ? 'wbStock' : 'ozonStock'; db.collection('settings').doc(docId).set({ items: result.items }).catch(() => {}); } showToast(mp + ': загружено ' + result.items.length + ' позиций'); } catch (err) { showToast('Ошибка: ' + err.message); } }
+function removeStockFile(mp) { if (mp === 'WB') { wbStockData = []; document.getElementById('wbStockFileInfo').style.display = 'none'; document.getElementById('wbStockUpload').classList.remove('has-file'); document.getElementById('wbStockTable').innerHTML = '<div class="empty-state">Загрузите файл для отображения остатков</div>'; document.getElementById('wbStockStats').innerHTML = ''; document.getElementById('wbStockFilters').style.display = 'none'; } else if (mp === 'OZON') { ozonStockData = []; document.getElementById('ozonStockFileInfo').style.display = 'none'; document.getElementById('ozonStockUpload').classList.remove('has-file'); document.getElementById('ozonStockTable').innerHTML = '<div class="empty-state">Загрузите файл для отображения остатков</div>'; document.getElementById('ozonStockStats').innerHTML = ''; document.getElementById('ozonStockFilters').style.display = 'none'; } saveAllToLocalStorage(); showToast('Файл удалён'); }
+function getFilteredStockData(mp) { const data = mp === 'WB' ? wbStockData : ozonStockData; const searchEl = document.getElementById(mp === 'WB' ? 'wbStockSearch' : 'ozonStockSearch'); const balanceEl = document.getElementById(mp === 'WB' ? 'wbStockBalanceFilter' : 'ozonStockBalanceFilter'); const waitingEl = document.getElementById(mp === 'WB' ? 'wbStockWaitingFilter' : 'ozonStockWaitingFilter'); let filtered = [...data]; const query = (searchEl?.value || '').trim().toLowerCase(); const balanceFilter = balanceEl?.value || 'all'; const waitingFilter = waitingEl?.value || 'all'; if (query) { filtered = filtered.filter(i => i.article.toLowerCase().includes(query) || i.name.toLowerCase().includes(query)); } if (balanceFilter === 'positive') filtered = filtered.filter(i => i.balance > 0); else if (balanceFilter === 'zero') filtered = filtered.filter(i => i.balance === 0); else if (balanceFilter === 'negative') filtered = filtered.filter(i => i.balance < 0); if (waitingFilter === 'positive') filtered = filtered.filter(i => i.waiting > 0); else if (waitingFilter === 'zero') filtered = filtered.filter(i => i.waiting === 0); return filtered; }
+function renderStockStats(mp) { const data = mp === 'WB' ? wbStockData : ozonStockData; const container = document.getElementById(mp === 'WB' ? 'wbStockStats' : 'ozonStockStats'); if (!container || !data.length) { container.innerHTML = ''; return; } const totalBalance = data.reduce((s, i) => s + i.balance, 0); const totalWaiting = data.reduce((s, i) => s + i.waiting, 0); const withBalance = data.filter(i => i.balance > 0).length; const withWaiting = data.filter(i => i.waiting > 0).length; container.innerHTML = `<div class="stock-stat-card"><div class="ss-value">${data.length.toLocaleString('ru-RU')}</div><div class="ss-label">Всего позиций</div></div><div class="stock-stat-card ss-success"><div class="ss-value">${totalBalance.toLocaleString('ru-RU')}</div><div class="ss-label">Общий остаток</div></div><div class="stock-stat-card ss-warning"><div class="ss-value">${totalWaiting.toLocaleString('ru-RU')}</div><div class="ss-label">В ожидании</div></div><div class="stock-stat-card ss-info"><div class="ss-value">${withBalance.toLocaleString('ru-RU')}</div><div class="ss-label">С остатком > 0</div></div>`; }
+function renderStockTable(mp) { const data = mp === 'WB' ? wbStockData : ozonStockData; const container = document.getElementById(mp === 'WB' ? 'wbStockTable' : 'ozonStockTable'); const filtersEl = document.getElementById(mp === 'WB' ? 'wbStockFilters' : 'ozonStockFilters'); if (!container) return; if (!data.length) { container.innerHTML = '<div class="empty-state">Загрузите файл для отображения остатков</div>'; if (filtersEl) filtersEl.style.display = 'none'; return; } if (filtersEl) filtersEl.style.display = 'flex'; const filtered = getFilteredStockData(mp); if (!filtered.length) { container.innerHTML = '<div class="stock-empty-filter">Нет данных, соответствующих фильтрам</div>'; return; } let html = '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Ожидание</th><th class="num">Остаток</th><th>Статус</th></tr></thead><tbody>'; for (const item of filtered) { let statusBadge = ''; if (item.balance > 100) statusBadge = '<span class="stock-badge high">✓ Высокий</span>'; else if (item.balance > 10) statusBadge = '<span class="stock-badge medium">⚠ Средний</span>'; else if (item.balance > 0) statusBadge = '<span class="stock-badge low">🔴 Низкий</span>'; else statusBadge = '<span class="stock-badge zero">— Нет</span>'; html += `<tr><td style="font-family:monospace;font-size:12px;">${escapeHtml(item.article)}</td><td>${escapeHtml(item.name)}</td><td class="num">${item.waiting.toLocaleString('ru-RU')}</td><td class="num"><b>${item.balance.toLocaleString('ru-RU')}</b></td><td>${statusBadge}</td></tr>`; } html += '</tbody></table>'; html += `<div style="padding:10px 16px;font-size:11px;color:var(--text-tertiary);">Показано ${filtered.length} из ${data.length} позиций</div>`; container.innerHTML = html; }
+function renderWbStock() { renderStockStats('WB'); renderStockTable('WB'); }
+function renderOzonStock() { renderStockStats('Ozon'); renderStockTable('Ozon'); }
+function exportStockCSV(mp) { const data = getFilteredStockData(mp); if (!data.length) { showToast('Нет данных для экспорта'); return; } let csv = 'Артикул;Наименование;Ожидание;Остаток\n'; for (const item of data) { csv += `"${item.article}";"${item.name}";${item.waiting};${item.balance}\n`; } downloadCSV(csv, `остатки_${mp.toLowerCase()}.csv`); }
+function resetStockFilters(mp) { const searchEl = document.getElementById(mp === 'WB' ? 'wbStockSearch' : 'ozonStockSearch'); const balanceEl = document.getElementById(mp === 'WB' ? 'wbStockBalanceFilter' : 'ozonStockBalanceFilter'); const waitingEl = document.getElementById(mp === 'WB' ? 'wbStockWaitingFilter' : 'ozonStockWaitingFilter'); if (searchEl) searchEl.value = ''; if (balanceEl) balanceEl.value = 'all'; if (waitingEl) waitingEl.value = 'all'; if (mp === 'WB') renderWbStock(); else renderOzonStock(); }
 
-// ========== ЛОГИСТИКА ==========
-function updateLogCalc() { 
-    const ae=document.getElementById('logAmount'), ne=document.getElementById('logNDS'), ce=document.getElementById('logCalcFull'); 
-    if(!ae||!ce) return; const a=parseFloat(ae.value)||0, rate=ne&&ne.value==='22%'?1.22:1.07; 
-    ce.textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' руб.'; 
-}
-async function addLogEntry() { 
-    const de=document.getElementById('logDate'), me=document.getElementById('logMP'), ce=document.getElementById('logCity'), qe=document.getElementById('logQty'), ae=document.getElementById('logAmount'); 
-    if(!de||!ce||!qe||!ae) return; const date=de.value, mp=me?me.value:'Wildberries', city=ce.value.trim(), qty=parseInt(qe.value)||0, amount=parseFloat(ae.value)||0; 
-    if(!date||!city||qty<=0||amount<=0){alert('Заполните поля');return;} 
-    const entry={id:generateUniqueId(), date, marketplace:mp, type:'FBO', supplier:'', city, qty, boxes:0, amount, amountFull:Math.round(amount*1.22*100)/100, paid:false, nds:'22%', source:'Логистика', linkId:generateUniqueId()}; 
-    logEntries.push(entry); 
-    if(isOnline){try{await db.collection('logistics').doc(entry.id).set(entry);}catch(e){}} 
-    saveAllToLocalStorage(); renderLog(); renderLogAnalytics(); showToast('Добавлено'); 
-}
-function renderLog() { 
-    const tc=document.getElementById('logTable'); if(!tc) return; 
-    if(!logEntries.length){tc.innerHTML='<div class="empty-state">Нет записей</div>';return;} 
-    let h='<table><thead><tr><th>Дата</th><th>МП</th><th>Город</th><th class="num">Кол-во</th><th class="num">Сумма</th></tr></thead><tbody>'; 
-    for(let e of [...logEntries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0, 50)){ 
-        h+=`<tr><td>${e.date}</td><td>${escapeHtml(e.marketplace)}</td><td>${escapeHtml(e.city||'')}</td><td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td><td class="num">${(e.amountFull||0).toLocaleString('ru-RU')} руб.</td></tr>`; 
-    } 
-    h+='</tbody></table>'; tc.innerHTML=h; 
-}
-function renderLogAnalytics() { 
-    const grid = document.getElementById('logAnalyticsGrid'); if (!grid) return; 
-    const totalQty = logEntries.reduce((s, e) => s + (e.qty || 0), 0); 
-    const totalAmount = logEntries.reduce((s, e) => s + (e.amountFull || 0), 0); 
-    grid.innerHTML = `<div class="analytics-card"><div class="ac-label">Всего</div><div class="ac-metric"><div class="ac-metric-value">${totalQty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(totalAmount)}</div><div class="ac-metric-label">Сумма</div></div></div>`; 
-}
+// ========== ОСТАТКИ МС ==========
+async function handleMsStockFileUpload(file) { try { const result = await stockParser.parseStockReport(file); msStockData = result.items; saveAllToLocalStorage(); if (isOnline) { db.collection('settings').doc('msStock').set({ items: msStockData }).catch(() => {}); } document.getElementById('msStockFileName').textContent = result.fileName + ' (' + result.items.length + ' поз.)'; document.getElementById('msStockFileInfo').style.display = 'flex'; document.getElementById('msStockUpload').classList.add('has-file'); renderMsStock(); showToast('МС: загружено ' + result.items.length + ' позиций'); } catch (err) { showToast('Ошибка: ' + err.message); } }
+function removeMsStockFile() { msStockData = []; saveAllToLocalStorage(); document.getElementById('msStockFileInfo').style.display = 'none'; document.getElementById('msStockUpload').classList.remove('has-file'); document.getElementById('msStockTable').innerHTML = '<div class="empty-state">Загрузите файл для отображения общих остатков</div>'; document.getElementById('msStockStats').innerHTML = ''; document.getElementById('msStockFilters').style.display = 'none'; document.getElementById('msStockComparisonGrid').style.display = 'none'; showToast('Файл удалён'); }
+function matchMsWithPlatforms(msItem) { const result = { wb: null, ozon: null }; const wbMatch = wbStockData.find(i => i.article === msItem.article); if (wbMatch) result.wb = wbMatch; const ozonMatch = ozonStockData.find(i => i.article === msItem.article); if (ozonMatch) result.ozon = ozonMatch; if (!result.wb && wbStockData.length > 0) { const fuzzyWb = wbStockData.find(i => i.article.includes(msItem.article) || msItem.article.includes(i.article)); if (fuzzyWb) result.wb = fuzzyWb; } if (!result.ozon && ozonStockData.length > 0) { const fuzzyOzon = ozonStockData.find(i => i.article.includes(msItem.article) || msItem.article.includes(i.article)); if (fuzzyOzon) result.ozon = fuzzyOzon; } return result; }
+function getFilteredMsStockData() { const searchEl = document.getElementById('msStockSearch'); const balanceEl = document.getElementById('msStockBalanceFilter'); const waitingEl = document.getElementById('msStockWaitingFilter'); const matchEl = document.getElementById('msStockMatchFilter'); let filtered = [...msStockData]; const query = (searchEl?.value || '').trim().toLowerCase(); const balanceFilter = balanceEl?.value || 'all'; const waitingFilter = waitingEl?.value || 'all'; const matchFilter = matchEl?.value || 'all'; if (query) { filtered = filtered.filter(i => i.article.toLowerCase().includes(query) || i.name.toLowerCase().includes(query)); } if (balanceFilter === 'positive') filtered = filtered.filter(i => i.balance > 0); else if (balanceFilter === 'zero') filtered = filtered.filter(i => i.balance === 0); else if (balanceFilter === 'negative') filtered = filtered.filter(i => i.balance < 0); if (waitingFilter === 'positive') filtered = filtered.filter(i => i.waiting > 0); else if (waitingFilter === 'zero') filtered = filtered.filter(i => i.waiting === 0); if (matchFilter === 'matched' || matchFilter === 'unmatched') { filtered = filtered.filter(i => { const matches = matchMsWithPlatforms(i); const hasMatch = matches.wb !== null || matches.ozon !== null; return matchFilter === 'matched' ? hasMatch : !hasMatch; }); } return filtered; }
+function renderMsStockStats() { const container = document.getElementById('msStockStats'); if (!container || !msStockData.length) { container.innerHTML = ''; return; } const totalBalance = msStockData.reduce((s, i) => s + i.balance, 0); const totalWaiting = msStockData.reduce((s, i) => s + i.waiting, 0); let matchedCount = 0; msStockData.forEach(i => { const matches = matchMsWithPlatforms(i); if (matches.wb || matches.ozon) matchedCount++; }); container.innerHTML = `<div class="stock-stat-card clickable" id="msStatAll" title="Нажмите, чтобы показать все товары"><div class="ss-value">${msStockData.length.toLocaleString('ru-RU')}</div><div class="ss-label">Всего позиций</div></div><div class="stock-stat-card ss-success clickable" id="msStatBalance" title="Нажмите, чтобы показать все товары"><div class="ss-value">${totalBalance.toLocaleString('ru-RU')}</div><div class="ss-label">Общий остаток</div></div><div class="stock-stat-card ss-warning clickable" id="msStatWaiting" title="Нажмите, чтобы показать товары в ожидании"><div class="ss-value">${totalWaiting.toLocaleString('ru-RU')}</div><div class="ss-label">В ожидании</div></div><div class="stock-stat-card ss-info"><div class="ss-value">${matchedCount.toLocaleString('ru-RU')}</div><div class="ss-label">С привязкой к площадкам</div></div>`; }
+function renderMsStockComparison() { const grid = document.getElementById('msStockComparisonGrid'); if (!grid || !msStockData.length) { if (grid) grid.style.display = 'none'; return; } const hasWbData = wbStockData.length > 0; const hasOzonData = ozonStockData.length > 0; if (!hasWbData && !hasOzonData) { grid.style.display = 'none'; return; } grid.style.display = 'grid'; let wbMatchCount = 0, wbMatchBalance = 0, ozonMatchCount = 0, ozonMatchBalance = 0, totalMatched = 0, unmatched = 0; msStockData.forEach(item => { const matches = matchMsWithPlatforms(item); let hasAny = false; if (matches.wb) { wbMatchCount++; wbMatchBalance += matches.wb.balance; hasAny = true; } if (matches.ozon) { ozonMatchCount++; ozonMatchBalance += matches.ozon.balance; hasAny = true; } if (hasAny) totalMatched++; else unmatched++; }); if (hasWbData) { document.getElementById('msWbMatchCount').textContent = wbMatchCount.toLocaleString('ru-RU'); document.getElementById('msWbMatchBalance').textContent = wbMatchBalance.toLocaleString('ru-RU'); document.getElementById('msWbComparisonCard').style.display = ''; } else { document.getElementById('msWbComparisonCard').style.display = 'none'; } if (hasOzonData) { document.getElementById('msOzonMatchCount').textContent = ozonMatchCount.toLocaleString('ru-RU'); document.getElementById('msOzonMatchBalance').textContent = ozonMatchBalance.toLocaleString('ru-RU'); document.getElementById('msOzonComparisonCard').style.display = ''; } else { document.getElementById('msOzonComparisonCard').style.display = 'none'; } document.getElementById('msMatchTotal').textContent = totalMatched.toLocaleString('ru-RU'); document.getElementById('msUnmatchedCount').textContent = unmatched.toLocaleString('ru-RU'); }
+function renderMsStockTable() { const container = document.getElementById('msStockTable'); const filtersEl = document.getElementById('msStockFilters'); if (!container) return; if (!msStockData.length) { container.innerHTML = '<div class="empty-state">Загрузите файл для отображения общих остатков</div>'; if (filtersEl) filtersEl.style.display = 'none'; return; } if (filtersEl) filtersEl.style.display = 'flex'; const filtered = getFilteredMsStockData(); if (!filtered.length) { container.innerHTML = '<div class="stock-empty-filter">Нет данных, соответствующих фильтрам</div>'; return; } const hasWbData = wbStockData.length > 0; const hasOzonData = ozonStockData.length > 0; let html = '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Ожидание</th><th class="num">Остаток МС</th>'; if (hasWbData) html += '<th class="num">Остаток WB</th><th>Разница</th>'; if (hasOzonData) html += '<th class="num">Остаток Ozon</th><th>Разница</th>'; html += '<th>Площадки</th><th>Статус</th></tr></thead><tbody>'; for (const item of filtered) { const matches = matchMsWithPlatforms(item); let statusBadge = ''; if (item.balance > 100) statusBadge = '<span class="stock-badge high">✓ Высокий</span>'; else if (item.balance > 10) statusBadge = '<span class="stock-badge medium">⚠ Средний</span>'; else if (item.balance > 0) statusBadge = '<span class="stock-badge low">🔴 Низкий</span>'; else statusBadge = '<span class="stock-badge zero">— Нет</span>'; let platformBadges = []; if (matches.wb) platformBadges.push('<span class="stock-match-indicator wb-match">WB ✓</span>'); if (matches.ozon) platformBadges.push('<span class="stock-match-indicator ozon-match">Ozon ✓</span>'); if (!matches.wb && !matches.ozon) platformBadges.push('<span class="stock-match-indicator no-match">—</span>'); html += `<tr><td style="font-family:monospace;font-size:12px;">${escapeHtml(item.article)}</td><td>${escapeHtml(item.name)}</td><td class="num">${item.waiting.toLocaleString('ru-RU')}</td><td class="num"><b>${item.balance.toLocaleString('ru-RU')}</b></td>`; if (hasWbData) { const wbBalance = matches.wb ? matches.wb.balance : 0; const diff = matches.wb ? item.balance - wbBalance : 0; let diffClass = 'stock-diff-zero', diffText = '—'; if (matches.wb) { diffClass = diff > 0 ? 'stock-diff-positive' : (diff < 0 ? 'stock-diff-negative' : 'stock-diff-zero'); diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString('ru-RU'); } html += `<td class="num">${matches.wb ? wbBalance.toLocaleString('ru-RU') : '—'}</td><td class="num ${diffClass}">${diffText}</td>`; } if (hasOzonData) { const ozonBalance = matches.ozon ? matches.ozon.balance : 0; const diff = matches.ozon ? item.balance - ozonBalance : 0; let diffClass = 'stock-diff-zero', diffText = '—'; if (matches.ozon) { diffClass = diff > 0 ? 'stock-diff-positive' : (diff < 0 ? 'stock-diff-negative' : 'stock-diff-zero'); diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString('ru-RU'); } html += `<td class="num">${matches.ozon ? ozonBalance.toLocaleString('ru-RU') : '—'}</td><td class="num ${diffClass}">${diffText}</td>`; } html += `<td>${platformBadges.join(' ')}</td><td>${statusBadge}</td></tr>`; } html += '</tbody></table>'; html += `<div style="padding:10px 16px;font-size:11px;color:var(--text-tertiary);">Показано ${filtered.length} из ${msStockData.length} позиций</div>`; container.innerHTML = html; }
+function renderMsStock() { renderMsStockStats(); renderMsStockComparison(); renderMsStockTable(); }
+function exportMsStockCSV() { const data = getFilteredMsStockData(); if (!data.length) { showToast('Нет данных для экспорта'); return; } const hasWb = wbStockData.length > 0; const hasOzon = ozonStockData.length > 0; let csv = 'Артикул;Наименование;Ожидание;Остаток МС'; if (hasWb) csv += ';Остаток WB;Разница WB'; if (hasOzon) csv += ';Остаток Ozon;Разница Ozon'; csv += ';Площадки\n'; for (const item of data) { const matches = matchMsWithPlatforms(item); const platforms = []; if (matches.wb) platforms.push('WB'); if (matches.ozon) platforms.push('Ozon'); csv += `"${item.article}";"${item.name}";${item.waiting};${item.balance}`; if (hasWb) { const wbBalance = matches.wb ? matches.wb.balance : 0; const diff = matches.wb ? item.balance - wbBalance : 0; csv += `;${matches.wb ? wbBalance : ''};${matches.wb ? diff : ''}`; } if (hasOzon) { const ozonBalance = matches.ozon ? matches.ozon.balance : 0; const diff = matches.ozon ? item.balance - ozonBalance : 0; csv += `;${matches.ozon ? ozonBalance : ''};${matches.ozon ? diff : ''}`; } csv += `;${platforms.join('+') || '—'}\n`; } downloadCSV(csv, 'остатки_мс.csv'); }
+function resetMsStockFilters() { const searchEl = document.getElementById('msStockSearch'); const balanceEl = document.getElementById('msStockBalanceFilter'); const waitingEl = document.getElementById('msStockWaitingFilter'); const matchEl = document.getElementById('msStockMatchFilter'); if (searchEl) searchEl.value = ''; if (balanceEl) balanceEl.value = 'all'; if (waitingEl) waitingEl.value = 'all'; if (matchEl) matchEl.value = 'all'; renderMsStock(); }
 
-// ========== ПРОГНОЗ ==========
-function calculateForecast() {
-    const months = FORECAST_MONTHS;
-    let remaining = warehouseData.currentOccupancy + warehouseData.constantVolume;
-    const result = [];
-    for (let month of months) {
-        const incoming = vedSupplies.filter(s => s.includeInModel !== false && s.eta && MONTHS[new Date(s.eta).getMonth()] === month).reduce((sum, s) => sum + (s.totalVolume || 0), 0);
-        const expense = warehouseData.baseExpense * (warehouseData.salesPlan[month] || 0) / (warehouseData.marchPlan || 311000000);
-        remaining = Math.max(0, remaining + incoming - expense);
-        result.push({ month, incoming: Math.round(incoming*100)/100, expense: Math.round(expense*100)/100, remaining: Math.round(remaining) });
-    }
-    return result;
-}
-function renderForecastTab() {
-    const tb = document.getElementById('salesPlanEditor'); if (!tb) return;
-    const fc = calculateForecast();
-    let h = '';
-    for (let m of FORECAST_MONTHS) {
-        const sales = warehouseData.salesPlan[m] || 0;
-        const fd = fc.find(f => f.month === m);
-        h += `<tr><td><b>${m}</b></td><td class="num">${sales.toLocaleString('ru-RU')}</td><td class="num">${fd?fd.incoming.toFixed(2):0}</td><td class="num">${fd?fd.expense.toFixed(2):0}</td><td class="num"><b>${fd?fd.remaining.toLocaleString('ru-RU'):0}</b></td></tr>`;
-    }
-    tb.innerHTML = h;
-}
+// ========== АНАЛИТИКА ЛОГИСТИКИ ==========
+function calculateMonthAnalytics(monthIndex, year) { const wbEntries = logEntries.filter(e => e.marketplace === 'Wildberries' && e.date && new Date(e.date + 'T00:00:00').getMonth() === monthIndex && new Date(e.date + 'T00:00:00').getFullYear() === year); const ozEntries = logEntries.filter(e => e.marketplace === 'Ozon' && e.date && new Date(e.date + 'T00:00:00').getMonth() === monthIndex && new Date(e.date + 'T00:00:00').getFullYear() === year); const calc = (entries) => { const totalQty = entries.reduce((s, e) => s + (e.qty || 0), 0); const totalAmount = entries.reduce((s, e) => s + (e.amountFull || e.amount || 0), 0); const pricePerUnit = totalQty > 0 ? Math.round(totalAmount / totalQty) : 0; const totalBoxes = entries.reduce((s, e) => s + (e.boxes || 0), 0); return { qty: totalQty, amount: totalAmount, pricePerUnit, boxes: totalBoxes, entries: entries.length }; }; const wb = calc(wbEntries), oz = calc(ozEntries); return { wb, oz, total: { qty: wb.qty + oz.qty, amount: wb.amount + oz.amount, pricePerUnit: (wb.qty + oz.qty) > 0 ? Math.round((wb.amount + oz.amount) / (wb.qty + oz.qty)) : 0, boxes: wb.boxes + oz.boxes, entries: wb.entries + oz.entries }, month: MONTHS[monthIndex], year }; }
+function renderLogAnalytics() { const now = new Date(); const currentMonth = now.getMonth(), currentYear = now.getFullYear(); const current = calculateMonthAnalytics(currentMonth, currentYear); let gridHtml = ''; gridHtml += `<div class="analytics-card wb-card"><div class="ac-label"><span class="ac-icon">W</span>Wildberries</div><div class="ac-metrics"><div class="ac-metric"><div class="ac-metric-value">${current.wb.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.wb.amount)}</div><div class="ac-metric-label">Сумма</div></div><div class="ac-metric"><div class="ac-metric-value">${current.wb.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div><div class="ac-metric"><div class="ac-metric-value">${current.wb.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div></div><div class="ac-subtitle">${current.wb.entries} записей в ${current.month}</div></div>`; gridHtml += `<div class="analytics-card ozon-card"><div class="ac-label"><span class="ac-icon">O</span>Ozon</div><div class="ac-metrics"><div class="ac-metric"><div class="ac-metric-value">${current.oz.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.oz.amount)}</div><div class="ac-metric-label">Сумма</div></div><div class="ac-metric"><div class="ac-metric-value">${current.oz.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div><div class="ac-metric"><div class="ac-metric-value">${current.oz.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div></div><div class="ac-subtitle">${current.oz.entries} записей в ${current.month}</div></div>`; gridHtml += `<div class="analytics-card total-card"><div class="ac-label"><span class="ac-icon">∑</span>Всего</div><div class="ac-metrics"><div class="ac-metric"><div class="ac-metric-value">${current.total.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.total.amount)}</div><div class="ac-metric-label">Сумма</div></div><div class="ac-metric"><div class="ac-metric-value">${current.total.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div><div class="ac-metric"><div class="ac-metric-value">${current.total.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div></div><div class="ac-subtitle">${current.total.entries} записей всего</div></div>`; document.getElementById('logAnalyticsGrid').innerHTML = gridHtml; const history = []; for (let i = 0; i < 12; i++) { let m = currentMonth - i, y = currentYear; if (m < 0) { m += 12; y--; } history.push(calculateMonthAnalytics(m, y)); } let histHtml = `<div style="overflow-x:auto;"><table class="analytics-history-table"><thead><tr><th>Месяц</th><th class="num">WB ед.</th><th class="num">WB руб.</th><th class="num">WB ₽/ед</th><th class="num">Ozon ед.</th><th class="num">Ozon руб.</th><th class="num">Ozon ₽/ед</th><th class="num">Всего ед.</th><th class="num">Всего руб.</th><th class="num">Паллет</th></tr></thead><tbody>`; history.forEach((h, idx) => { const isCurrent = idx === 0; const prevH = history[idx + 1]; const trend = (val, prev) => { if (!prev || prev === 0) return ''; if (val > prev) return ' <span class="trend-up">▲</span>'; if (val < prev) return ' <span class="trend-down">▼</span>'; return ''; }; histHtml += `<tr class="${isCurrent ? 'month-current' : ''}"><td><b>${h.month} ${h.year}</b>${isCurrent ? ' <span class="badge badge-info">тек.</span>' : ''}</td><td class="num">${h.wb.qty.toLocaleString('ru-RU')}${prevH ? trend(h.wb.qty, prevH.wb.qty) : ''}</td><td class="num">${formatAmount(h.wb.amount)}</td><td class="num">${h.wb.pricePerUnit.toLocaleString('ru-RU')}</td><td class="num">${h.oz.qty.toLocaleString('ru-RU')}${prevH ? trend(h.oz.qty, prevH.oz.qty) : ''}</td><td class="num">${formatAmount(h.oz.amount)}</td><td class="num">${h.oz.pricePerUnit.toLocaleString('ru-RU')}</td><td class="num highlight-cell">${h.total.qty.toLocaleString('ru-RU')}</td><td class="num highlight-cell">${formatAmount(h.total.amount)}</td><td class="num">${h.total.boxes.toLocaleString('ru-RU')}</td></tr>`; }); histHtml += '</tbody></table></div>'; document.getElementById('logHistoryBody').innerHTML = histHtml; }
+function toggleLogHistory() { logHistoryExpanded = !logHistoryExpanded; const block = document.getElementById('logHistoryBlock'); if (block) { if (logHistoryExpanded) block.classList.add('expanded'); else block.classList.remove('expanded'); } }
 
 // ========== KPI ==========
-function renderKpiStrip() { 
-    const strip = document.getElementById('kpiStrip'); if (!strip) return; 
-    strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Отгрузок:</span><span class="kpi-item-value">${getAllShipments().length}</span></div>`; 
-}
-function renderVedKpiStrip() { 
-    const strip = document.getElementById('vedKpiStrip'); if (!strip) return; 
-    strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Поставок:</span><span class="kpi-item-value">${vedSupplies.length}</span></div>`; 
-}
+function renderKpiStrip() { const strip = document.getElementById('kpiStrip'); if (!strip) return; const cwk = getCurrentWeekKey(); const all = getAllShipments(); let weekWb = 0, weekOzon = 0; all.forEach(s => { const wk = getWeekKey(s.date); if (wk.key === cwk) { if (s.marketplace === 'Wildberries') weekWb += s.qty || 0; else weekOzon += s.qty || 0; } }); let weekCap = weekCapacities[cwk] || 0; if (!weekCap) { const cwkDate = new Date(cwk + 'T00:00:00'); let bestKey = null; let bestDiff = Infinity; for (const [key, val] of Object.entries(weekCapacities)) { if (!val) continue; const keyDate = new Date(key + 'T00:00:00'); const diff = Math.abs(keyDate.getTime() - cwkDate.getTime()); if (diff < bestDiff && diff <= 3 * 24 * 60 * 60 * 1000) { bestDiff = diff; bestKey = key; } } if (bestKey) weekCap = weekCapacities[bestKey] || 0; } const weekTotal = weekWb + weekOzon; const packPct = weekCap > 0 ? Math.round((weekTotal / weekCap) * 100) : null; const occupied = warehouseData.currentOccupancy; const totalCap = warehouseData.totalCapacity; const free = totalCap - occupied; const loadPct = Math.round((occupied / totalCap) * 100); const transitSupplies = vedSupplies.filter(s => s.status === 'transit'); const transitVolume = transitSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0); const transitCount = transitSupplies.length; strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Текущая неделя:</span><span class="kpi-item-value">${weekTotal > 0 ? weekTotal.toLocaleString('ru-RU') + ' ед.' : 'Нет отгрузок'}</span>${weekTotal > 0 ? `<span style="font-size:11px;color:var(--text-tertiary);">(WB: ${weekWb.toLocaleString('ru-RU')} · Ozon: ${weekOzon.toLocaleString('ru-RU')})</span>` : ''}</div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Загрузка упаковки:</span>${weekCap > 0 ? `<span class="kpi-item-value" style="color:${packPct > 100 ? 'var(--danger)' : packPct > 80 ? 'var(--warning)' : 'var(--success)'}">${packPct}%</span><span style="font-size:11px;color:var(--text-tertiary);">(${weekTotal.toLocaleString('ru-RU')} из ${weekCap.toLocaleString('ru-RU')} ед.)</span>` : `<span class="kpi-item-value" style="color:var(--text-tertiary);">—</span><span style="font-size:11px;color:var(--text-tertiary);">(способность не задана)</span>`}</div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Загрузка склада:</span><span class="kpi-item-value" style="color:${loadPct > 85 ? 'var(--danger)' : loadPct > 70 ? 'var(--warning)' : 'var(--success)'}">${loadPct}%</span><span style="font-size:11px;color:var(--text-tertiary);">(занято ${occupied.toLocaleString('ru-RU')} / свободно ${free.toLocaleString('ru-RU')} из ${totalCap.toLocaleString('ru-RU')} м³)</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">ВЭД в пути:</span><span class="kpi-item-value" style="color:var(--ved);">${transitVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${transitCount} поставк${transitCount === 1 ? 'а' : transitCount >= 2 && transitCount <= 4 ? 'и' : 'ок'})</span></div>`; }
+function renderVedKpiStrip() { const strip = document.getElementById('vedKpiStrip'); if (!strip) return; const total = vedSupplies.length; const inTransit = vedSupplies.filter(s => s.status === 'transit').length; const inCustoms = vedSupplies.filter(s => s.status === 'customs').length; const inSvh = vedSupplies.filter(s => s.status === 'svh').length; const arrived = vedSupplies.filter(s => s.status === 'arrived').length; const totalQty = vedSupplies.reduce((sum, s) => sum + (s.totalQty || 0), 0); const totalVolume = vedSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0); strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Всего поставок:</span><span class="kpi-item-value">${total}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">В пути:</span><span class="kpi-item-value" style="color:var(--accent);">${inTransit}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Таможня:</span><span class="kpi-item-value" style="color:var(--warning);">${inCustoms}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">На СВХ:</span><span class="kpi-item-value" style="color:var(--danger);">${inSvh}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Прибыло:</span><span class="kpi-item-value" style="color:var(--success);">${arrived}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Общий объём:</span><span class="kpi-item-value" style="color:var(--ved);">${totalVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${totalQty.toLocaleString('ru-RU')} ед.)</span></div>`; }
 
 // ========== ВЭД ==========
-function renderVedLists() { 
-    const container = document.getElementById('vedListsContainer'); if (!container) return; 
-    if (!vedTempLists.length) vedTempLists = [null]; 
-    let html = ''; 
-    vedTempLists.forEach((list, i) => { 
-        html += `<div class="ved-list-item"><div class="ved-list-header"><span>Список ${i+1}</span>${list ? '<span>✓</span>' : '<span>Ожидает</span>'}</div></div>`; 
-    }); 
-    container.innerHTML = html; 
-}
-function renderVedCards() { 
-    const container = document.getElementById('vedCards'); if (!container) return; 
-    if (!vedSupplies.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKpiStrip(); return; } 
-    let html = ''; 
-    vedSupplies.forEach(s => { html += `<div class="ved-card"><div class="card-accent"></div><div class="card-body"><div class="card-number">${escapeHtml(s.number)}</div><div>${(s.totalVolume || 0).toFixed(2)} м³</div></div></div>`; }); 
-    container.innerHTML = html; renderVedKpiStrip(); 
-}
+function renderVedLists() { const container = document.getElementById('vedListsContainer'); const btnAdd = document.getElementById('btnAddVedList'); const summary = document.getElementById('vedTotalSummary'); if (!container) return; let html = ''; for (let i = 0; i < vedTempLists.length; i++) { const list = vedTempLists[i]; html += `<div class="ved-list-item"><div class="ved-list-header"><span class="ved-list-title">Список ${i + 1}</span><span class="ved-list-status">${list ? list.name + ' (' + list.itemsCount + ' поз., ' + list.totalVolume.toFixed(2) + ' м³)' : 'Ожидает файл'}</span><button type="button" class="file-delete" data-ved-list-remove="${i}">x</button></div>`; if (list) { html += `<div class="file-preview show" style="margin-top:4px;max-height:200px;"><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>`; list.items.slice(0, 8).forEach(item => { const naClass = item.article === 'N/A' ? ' na-highlight' : ''; html += `<tr class="${naClass}"><td>${escapeHtml(item.article||'—')}</td><td>${escapeHtml((item.name||'—').slice(0, 30))}</td><td class="num">${(item.cartons||0)}</td><td class="num">${(item.perCarton||0)}</td><td class="num">${(item.qty||0)}</td><td class="num">${item.volume > 0 ? item.volume.toFixed(3) : '—'}</td></tr>`; }); if (list.items.length > 8) html += `<tr><td colspan="6" style="font-size:10px;color:var(--text-tertiary);">... и ещё ${list.items.length - 8} позиций</td></tr>`; html += '</tbody></table></div>'; } else { html += `<div class="file-upload-box" data-ved-list-index="${i}"><div style="font-size:12px;">Перетащите файл или нажмите</div><div style="font-size:10px;color:var(--text-tertiary);">Excel (.xlsx, .xls) или CSV</div><input type="file" accept=".xlsx,.xls,.csv" data-ved-list-input="${i}"></div>`; } html += '</div>'; } container.innerHTML = html; if (btnAdd) btnAdd.style.display = vedTempLists.length < MAX_VED_LISTS ? 'inline-block' : 'none'; updateVedTotalSummary(); container.querySelectorAll('input[type="file"]').forEach(input => { input.addEventListener('change', function() { if (this.files[0]) handleVedFileForList(parseInt(this.dataset.vedListInput), this.files[0]); }); }); container.querySelectorAll('.file-upload-box').forEach(box => { const index = parseInt(box.dataset.vedListIndex); box.addEventListener('click', function(e) { if (e.target.tagName === 'INPUT') return; const input = box.querySelector('input[type="file"]'); if (input) input.click(); }); box.addEventListener('dragover', e => { e.preventDefault(); box.style.borderColor = 'var(--ved)'; }); box.addEventListener('dragleave', () => { box.style.borderColor = ''; }); box.addEventListener('drop', e => { e.preventDefault(); box.style.borderColor = ''; const file = e.dataTransfer.files[0]; if (file) handleVedFileForList(index, file); }); }); }
+function handleVedFileForList(index, file) { if (!file||index>=vedTempLists.length) return; vedTempLists[index]={name:'Анализ...',items:[],totalVolume:0,totalQty:0,totalCartons:0,itemsCount:0}; renderVedLists(); vedParser.parseFile(file).then(result=>{vedTempLists[index]={name:file.name,items:result.items,totalVolume:result.totalVolume,totalQty:result.totalQty,totalCartons:result.totalCartons,itemsCount:result.itemsCount,missingVolumeCount:result.missingVolumeCount,skuLibrarySize:result.skuLibrarySize,naCount:result.naCount};renderVedLists();if(result.naCount>0)showToast('Список '+(index+1)+': '+result.naCount+' позиций без артикула');else showToast('Список '+(index+1)+' загружен');}).catch(err=>{vedTempLists[index]=null;renderVedLists();showToast('Ошибка чтения файла');});}
+function addVedList() { if(vedTempLists.length>=MAX_VED_LISTS){showToast('Максимум '+MAX_VED_LISTS+' списков');return;} vedTempLists.push(null); renderVedLists(); }
+function removeVedList(index) { if(vedTempLists.length<=1){showToast('Должен быть хотя бы один список');return;} vedTempLists.splice(index,1); renderVedLists(); }
+function updateVedTotalSummary() { const summary=document.getElementById('vedTotalSummary'); if(!summary)return; const validLists=vedTempLists.filter(l=>l&&l.items&&l.items.length>0); if(validLists.length===0){summary.style.display='none';return;} let ti=0,tc=0,tq=0,tv=0; validLists.forEach(l=>{ti+=l.itemsCount||0;tc+=l.totalCartons||0;tq+=l.totalQty||0;tv+=l.totalVolume||0;}); summary.style.display='block'; summary.innerHTML=`Итого по ${validLists.length} спискам: <b>${ti} поз.</b> · ${tc.toLocaleString('ru-RU')} кор. · ${tq.toLocaleString('ru-RU')} ед. · <b>${tv.toFixed(2)} м³</b>`; }
+async function saveVedSupply() { const ne=document.getElementById('vedNumber'),ee=document.getElementById('vedEta'),se=document.getElementById('vedSupplier'),we=document.getElementById('vedWarehouse'),ste=document.getElementById('vedStatus'),ie=document.getElementById('vedIncludeInModel'); if(!ne||!ee||!se)return; const n=ne.value.trim(),e=ee.value,s=se.value.trim(),w=we?we.value:'Москва',st=ste?ste.value:'transit',inc=ie?ie.value==='yes':true; if(!n||!e||!s)return alert('Заполните номер, дату и поставщика'); const validLists=vedTempLists.filter(l=>l&&l.items&&l.items.length>0); if(validLists.length===0)return alert('Прикрепите хотя бы один список'); const allItems=[]; let tv=0,tq=0,tc=0; const fns=[]; validLists.forEach(l=>{allItems.push(...l.items);tv+=l.totalVolume||0;tq+=l.totalQty||0;tc+=l.totalCartons||0;fns.push(l.name);}); const supply={id:generateUniqueId(),number:n,eta:e,supplier:s,warehouse:w,status:st,includeInModel:inc,items:allItems,totalVolume:Math.round(tv*1000)/1000,totalQty:tq,totalCartons:tc,fileName:fns.join('; '),listsCount:validLists.length,createdAt:new Date().toISOString(),history:[{status:st,date:new Date().toISOString()}]}; vedSupplies.push(supply); if(isOnline){const{id,...data}=supply;try{await db.collection('ved_supplies').doc(id).set(data);}catch(e){showToast('Сохранено локально');}} saveAllToLocalStorage(); clearVedForm(); renderAllDebounced(); showToast('Поставка сохранена: '+n+' ('+validLists.length+' списка)'); }
+function clearVedForm() { ['vedNumber','vedEta','vedSupplier'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); vedTempLists=[null]; const ie=document.getElementById('vedIncludeInModel'); if(ie)ie.value='yes'; renderVedLists(); }
+async function updateVedStatus(id,status){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.status=status;s.history=s.history||[];s.history.push({status,date:new Date().toISOString()});saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({status,history:s.history});}catch(e){}}renderVedCards();renderAllDebounced();}}
+async function toggleVedIncludeInModel(id){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.includeInModel=!s.includeInModel;saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({includeInModel:s.includeInModel});}catch(e){}}renderVedCards();renderAllDebounced();}}
+async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){}}saveAllToLocalStorage();renderAllDebounced();}
+function toggleVedDetails(id) { if (vedExpandedId === String(id)) { vedExpandedId = null; } else { vedExpandedId = String(id); } renderVedCards(); }
+function renderVedCards() { const container = document.getElementById('vedCards'); if (!container) return; const srt = [...vedSupplies].sort((a,b)=>{if(!a.eta&&!b.eta)return 0;if(!a.eta)return 1;if(!b.eta)return-1;return a.eta.localeCompare(b.eta);}); if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKpiStrip(); return; } const query = vedSearchQuery.trim().toLowerCase(); let matchCount = 0; let html = ''; for (let s of srt) { const so = VED_STATUSES[s.status] || VED_STATUSES.transit; const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0); const inc = s.includeInModel !== false; const li = s.listsCount ? ` · ${s.listsCount} списка` : ''; const isExpanded = vedExpandedId === String(s.id); let hasMatch = false; if (query && s.items) { for (const item of s.items) { if (item.article && item.article.toLowerCase().includes(query)) { hasMatch = true; break; } } if (hasMatch) matchCount++; } const matchClass = hasMatch ? ' match-highlight' : ''; const expandClass = isExpanded ? ' expanded' : ''; html += `<div class="ved-card${matchClass}${expandClass}" id="ved-card-${s.id}" data-ved-id="${s.id}"><div class="card-accent"></div><button type="button" class="card-delete" data-ved-delete="${s.id}">&times;</button><div class="card-body" data-ved-toggle="${s.id}"><div class="card-header"><div><div class="card-number">${escapeHtml(s.number)}</div><div class="card-supplier">${escapeHtml(s.supplier)}</div></div></div><div class="card-meta"><span>${escapeHtml(s.warehouse)}</span><span>${escapeHtml(s.eta)}</span></div><div class="card-volume">${(s.totalVolume || 0).toFixed(2)} м³ · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div><div style="font-size:11px;color:var(--text-secondary);">${(s.items || []).length} поз.${li} · ${tq.toLocaleString('ru-RU')} ед.</div><div class="card-footer"><div class="card-status-row"><span class="supply-status-badge ${so.class}" style="padding:3px 10px;border-radius:10px;font-size:10px;">${so.label}</span><select data-ved-status="${s.id}" style="font-size:10px;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);">${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}</select><button type="button" class="include-model ${inc?'yes':'no'}" data-ved-include="${s.id}">${inc?'Вкл':'Выкл'}</button></div><span class="card-expand-icon">&#9662;</span></div></div><div class="card-details"><div style="font-size:10px;color:var(--text-tertiary);padding:8px 0 4px 0;">${escapeHtml(s.fileName)}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items || []).map(i => { const isMatch = query && i.article && i.article.toLowerCase().includes(query); const mClass = isMatch ? ' item-match' : ''; const naClass = i.article === 'N/A' ? ' na-highlight' : ''; return `<tr class="${naClass}${mClass}"><td style="font-family:monospace;font-size:12px;">${escapeHtml(i.article || '—')}</td><td class="name-cell" title="${escapeHtml((i.name || '—'))}">${escapeHtml(i.name || '—')}</td><td class="num">${(i.cartons || 0)}</td><td class="num">${(i.perCarton || 0)}</td><td class="num">${(i.qty || 0)}</td><td class="num">${(i.volume || 0).toFixed(3)}</td></tr>`; }).join('')}</tbody></table></div></div>`; } container.innerHTML = html; renderVedKpiStrip(); const searchResults = document.getElementById('vedSearchResults'); if (searchResults && query) { searchResults.classList.add('show'); searchResults.textContent = `Найдено в ${matchCount} поставк${matchCount === 1 ? 'е' : matchCount >= 2 && matchCount <= 4 ? 'ах' : 'ах'}`; } else if (searchResults) { searchResults.classList.remove('show'); } }
+function handleVedSearch(query) { vedSearchQuery = query; vedExpandedId = null; renderVedCards(); }
+
+// ========== ЛОГИСТИКА ==========
+function updateLogCalc() { const ae=document.getElementById('logAmount'),ne=document.getElementById('logNDS'),ce=document.getElementById('logCalcFull'); if(!ae||!ce)return; const a=parseFloat(ae.value)||0,rate=ne&&ne.value==='22%'?1.22:1.07;ce.textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' руб.'; }
+async function addLogEntry() { const de=document.getElementById('logDate'),me=document.getElementById('logMP'),te=document.getElementById('logType'),se=document.getElementById('logSupplier'),ce=document.getElementById('logCity'),qe=document.getElementById('logQty'),be=document.getElementById('logBoxes'),ae=document.getElementById('logAmount'),ne=document.getElementById('logNDS'); if(!de||!ce||!qe||!ae)return; const date=de.value,mp=me?me.value:'Wildberries',type=te?te.value:'FBO',supplier=se?se.value:'',city=ce.value.trim(),qty=parseInt(qe.value)||0,boxes=be?parseInt(be.value)||0:0,amount=parseFloat(ae.value)||0,nds=ne?ne.value:'22%',rate=nds==='22%'?1.22:1.07; if(!date||!city||qty<=0||amount<=0){alert('Заполните обязательные поля');return;} const linkId=generateUniqueId(); const entry={id:generateUniqueId(),date,marketplace:mp,type,supplier,city,qty,boxes,amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds,source:'Логистика',linkId}; logEntries.push(entry); if(isOnline){try{await db.collection('logistics').doc(entry.id).set(entry);}catch(e){showToast('Сохранено локально');}} saveAllToLocalStorage(); if(ce)ce.value='';if(qe)qe.value='';if(be)be.value='';if(ae)ae.value='';updateLogCalc();renderLog();renderLogAnalytics();showToast('Добавлена запись'); }
+function renderLog() { const fme=document.getElementById('logFilterMonth'),fse=document.getElementById('logFilterStatus'),fmpe=document.getElementById('logFilterMP'),tc=document.getElementById('logTable'),cnt=document.getElementById('logCount'); if(!tc)return; const fm=fme?fme.value:'',fs=fse?fse.value:'all',fmp=fmpe?fmpe.value:'all'; let fl=[...logEntries]; if(fm)fl=fl.filter(e=>e.date&&e.date.startsWith(fm)); if(fs==='paid')fl=fl.filter(e=>e.paid); if(fs==='unpaid')fl=fl.filter(e=>!e.paid); if(fmp!=='all')fl=fl.filter(e=>e.marketplace===fmp); const srt=fl.sort((a,b)=>(b.date||'').localeCompare(a.date||'')); if(cnt)cnt.textContent=srt.length; if(!srt.length){tc.innerHTML='<div class="empty-state">Нет записей</div>';return;} let h='<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>'; for(let e of srt){if(!e.date)continue;h+=`<tr><td>${e.date.split('-').reverse().join('.')}</td><td><span class="badge ${e.marketplace==='Wildberries'?'badge-wb':'badge-ozon'}">${escapeHtml(e.marketplace)}</span></td><td>${escapeHtml(e.type||'FBO')}</td><td><select class="log-select" data-log-supplier="${e.id}">${SUPPLIERS.map(s=>`<option value="${s}" ${e.supplier===s?'selected':''}>${s||'—'}</option>`).join('')}</select></td><td>${escapeHtml(e.city||'')}</td><td class="num">${(e.qty||0).toLocaleString('ru-RU')}</td><td class="num"><input class="log-edit-input" style="width:50px;text-align:center;" value="${e.boxes||0}" type="number" data-log-pallets="${e.id}"></td><td class="num"><input class="log-edit-input" style="width:80px;text-align:right;" value="${e.amount||''}" placeholder="0" type="number" data-log-amount="${e.id}"></td><td class="num">${fmtPrice(e.amountFull)}</td><td><select data-log-nds="${e.id}" style="font-size:10px;padding:2px;"><option value="22%" ${e.nds==='22%'?'selected':''}>22%</option><option value="7%" ${e.nds==='7%'?'selected':''}>7%</option></select></td><td><button type="button" class="btn-status ${e.paid?'paid':'unpaid'}" data-log-paid="${e.id}">${e.paid?'Оплачен':'Не опл.'}</button></td><td><button type="button" class="btn btn-danger-sm" data-log-delete="${e.id}">x</button></td></tr>`;} h+='</tbody></table>';tc.innerHTML=h; }
+function updateLogSupplier(id,v){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.supplier=v;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({supplier:v}).catch(()=>{});renderLog();}}
+function updateLogPallets(id,v){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.boxes=parseInt(v)||0;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({boxes:e.boxes}).catch(()=>{});renderLog();}}
+function updateLogAmount(id,v){const e=logEntries.find(x=>String(x.id)===String(id));if(e){const a=parseFloat(v)||0,rate=e.nds==='22%'?1.22:1.07;e.amount=a;e.amountFull=Math.round(a*rate*100)/100;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({amount:e.amount,amountFull:e.amountFull}).catch(()=>{});renderLog();renderLogAnalytics();}}
+function updateLogNds(id,v){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.nds=v;const rate=v==='22%'?1.22:1.07;e.amountFull=Math.round((e.amount||0)*rate*100)/100;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({nds:v,amountFull:e.amountFull}).catch(()=>{});renderLog();renderLogAnalytics();}}
+function toggleLogPaid(id){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.paid=!e.paid;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({paid:e.paid}).catch(()=>{});renderLog();}}
+async function deleteLogEntry(id) { if (!confirm('Удалить запись логистики? Связанная отгрузка WB/Ozon тоже будет удалена.')) return; const logEntry = logEntries.find(l => String(l.id)===String(id)); const linkId = logEntry ? logEntry.linkId : null; logEntries = logEntries.filter(l => l.id !== id); if (linkId) { const wbShip = wbShipments.find(s => s.linkId === linkId); const ozShip = ozonShipments.find(s => s.linkId === linkId); if (wbShip) { wbShipments = wbShipments.filter(s => s.linkId !== linkId); if (isOnline) { try { await db.collection('shipments_wb').doc(String(wbShip.id)).delete(); } catch(e) {} } } if (ozShip) { ozonShipments = ozonShipments.filter(s => s.linkId !== linkId); if (isOnline) { try { await db.collection('shipments_ozon').doc(String(ozShip.id)).delete(); } catch(e) {} } } } if (isOnline) { try { await db.collection('logistics').doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAllDebounced(); showToast('Запись логистики и связанная отгрузка удалены'); }
+function resetLogFilters(){const fme=document.getElementById('logFilterMonth'),fse=document.getElementById('logFilterStatus'),fmpe=document.getElementById('logFilterMP');if(fme)fme.value='';if(fse)fse.value='all';if(fmpe)fmpe.value='all';renderLog();showToast('Фильтры сброшены');}
+function toggleLogImport(){const block=document.getElementById('logImportBlock');if(block)block.style.display=block.style.display==='none'?'block':'none';}
+function fmtPrice(n){return n?n.toLocaleString('ru-RU')+' руб.':'0 руб.';}
+async function doLogImport() { const textEl = document.getElementById('logImportText'); if (!textEl) return; const text = textEl.value.trim(); if (!text) return; let logCount = 0, wbCount = 0, ozonCount = 0; const newLogEntries = [], newWbShipments = [], newOzShipments = []; text.split('\n').filter(l => l.trim()).forEach(line => { let cols = line.split('\t'); if (cols.length < 4) cols = line.split(/[\t,;]/); if (cols.length >= 4) { let ds = cols[0].trim(); const mpRaw = cols[1].trim(); const type = cols.length > 2 ? cols[2].trim() : 'FBO'; const supplier = cols.length > 3 ? cols[3].trim() : ''; const city = cols.length > 4 ? cols[4].trim() : ''; const qty = cols.length > 5 ? parseInt(String(cols[5]).replace(/\s/g, '')) || 0 : 0; const boxes = cols.length > 6 ? parseInt(String(cols[6]).replace(/\s/g, '')) || 0 : 0; const amount = cols.length > 7 ? parseFloat(String(cols[7]).replace(/\s/g, '').replace(',', '.')) || 0 : 0; const paidStatus = cols.length > 8 ? cols[8].trim().toLowerCase() : ''; const nds = cols.length > 9 ? cols[9].trim() : '22%'; let mp = null; if (['Wildberries','WB','ВБ'].includes(mpRaw)) mp = 'Wildberries'; else if (['Ozon','Озон'].includes(mpRaw)) mp = 'Ozon'; else return; const normalized = normalizeDateString(ds); if (!normalized) return; const paid = paidStatus === 'paid' || paidStatus === 'оплачен' || paidStatus === 'true' || paidStatus === '1'; const rate = nds === '22%' ? 1.22 : 1.07; const linkId = generateUniqueId(); const logEntry = { id: generateUniqueId(), date: normalized, marketplace: mp, type: type || 'FBO', supplier: supplier || '', city: city, qty: qty, boxes: boxes, amount: amount, amountFull: Math.round(amount * rate * 100) / 100, paid: paid, nds: nds || '22%', source: 'Логистика (импорт)', linkId }; newLogEntries.push(logEntry); logCount++; const isDuplicateInWb = wbShipments.some(s => s.date===normalized&&s.city===city&&s.qty===qty); const isDuplicateInOz = ozonShipments.some(s => s.date===normalized&&s.city===city&&s.qty===qty); if (mp==='Wildberries'&&!isDuplicateInWb){const shipment={id:generateUniqueId(),date:normalized,city,qty,source:'Wildberries',status:'in_work',linkId};newWbShipments.push(shipment);wbCount++;} if (mp==='Ozon'&&!isDuplicateInOz){const shipment={id:generateUniqueId(),date:normalized,city,qty,source:'Ozon',status:'in_work',linkId};newOzShipments.push(shipment);ozonCount++;} } }); if (newLogEntries.length>0){logEntries.push(...newLogEntries);wbShipments.push(...newWbShipments);ozonShipments.push(...newOzShipments);if(isOnline){const batch=db.batch();newLogEntries.forEach(e=>{const{id,...data}=e;batch.set(db.collection('logistics').doc(id),data);});newWbShipments.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});newOzShipments.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();} if(textEl)textEl.value=''; renderAllDebounced(); let msg='Импортировано: '+logCount+' записей в логистику'; if(wbCount>0)msg+=' · '+wbCount+' отгрузок WB'; if(ozonCount>0)msg+=' · '+ozonCount+' отгрузок Ozon'; showToast(msg); }
+
+// ========== ПРОГНОЗ ==========
+function getMonthlyIncoming(month){return vedSupplies.filter(s=>s.includeInModel!==false).filter(s=>{if(!s.eta)return false;const ed=new Date(s.eta);const em=MONTHS[ed.getMonth()];return em===month;}).reduce((sum,s)=>sum+(s.totalVolume||0),0);}
+function calculateExpense(month,prevExpense=null){const months=FORECAST_MONTHS;const idx=months.indexOf(month);if(idx===-1)return 0;if(idx===0){return warehouseData.baseExpense*(warehouseData.salesPlan[month]||0)/(warehouseData.marchPlan||311000000);}else{const prevMonth=months[idx-1];const prevSales=warehouseData.salesPlan[prevMonth]||0;const currSales=warehouseData.salesPlan[month]||0;if(prevSales===0)return 0;return(prevExpense||calculateExpense(prevMonth))*currSales/prevSales;}}
+function calculateForecast(){const months=FORECAST_MONTHS;let remaining=warehouseData.currentOccupancy+warehouseData.constantVolume;const result=[];let prevExpense=null;for(let month of months){const incoming=getMonthlyIncoming(month);const expense=calculateExpense(month,prevExpense);prevExpense=expense;remaining=remaining+incoming-expense;remaining=Math.max(remaining,0);const lp=remaining/warehouseData.totalCapacity;const free=warehouseData.totalCapacity-remaining;let status;if(lp>0.85)status='Переполнение';else if(lp>0.7)status='Высокая загрузка';else if(lp>0.5)status='Средняя загрузка';else status='OK';result.push({month,incoming:Math.round(incoming*100)/100,expense:Math.round(expense*100)/100,remaining:Math.round(remaining),loadPercent:lp,free:Math.round(free),status});}return result;}
+function renderForecastTab(){ const tcEl=document.getElementById('totalCapacity'),coEl=document.getElementById('currentOccupancy'),cvEl=document.getElementById('constantVolume'),beEl=document.getElementById('baseExpense'),mpEl=document.getElementById('marchPlan'); if(tcEl)tcEl.value=warehouseData.totalCapacity; if(coEl)coEl.value=warehouseData.currentOccupancy; if(cvEl)cvEl.value=warehouseData.constantVolume; if(beEl)beEl.value=warehouseData.baseExpense; if(mpEl)mpEl.value=warehouseData.marchPlan; renderSalesPlanEditor(); renderForecastChart(); }
+function renderSalesPlanEditor(){const tb=document.getElementById('salesPlanEditor');if(!tb)return;const fc=calculateForecast();let pe=null;let h='';for(let m of FORECAST_MONTHS){const sales=warehouseData.salesPlan[m]||0;const idx=FORECAST_MONTHS.indexOf(m);const pm=idx>0?FORECAST_MONTHS[idx-1]:null;const ps=pm?(warehouseData.salesPlan[pm]||0):warehouseData.marchPlan;const growth=ps>0?((sales/ps-1)*100).toFixed(1)+'%':'—';const expense=calculateExpense(m,pe);pe=expense;const incoming=getMonthlyIncoming(m);const fd=fc.find(f=>f.month===m);const remaining=fd?fd.remaining:0;const free=fd?fd.free:0;const lp=fd?Math.round(fd.loadPercent*100):0;const lc=lp>85?'danger':(lp>70?'warn':'good');h+=`<tr><td><b>${m}</b></td><td class="num"><input type="number" class="sales-plan-input" id="sales_${m}" value="${sales}" step="1000000" data-sales-month="${m}"></td><td class="num">${growth}</td><td class="num" style="color:var(--ved);">${incoming.toFixed(2)}</td><td class="num">${expense.toFixed(2)}</td><td class="num"><b>${remaining.toLocaleString('ru-RU')}</b></td><td class="num">${free.toLocaleString('ru-RU')}</td><td><div class="progress-bar"><div class="progress-fill ${lc}" style="width:${lp}%"></div></div>${lp}%</td></tr>`;}tb.innerHTML=h;}
+let sdt=null;function updateSalesPlan(m,v){warehouseData.salesPlan[m]=parseFloat(v)||0;if(sdt)clearTimeout(sdt);sdt=setTimeout(()=>{renderForecastTab();renderKpiStrip();},300);}
+async function saveWarehouseSettings(){const tcEl=document.getElementById('totalCapacity'),coEl=document.getElementById('currentOccupancy'),cvEl=document.getElementById('constantVolume'),beEl=document.getElementById('baseExpense'),mpEl=document.getElementById('marchPlan');if(tcEl)warehouseData.totalCapacity=parseFloat(tcEl.value)||2267;if(coEl)warehouseData.currentOccupancy=parseFloat(coEl.value)||1408;if(cvEl)warehouseData.constantVolume=parseFloat(cvEl.value)||85;if(beEl)warehouseData.baseExpense=parseFloat(beEl.value)||51.50;if(mpEl)warehouseData.marchPlan=parseFloat(mpEl.value)||311000000;saveAllToLocalStorage();if(isOnline){try{await db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true});}catch(e){showToast('Сохранено локально');return;}}renderForecastTab();renderKpiStrip();showToast('Настройки сохранены');}
+function renderForecastChart(){const svg=document.getElementById('forecastChart');if(!svg)return;const fc=calculateForecast();if(!fc.length||warehouseData.baseExpense===0){svg.innerHTML='<text x="300" y="110" text-anchor="middle" font-size="13" fill="var(--text-tertiary)">Загрузите данные</text>';return;}const months=fc.map(f=>f.month.slice(0,3));const idata=fc.map(f=>f.incoming);const edata=fc.map(f=>f.expense);const maxVal=Math.max(...idata,...edata,50);const yMax=Math.ceil(maxVal/10)*10;const W=600,H=220,PL=55,PR=20,PT=15,PB=30,cw=W-PL-PR,ch=H-PT-PB;const gx=i=>PL+(cw/(months.length-1))*i;const gy=v=>PT+ch-(v/yMax)*ch;let sc='';for(let i=0;i<=4;i++){const y=PT+(ch/4)*i;const val=Math.round(yMax-(yMax/4)*i);sc+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" class="chart-grid"/><text x="${PL-8}" y="${y+4}" text-anchor="end" class="chart-axis">${val.toFixed(0)}</text>`;}let ip='',ep='';for(let i=0;i<months.length;i++){const x=gx(i);ip+=(i===0?'M':'L')+`${x},${gy(idata[i])} `;ep+=(i===0?'M':'L')+`${x},${gy(edata[i])} `;}sc+=`<path d="${ip}" class="chart-line incoming"/><path d="${ep}" class="chart-line expense"/>`;for(let i=0;i<months.length;i++){sc+=`<circle cx="${gx(i)}" cy="${gy(idata[i])}" r="3.5" class="chart-dot" style="fill:var(--ved);"><title>Приход ${months[i]}: ${idata[i].toFixed(2)} м³</title></circle><circle cx="${gx(i)}" cy="${gy(edata[i])}" r="3.5" class="chart-dot" style="fill:#e37400;"><title>Расход ${months[i]}: ${edata[i].toFixed(2)} м³</title></circle><text x="${gx(i)}" y="${H-8}" text-anchor="middle" class="chart-axis">${months[i]}</text>`;}svg.innerHTML=sc;}
 
 // ========== НЕДЕЛИ ==========
-function getWeekKey(ds) { 
-    if (!ds) return { key: 'unknown', label: '—' }; 
-    const d = new Date(ds); if (isNaN(d.getTime())) return { key: 'unknown', label: '—' }; 
-    const day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1); 
-    const mon = new Date(d.setDate(diff)); 
-    return { key: mon.toISOString().slice(0, 10), label: mon.toLocaleDateString('ru-RU') }; 
-}
-function getAllShipments() { 
-    const all = []; 
-    wbShipments.forEach(s => all.push({...s, marketplace: 'Wildberries'})); 
-    ozonShipments.forEach(s => all.push({...s, marketplace: 'Ozon'})); 
-    return all; 
-}
-function renderSchedule() { 
-    const tc = document.getElementById('scheduleTable'); if (!tc) return; 
-    const all = getAllShipments(); 
-    if (!all.length) { tc.innerHTML = '<div class="empty-state">Нет данных</div>'; return; } 
-    const weeks = {}; 
-    all.forEach(s => { const wk = getWeekKey(s.date); if (!weeks[wk.key]) weeks[wk.key] = { label: wk.label, qty: 0 }; weeks[wk.key].qty += s.qty || 0; }); 
-    let html = '<table><thead><tr><th>Неделя</th><th class="num">Количество</th></tr></thead><tbody>'; 
-    Object.entries(weeks).sort((a,b) => b[0].localeCompare(a[0])).forEach(([key, val]) => { html += `<tr><td>${val.label}</td><td class="num">${val.qty.toLocaleString('ru-RU')}</td></tr>`; }); 
-    html += '</tbody></table>'; tc.innerHTML = html; 
-}
+function getWeekKey(ds) { if (!ds || typeof ds !== 'string') return { key: 'unknown-' + Math.random(), label: '—' }; const n = normalizeDateString(ds); if (!n) return { key: 'unknown-' + Math.random(), label: '—' }; const parts = n.split('-'); const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]); const date = new Date(Date.UTC(y, m, d)); if (isNaN(date.getTime())) return { key: 'unknown-' + Math.random(), label: '—' }; const day = date.getUTCDay(); const daysFromMonday = day === 0 ? 6 : day - 1; const mon = new Date(Date.UTC(y, m, d - daysFromMonday)); const fmt = dt => dt.getUTCDate().toString().padStart(2, '0') + '.' + (dt.getUTCMonth() + 1).toString().padStart(2, '0'); const sun = new Date(Date.UTC(mon.getUTCFullYear(), mon.getUTCMonth(), mon.getUTCDate() + 6)); return { key: mon.toISOString().slice(0, 10), label: fmt(mon) + '-' + fmt(sun) }; }
+function getCurrentWeekKey() { const now = new Date(); const y = now.getUTCFullYear(), m = now.getUTCMonth(), d = now.getUTCDate(); const date = new Date(Date.UTC(y, m, d)); const day = date.getUTCDay(); const daysFromMonday = day === 0 ? 6 : day - 1; const mon = new Date(Date.UTC(y, m, d - daysFromMonday)); return mon.toISOString().slice(0, 10); }
+function getAllShipments(){const all=[];wbShipments.forEach(s=>all.push({...s,marketplace:s.marketplace||s.source||'Wildberries'}));ozonShipments.forEach(s=>all.push({...s,marketplace:s.marketplace||s.source||'Ozon'}));return all.filter(s=>s.date&&typeof s.date==='string'&&!isNaN(new Date(s.date+'T00:00:00').getTime()));}
+function renderSchedule(){const tc=document.getElementById('scheduleTable'),wc=document.getElementById('scheduleWeekCount'),tr=document.getElementById('scheduleTotalRows');if(!tc)return;const all=getAllShipments();const grp={};all.forEach(s=>{const wk=getWeekKey(s.date);if(!grp[wk.key])grp[wk.key]={label:wk.label,wb:0,ozon:0,details:[]};if(s.marketplace==='Wildberries')grp[wk.key].wb+=s.qty;else grp[wk.key].ozon+=s.qty;grp[wk.key].details.push(s);});const weeks=Object.keys(grp).sort().reverse();const cwk=getCurrentWeekKey();if(wc)wc.textContent=weeks.filter(k=>!k.startsWith('unknown')).length;if(tr)tr.textContent=all.length;if(!weeks.length){tc.innerHTML='<div class="empty-state">Нет данных</div>';}else{let html='<table><thead><tr><th>Неделя</th><th class="num">WB</th><th class="num">Ozon</th><th class="num">Всего</th><th>Способность</th><th>Загрузка</th></tr></thead><tbody>';for(let key of weeks){const g=grp[key],t=g.wb+g.ozon,cap=weekCapacities[key]||0;const pct=cap>0?Math.round(t/cap*100):0;const bc=pct>100?'danger':pct>80?'warn':'good';const isCurrent=key===cwk;const rc=isCurrent?'week-row current':'week-row';const hasDetails=g.details.length>0;const wid='week-'+key.replace(/[^a-zA-Z0-9]/g,'-');html+=`<tr class="${rc}" data-week-toggle="${wid}"><td><b>${g.label}</b>${isCurrent?' <span class="badge badge-info">текущая</span>':''}${hasDetails?'<span class="toggle-icon" id="icon-'+wid+'">&#9662;</span>':''}</td><td class="num"><span class="badge badge-wb">${g.wb.toLocaleString('ru-RU')}</span></td><td class="num"><span class="badge badge-ozon">${g.ozon.toLocaleString('ru-RU')}</span></td><td class="num"><b>${t.toLocaleString('ru-RU')}</b></td><td><input class="capacity-input" type="number" value="${cap||''}" placeholder="0" data-week-cap="${key}"></td><td><div class="progress-bar"><div class="progress-fill ${bc}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;">${cap>0?pct+'%':'—'}</span></td></tr>`;if(hasDetails){const byCity={};g.details.forEach(d=>{const ck=d.city+'|'+d.marketplace;if(!byCity[ck])byCity[ck]=0;byCity[ck]+=d.qty;});html+=`<tr id="${wid}" style="display:none;background:var(--surface-hover);"><td colspan="6" style="padding:8px 16px;font-size:11px;color:var(--text-secondary);">`;for(let[ck,qty]of Object.entries(byCity)){const[city,mp]=ck.split('|');html+=`<span class="badge ${mp==='Wildberries'?'badge-wb':'badge-ozon'}" style="margin:2px;">${escapeHtml(city)}: ${qty.toLocaleString('ru-RU')} шт</span> `;}html+='</td></tr>';}}html+='</tbody></table>';tc.innerHTML=html;}}
+function toggleWeekDetails(wid){const el=document.getElementById(wid);const icon=document.getElementById('icon-'+wid);if(el){el.style.display=el.style.display==='none'?'table-row':'none';if(icon)icon.classList.toggle('open');}}
+async function updateWeekCapacity(key,val){weekCapacities[key]=parseInt(val)||0;if(isOnline){try{await db.collection('settings').doc('capacities').set({capacities:weekCapacities},{merge:true});}catch(e){}}saveAllToLocalStorage();renderSchedule();renderKpiStrip();}
+function exportScheduleCSV(){const all=getAllShipments();const grp={};all.forEach(s=>{const wk=getWeekKey(s.date);if(!grp[wk.key])grp[wk.key]={label:wk.label,wb:0,ozon:0};if(s.marketplace==='Wildberries')grp[wk.key].wb+=s.qty;else grp[wk.key].ozon+=s.qty;});let csv='Неделя;WB;Ozon;Всего;Способность;Загрузка\n';Object.keys(grp).filter(k=>!k.startsWith('unknown')).sort().reverse().forEach(k=>{const g=grp[k],t=g.wb+g.ozon,cap=weekCapacities[k]||0;csv+=`${g.label};${g.wb};${g.ozon};${t};${cap};${cap>0?Math.round(t/cap*100)+'%':'—'}\n`;});downloadCSV(csv,'сводная.csv');}
+function downloadCSV(csv,fn){const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+
+// ========== ИМПОРТ ==========
+async function importExcelModel(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array'});let tc=0,co=0,cv=0,mp=311000000;let sp={};const sheetNames=workbook.SheetNames;let inputSheet=null;for(const name of sheetNames){if(name.includes('Вводные')||name.includes('Input')||name.includes('Settings')){inputSheet=workbook.Sheets[name];break;}}if(!inputSheet&&sheetNames.length>0)inputSheet=workbook.Sheets[sheetNames[0]];if(inputSheet){const rows=XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;const ca=String(row[0]||'').toLowerCase();const cb=row[1];if(ca.includes('полезный')&&(ca.includes('объем')||ca.includes('объём')))tc=parseFloat(cb)||0;if(ca.includes('занято')&&!ca.includes('постоянный'))co=parseFloat(cb)||0;if(ca.includes('постоянный'))cv=parseFloat(cb)||0;}let its=false;for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Месяц')&&row.some(c=>String(c||'').includes('План'))){its=true;continue;}if(its&&row[0]&&MONTHS.includes(String(row[0]).trim())){const month=String(row[0]).trim();for(let col=1;col<row.length;col++){const plan=parseFloat(row[col])||0;if(plan>0){sp[month]=plan;break;}}}}}let expenseSheet=null;for(const name of sheetNames){if(name.includes('Уходимость')||name.includes('Расход')||name.includes('Expense')){expenseSheet=workbook.Sheets[name];break;}}if(expenseSheet){const rows=XLSX.utils.sheet_to_json(expenseSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Март')){if(row[3])warehouseData.baseExpense=parseFloat(row[3])||51.50;if(row[1])mp=parseFloat(row[1])||311000000;}}}if(tc>0)warehouseData.totalCapacity=tc;if(co>0)warehouseData.currentOccupancy=co;if(cv>0)warehouseData.constantVolume=cv;if(mp>0)warehouseData.marchPlan=mp;if(Object.keys(sp).length>0)warehouseData.salesPlan=sp;saveAllToLocalStorage();if(isOnline){db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true}).catch(()=>{});}resolve({totalCapacity:tc,currentOccupancy:co,constantVolume:cv,baseExpense:warehouseData.baseExpense,marchPlan:warehouseData.marchPlan,salesPlanCount:Object.keys(sp).length});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения файла');reader.readAsArrayBuffer(file);});}
+let showScheduleImport=false;
+function toggleScheduleImport(){showScheduleImport=!showScheduleImport;const block=document.getElementById('scheduleImportBlock');if(block)block.style.display=showScheduleImport?'block':'none';}
+async function doScheduleImport(){const textEl=document.getElementById('scheduleImportText');if(!textEl)return;const text=textEl.value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(String(cols[3]).replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const normalized=normalizeDateString(ds);if(!normalized)return;const shipment={id:generateUniqueId(),date:normalized,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();if(textEl)textEl.value='';toggleScheduleImport();renderAllDebounced();showToast('WB: '+iw+', Ozon: '+io);}
 
 // ========== НАВИГАЦИЯ ==========
-function switchPage(page) {
-    currentPage = page;
+function switchPage(page){
+    currentPage = page; localStorage.setItem('currentPage', page);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active'));
+    document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active','wb-active','ozon-active','logistics-active','ved-active'); });
     const pageEl = document.getElementById('page-' + page); if (pageEl) pageEl.classList.add('active');
-    const map = {schedule:0,wb:1,ozon:2,logistics:3,ved:4};
-    const cls = ['active','wb-active','ozon-active','logistics-active','ved-active'];
+    const map = {schedule:0,wb:1,ozon:2,logistics:3,ved:4}; const cls = ['active','wb-active','ozon-active','logistics-active','ved-active'];
     const btns = document.querySelectorAll('.nav-btn'); if (btns[map[page]]) btns[map[page]].classList.add(cls[map[page]]);
     if (page === 'schedule') { renderKpiStrip(); switchSubPage(currentSubPage); }
-    if (page === 'wb') switchWbSubPage(currentWbSubPage);
-    if (page === 'ozon') switchOzonSubPage(currentOzonSubPage);
+    if (page === 'wb') { switchWbSubPage(currentWbSubPage); }
+    if (page === 'ozon') { switchOzonSubPage(currentOzonSubPage); }
     if (page === 'logistics') { updateLogCalc(); renderLog(); renderLogAnalytics(); }
-    if (page === 'ved') { if(!vedTempLists.length) vedTempLists=[null]; renderVedLists(); renderVedCards(); renderVedKpiStrip(); }
+    if (page === 'ved') { if(vedTempLists.length===0) vedTempLists=[null]; renderVedLists(); vedExpandedId = null; renderVedCards(); renderVedKpiStrip(); const searchInput = document.getElementById('vedArticleSearch'); if (searchInput && vedSearchQuery) { searchInput.value = vedSearchQuery; } }
 }
-function switchSubPage(subPage) {
-    currentSubPage = subPage;
-    document.querySelectorAll('#page-schedule .sub-page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('#page-schedule .sub-nav-btn').forEach(b => b.classList.remove('active'));
-    const el = document.getElementById('sub-page-' + subPage); if (el) el.classList.add('active');
-    const map = {weeks:0, forecast:1, stock:2};
-    const btns = document.querySelectorAll('#page-schedule .sub-nav-btn'); if (btns[map[subPage]]) btns[map[subPage]].classList.add('active');
-    if (subPage === 'weeks') renderSchedule();
-    if (subPage === 'forecast') renderForecastTab();
-    if (subPage === 'stock') renderMsStock();
+function switchSubPage(subPage) { 
+    currentSubPage = subPage; localStorage.setItem('currentSubPage', subPage); 
+    document.querySelectorAll('#page-schedule .sub-page').forEach(p => p.classList.remove('active')); 
+    document.querySelectorAll('#page-schedule .sub-nav-btn').forEach(b => b.classList.remove('active')); 
+    const subPageEl = document.getElementById('sub-page-' + subPage); 
+    if (subPageEl) subPageEl.classList.add('active'); 
+    const subBtns = document.querySelectorAll('#page-schedule .sub-nav-btn'); 
+    const subMap = {weeks:0, forecast:1, stock:2}; 
+    if (subBtns[subMap[subPage]]) subBtns[subMap[subPage]].classList.add('active'); 
+    if (subPage === 'weeks') renderSchedule(); 
+    if (subPage === 'forecast') renderForecastTab(); 
+    if (subPage === 'stock') renderMsStock(); 
 }
 function switchWbSubPage(sub) {
     currentWbSubPage = sub;
-    document.querySelectorAll('#page-wb .sub-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('#page-wb .sub-nav-btn').forEach(b => b.classList.remove('active'));
-    const page = document.getElementById('wb-sub-' + sub); if (page) page.classList.add('active');
-    const btn = document.querySelector(`[data-wb-sub="${sub}"]`); if (btn) btn.classList.add('active');
+    document.querySelectorAll('#page-wb .sub-page').forEach(p => p.classList.remove('active'));
+    const btn = document.querySelector(`#page-wb .sub-nav-btn[data-wb-sub="${sub}"]`);
+    const page = document.getElementById('wb-sub-' + sub);
+    if (btn) btn.classList.add('active');
+    if (page) page.classList.add('active');
     if (sub === 'stock') renderWbStock();
 }
 function switchOzonSubPage(sub) {
     currentOzonSubPage = sub;
-    document.querySelectorAll('#page-ozon .sub-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('#page-ozon .sub-nav-btn').forEach(b => b.classList.remove('active'));
-    const page = document.getElementById('ozon-sub-' + sub); if (page) page.classList.add('active');
-    const btn = document.querySelector(`[data-ozon-sub="${sub}"]`); if (btn) btn.classList.add('active');
+    document.querySelectorAll('#page-ozon .sub-page').forEach(p => p.classList.remove('active'));
+    const btn = document.querySelector(`#page-ozon .sub-nav-btn[data-ozon-sub="${sub}"]`);
+    const page = document.getElementById('ozon-sub-' + sub);
+    if (btn) btn.classList.add('active');
+    if (page) page.classList.add('active');
     if (sub === 'stock') renderOzonStock();
+}
+function renderAll() { 
+    if (currentPage === 'schedule') { renderKpiStrip(); if (currentSubPage === 'weeks') renderSchedule(); if (currentSubPage === 'forecast') renderForecastTab(); if (currentSubPage === 'stock') renderMsStock(); } 
+    if (currentPage === 'wb' && currentWbSubPage === 'stock') renderWbStock(); 
+    if (currentPage === 'ozon' && currentOzonSubPage === 'stock') renderOzonStock(); 
+    renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); renderLogAnalytics(); renderVedCards(); renderVedKpiStrip(); 
 }
 
 // ========== ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ==========
-document.addEventListener('click', function(e) {
+document.addEventListener('click',function(e){
     const t = e.target;
-    if (t.classList.contains('card-delete') && t.dataset.mp) { deleteShipment(t.dataset.mp, t.dataset.id); return; }
-    if (t.id === 'themeToggle') { toggleTheme(); return; }
-    if (t.dataset.page) { switchPage(t.dataset.page); return; }
-    if (t.dataset.subPage) { switchSubPage(t.dataset.subPage); return; }
-    if (t.dataset.wbSub) { switchWbSubPage(t.dataset.wbSub); return; }
-    if (t.dataset.ozonSub) { switchOzonSubPage(t.dataset.ozonSub); return; }
-    if (t.id === 'btnSaveWb') { saveShipment('Wildberries'); return; }
-    if (t.id === 'btnSaveOzon') { saveShipment('Ozon'); return; }
-    if (t.id === 'btnClearWb') { clearShipmentForm('Wildberries'); return; }
-    if (t.id === 'btnClearOzon') { clearShipmentForm('Ozon'); return; }
-    if (t.id === 'btnAddLog') { addLogEntry(); return; }
-    if (t.id === 'btnSyncNow') { loadFromFirebase(); return; }
+    if(t.classList.contains('card-delete')&&t.dataset.mp&&t.dataset.id){e.stopPropagation();deleteShipment(t.dataset.mp,t.dataset.id);return;}
+    if(t.classList.contains('card-edit')&&t.dataset.editMp&&t.dataset.editId){e.stopPropagation();startEditQty(t.dataset.editMp,t.dataset.editId);return;}
+    if(t.hasAttribute('data-ved-delete')){e.stopPropagation();deleteVedSupply(t.getAttribute('data-ved-delete'));return;}
+    if(t.hasAttribute('data-ved-include')){e.stopPropagation();toggleVedIncludeInModel(t.getAttribute('data-ved-include'));return;}
+    if(t.hasAttribute('data-ved-list-remove')){e.stopPropagation();removeVedList(parseInt(t.getAttribute('data-ved-list-remove')));return;}
+    if(t.hasAttribute('data-ved-toggle')){e.stopPropagation();toggleVedDetails(t.getAttribute('data-ved-toggle'));return;}
+    const vedBody = t.closest('.ved-card .card-body'); if (vedBody && vedBody.hasAttribute('data-ved-toggle')) { if (t.tagName === 'SELECT' || t.tagName === 'BUTTON' || t.closest('select') || t.closest('button')) return; toggleVedDetails(vedBody.getAttribute('data-ved-toggle')); return; }
+    if(t.hasAttribute('data-log-paid')){toggleLogPaid(t.getAttribute('data-log-paid'));return;}
+    if(t.hasAttribute('data-log-delete')){deleteLogEntry(t.getAttribute('data-log-delete'));return;}
+    if(t.hasAttribute('data-week-toggle')){toggleWeekDetails(t.getAttribute('data-week-toggle'));return;}
+    const wr=t.closest('[data-week-toggle]');if(wr){toggleWeekDetails(wr.getAttribute('data-week-toggle'));return;}
+    if(t.id==='btnResetLogFilters'||t.closest('#btnResetLogFilters')){resetLogFilters();return;}
+    if(t.id==='btnAddVedList'){addVedList();return;}
+    if(t.id==='logHistoryHeader'||t.closest('#logHistoryHeader')){toggleLogHistory();return;}
+    if(t.id==='wbStockFileRemove'){removeStockFile('WB');return;}
+    if(t.id==='ozonStockFileRemove'){removeStockFile('Ozon');return;}
+    if(t.id==='msStockFileRemove'){removeMsStockFile();return;}
+    if(t.id==='btnExportWbStock'){exportStockCSV('WB');return;}
+    if(t.id==='btnExportOzonStock'){exportStockCSV('Ozon');return;}
+    if(t.id==='btnExportMsStock'){exportMsStockCSV();return;}
+    if(t.id==='btnResetWbStockFilters'){resetStockFilters('WB');return;}
+    if(t.id==='btnResetOzonStockFilters'){resetStockFilters('Ozon');return;}
+    if(t.id==='btnResetMsStockFilters'){resetMsStockFilters();return;}
+    if(t.id==='msStatAll'||t.closest('#msStatAll')){resetMsStockFilters();return;}
+    if(t.id==='msStatBalance'||t.closest('#msStatBalance')){resetMsStockFilters();return;}
+    if(t.id==='msStatWaiting'||t.closest('#msStatWaiting')){document.getElementById('msStockWaitingFilter').value='positive';renderMsStock();return;}
+    const wbSubBtn = t.closest('[data-wb-sub]'); if (wbSubBtn) { switchWbSubPage(wbSubBtn.getAttribute('data-wb-sub')); return; }
+    const ozonSubBtn = t.closest('[data-ozon-sub]'); if (ozonSubBtn) { switchOzonSubPage(ozonSubBtn.getAttribute('data-ozon-sub')); return; }
+});
+document.addEventListener('change',function(e){
+    const t=e.target;
+    if(t.classList.contains('status-select')){handleStatusChange(e);return;}
+    if(t.hasAttribute('data-ved-status')){updateVedStatus(t.getAttribute('data-ved-status'),t.value);return;}
+    if(t.hasAttribute('data-log-supplier')){updateLogSupplier(t.getAttribute('data-log-supplier'),t.value);return;}
+    if(t.hasAttribute('data-log-nds')){updateLogNds(t.getAttribute('data-log-nds'),t.value);return;}
+    if(t.hasAttribute('data-log-pallets')){updateLogPallets(t.getAttribute('data-log-pallets'),t.value);return;}
+    if(t.hasAttribute('data-log-amount')){updateLogAmount(t.getAttribute('data-log-amount'),t.value);return;}
+    if(t.hasAttribute('data-week-cap')){updateWeekCapacity(t.getAttribute('data-week-cap'),t.value);return;}
+});
+document.addEventListener('input',function(e){ 
+    const t=e.target; 
+    if(t.hasAttribute('data-sales-month')){updateSalesPlan(t.getAttribute('data-sales-month'),t.value);return;} 
+    if(t.id==='shipCityWildberries'||t.id==='shipCityOzon'||t.id==='logCity'){validateCityInput(t);} 
+    if(t.id==='vedArticleSearch'){handleVedSearch(t.value);return;} 
+    if(t.id==='wbStockSearch'){renderWbStock();return;} 
+    if(t.id==='ozonStockSearch'){renderOzonStock();return;} 
+    if(t.id==='msStockSearch'){renderMsStock();return;} 
+    if(t.id==='wbStockBalanceFilter'||t.id==='wbStockWaitingFilter'){renderWbStock();return;} 
+    if(t.id==='ozonStockBalanceFilter'||t.id==='ozonStockWaitingFilter'){renderOzonStock();return;} 
+    if(t.id==='msStockBalanceFilter'||t.id==='msStockWaitingFilter'||t.id==='msStockMatchFilter'){renderMsStock();return;} 
 });
 
-document.addEventListener('change', function(e) {
-    const t = e.target;
-    if (t.classList.contains('status-select')) { handleStatusChange(e); return; }
-    if (t.id === 'logAmount' || t.id === 'logNDS') { updateLogCalc(); return; }
-});
+// ========== ПРЯМЫЕ ОБРАБОТЧИКИ ==========
+function initDirectHandlers(){
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    document.querySelectorAll('.nav-btn').forEach(b=>{b.addEventListener('click',function(){switchPage(this.dataset.page);});});
+    document.querySelectorAll('#page-schedule .sub-nav-btn').forEach(b=>{b.addEventListener('click',function(){switchSubPage(this.dataset.subPage);});});
+    safeAddEventListener('btnSyncNow','click',() => loadFromFirebase());
+    safeAddEventListener('btnImportSchedule','click',toggleScheduleImport);
+    safeAddEventListener('btnDoScheduleImport','click',doScheduleImport);
+    safeAddEventListener('btnExportSchedule','click',exportScheduleCSV);
+    safeAddEventListener('btnSaveWb','click',()=>saveShipment('Wildberries'));
+    safeAddEventListener('btnClearWb','click',()=>clearShipmentForm('Wildberries'));
+    safeAddEventListener('btnSaveOzon','click',()=>saveShipment('Ozon'));
+    safeAddEventListener('btnClearOzon','click',()=>clearShipmentForm('Ozon'));
+    safeAddEventListener('btnAddLog','click',addLogEntry);
+    safeAddEventListener('btnToggleLogImport','click',toggleLogImport);
+    safeAddEventListener('btnDoLogImport','click',doLogImport);
+    safeAddEventListener('btnExportLog','click',()=>{let csv='Дата;МП;Тип;Поставщик;Город;Кол-во;Паллет;Сумма;С НДС;Статус;НДС\n'+[...logEntries].sort((a,b)=>a.date.localeCompare(b.date)).map(e=>`${e.date};${e.marketplace};${e.type};${e.supplier||''};${e.city};${e.qty};${e.boxes};${e.amount};${e.amountFull};${e.paid?'Оплачен':'Не оплачен'};${e.nds}`).join('\n');downloadCSV(csv,'логистика.csv');});
+    safeAddEventListener('logFilterMonth','change',renderLog);
+    safeAddEventListener('logFilterStatus','change',renderLog);
+    safeAddEventListener('logFilterMP','change',renderLog);
+    safeAddEventListener('logAmount','input',updateLogCalc);
+    safeAddEventListener('logNDS','change',updateLogCalc);
+    safeAddEventListener('btnSaveVed','click',saveVedSupply);
+    safeAddEventListener('btnClearVed','click',clearVedForm);
+    safeAddEventListener('btnSaveWarehouseSettings','click',saveWarehouseSettings);
+    safeAddEventListener('btnResetSalesPlan','click',()=>{if(confirm('Сбросить план?')){warehouseData.salesPlan={"Апрель":343000000,"Май":387000000,"Июнь":428300000,"Июль":494000000,"Август":565000000,"Сентябрь":629000000,"Октябрь":697000000,"Ноябрь":775000000,"Декабрь":1149000000};renderForecastTab();renderKpiStrip();showToast('План сброшен');}});
+    safeAddEventListener('btnImportExcelForSettings','click',()=>{const input=document.createElement('input');input.type='file';input.accept='.xlsx,.xls';input.onchange=async(ev)=>{const file=ev.target.files[0];if(!file)return;try{showToast('Импорт...');const result=await importExcelModel(file);showToast('Импортировано: план '+result.salesPlanCount+' мес.');renderForecastTab();renderKpiStrip();}catch(err){alert('Ошибка: '+err);}};input.click();});
+    const shipCityWb=document.getElementById('shipCityWildberries');if(shipCityWb){shipCityWb.addEventListener('input',showRouteInfo);shipCityWb.addEventListener('blur',function(){validateCityInput(this);});}
+    const shipCityOz=document.getElementById('shipCityOzon');if(shipCityOz){shipCityOz.addEventListener('blur',function(){validateCityInput(this);});}
+    const logCity=document.getElementById('logCity');if(logCity){logCity.addEventListener('blur',function(){validateCityInput(this);});}
+    
+    const stockUploads = [
+        { uploadId: 'wbStockUpload', inputId: 'wbStockFileInput', mp: 'WB', borderColor: 'var(--wb)' },
+        { uploadId: 'ozonStockUpload', inputId: 'ozonStockFileInput', mp: 'OZON', borderColor: 'var(--ozon)' },
+        { uploadId: 'msStockUpload', inputId: 'msStockFileInput', mp: 'MS', borderColor: 'var(--ved)' }
+    ];
+    stockUploads.forEach(({ uploadId, inputId, mp, borderColor }) => {
+        const upload = document.getElementById(uploadId);
+        const fileInput = document.getElementById(inputId);
+        if (upload && fileInput) {
+            upload.addEventListener('click', function(e) { if (e.target.tagName === 'INPUT') return; fileInput.click(); });
+            upload.addEventListener('dragover', e => { e.preventDefault(); upload.style.borderColor = borderColor; });
+            upload.addEventListener('dragleave', () => { upload.style.borderColor = ''; });
+            upload.addEventListener('drop', e => {
+                e.preventDefault(); upload.style.borderColor = '';
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    if (mp === 'WB') handleStockFileUpload('WB', file);
+                    else if (mp === 'OZON') handleStockFileUpload('Ozon', file);
+                    else if (mp === 'MS') handleMsStockFileUpload(file);
+                }
+            });
+            fileInput.addEventListener('change', function() {
+                if (this.files[0]) {
+                    if (mp === 'WB') handleStockFileUpload('WB', this.files[0]);
+                    else if (mp === 'OZON') handleStockFileUpload('Ozon', this.files[0]);
+                    else if (mp === 'MS') handleMsStockFileUpload(this.files[0]);
+                }
+            });
+        }
+    });
+}
 
-document.addEventListener('input', function(e) {
-    const t = e.target;
-    if (t.id === 'shipCityWildberries' || t.id === 'shipCityOzon') validateCityInput(t);
-    if (t.id === 'shipCityWildberries') showRouteInfo();
-});
+// ========== ПАРСЕР ВЭД ==========
+class FixedVedParser{constructor(){this.skuLibrary={};this.learningHistory=[];this.loadLearningHistory();this.articleStats={byHeader:0,byAutoSearch:0,byFirstCol:0,byNameExtract:0,notFound:0};this.columnKeywords={article:['article','артикул','sku','код','item','сырьевые артикулы','сырьевой артикул','vendor code','part number','pn'],name:['name','наименование','название','product','товар','description','описание','model','модель'],cartons:['cartons','короб','ящик','箱数','总件数','total cartons','количество коробок','箱'],perCarton:['per carton','шт/кор','每箱数量','each carton','в коробке','qty per ctn','pcs/ctn'],totalQty:['qty','количество','数量','total quantity','общее количество','всего','total'],volume:['cbm','объём','объем','volume','总体积','all cbm','total volume','箱体积','each meas']};}loadLearningHistory(){try{const s=localStorage.getItem('fixed_ved_parser_learning');if(s)this.learningHistory=JSON.parse(s);}catch(e){this.learningHistory=[];}}saveLearningHistory(){try{localStorage.setItem('fixed_ved_parser_learning',JSON.stringify(this.learningHistory));}catch(e){}}loadSkuLibrary(workbook){const sheetNames=workbook.SheetNames;let refSheet=null;for(const name of sheetNames){if(name.includes('Лист1')||name.includes('Sheet1')||name.includes('SKU')||name.includes('Reference')||name.includes('справочник')){refSheet=workbook.Sheets[name];break;}}if(!refSheet)return;const rows=XLSX.utils.sheet_to_json(refSheet,{header:1,defval:''});let articleCol=-1,perCartonCol=-1,lengthCol=-1,widthCol=-1,heightCol=-1,volumeCol=-1;for(let i=0;i<Math.min(10,rows.length);i++){const row=rows[i];if(!row)continue;for(let col=0;col<row.length;col++){const cell=String(row[col]||'').toLowerCase();if(/article|артикул|sku|код/.test(cell)&&articleCol===-1)articleCol=col;if(/pcs\/ctn|per carton|шт\/кор|每箱数量/.test(cell)&&perCartonCol===-1)perCartonCol=col;if(/length|длина|长/.test(cell)&&lengthCol===-1)lengthCol=col;if(/width|ширина|宽/.test(cell)&&widthCol===-1)widthCol=col;if(/height|высота|高/.test(cell)&&heightCol===-1)heightCol=col;if(/volume|cbm|объем|体积/.test(cell)&&volumeCol===-1)volumeCol=col;}if(articleCol!==-1)break;}if(articleCol===-1){for(let i=2;i<Math.min(20,rows.length);i++){const row=rows[i];if(!row)continue;for(let col=0;col<row.length;col++){if(/^[A-Z]{1,2}\d{4,}[-_\/]?\d*[A-Z]?$/i.test(String(row[col]||''))){articleCol=col;break;}}if(articleCol!==-1)break;}}if(articleCol===-1)return;for(let i=1;i<rows.length;i++){const row=rows[i];if(!row||row.length<=articleCol)continue;const article=String(row[articleCol]||'').trim();if(!article||article=='无'||article=='None')continue;this.skuLibrary[article]={perCarton:perCartonCol!==-1?this.parseNumber(row[perCartonCol]):0,length:lengthCol!==-1?this.parseNumber(row[lengthCol]):0,width:widthCol!==-1?this.parseNumber(row[widthCol]):0,height:heightCol!==-1?this.parseNumber(row[heightCol]):0,volume:volumeCol!==-1?this.parseNumber(row[volumeCol]):0};}}parseNumber(value){if(value===undefined||value===null)return 0;if(typeof value==='number')return value;const str=String(value).trim();if(str=='无'||str=='None'||str=='null'||str=='')return 0;const cleaned=str.replace(/\s/g,'').replace(',','.');const num=parseFloat(cleaned);return isNaN(num)?0:num;}isValueEmpty(value){if(value===undefined||value===null)return true;const str=String(value).trim();return str==''||str=='无'||str=='None'||str=='null';}isArticleLike(value){if(this.isValueEmpty(value))return false;const str=String(value).trim();if(str=='N/A'||str=='无'||str=='None'||str=='null')return false;if(str.length<3||str.length>50)return false;const strictPatterns=[/^[A-Z]{1,2}\d{4,}[-_\/]?\d*[A-Z]?$/i,/^[A-Z]{1,2}\d{4,}[-_][A-Z0-9]{2,}$/i,/^[A-Z]{1,2}\d{2,}[-_]\d{2,}[-_\/][A-Z0-9]{2,}$/i,/^[A-Z]{1,2}\d{4,}[A-Z]?[-_\/]?\d*$/i,/^[A-Z]{1,2}\d{4,}[-_][A-Z]?[-_\/]?\d*$/i,/^[A-Z]{1,2}\d{2,}[A-Z]?[-_\/]\d{2,}$/i];for(const p of strictPatterns){if(p.test(str))return true;}const mediumPatterns=[/^[A-Z]{1,2}\d{3,}[A-Z]?(\/|-)?\d*[A-Z]?$/i,/^[A-Z]{1,2}\d{3,}-\d-[A-Z]$/i,/^[A-Z]{1,3}\d{2,6}[A-Z]?$/i,/^[A-Z]{2,5}\d{2,6}$/i,/^[A-Z]{1,2}\d{3,}[A-Z]-\d{2,}$/i];for(const p of mediumPatterns){if(p.test(str))return true;}if(/[A-Za-z]/.test(str)&&/\d/.test(str)&&/[-_\/]/.test(str)&&str.length<=20)return true;if(/^[A-Z]{1,2}\d{3,}/i.test(str)&&str.length<=20)return true;const bm=str.match(/[\(\[\"']([A-Z0-9]{4,15})[\)\]\"']/i);if(bm&&/[A-Z]/.test(bm[1])&&/\d/.test(bm[1]))return true;if(/^[A-Z]{1}-\d{3,6}$/i.test(str))return true;if(str.length>=4&&str.length<=12&&!str.includes(' ')&&/[A-Za-z]/.test(str)&&/\d/.test(str)&&!/^https?:/.test(str)&&!/^[a-z]+[0-9]+$/i.test(str))return true;return false;}findColumnsByHeaders(rows){const columnMap={};const maxCols=rows[0]?rows[0].length:0;let headerRowIndex=-1;for(let i=0;i<Math.min(10,rows.length);i++){const row=rows[i];if(!row)continue;let matchCount=0;for(let col=0;col<row.length;col++){const cell=String(row[col]||'').toLowerCase();if(/article|артикул|sku/.test(cell))matchCount++;if(/qty|количество|数量/.test(cell))matchCount++;if(/carton|короб|箱/.test(cell))matchCount++;}if(matchCount>=2){headerRowIndex=i;break;}}if(headerRowIndex===-1)return{columnMap:{},headerRowIndex:0};const headerRow=rows[headerRowIndex];for(let col=0;col<Math.min(maxCols,headerRow.length);col++){const header=String(headerRow[col]||'').toLowerCase().trim();if(!header)continue;for(const[field,keywords]of Object.entries(this.columnKeywords)){for(const keyword of keywords){if(header.includes(keyword.toLowerCase())){columnMap[field]=col;break;}}}}return{columnMap,headerRowIndex};}getFromSkuLibrary(article,field){if(!article||!this.skuLibrary[article])return 0;return this.skuLibrary[article][field]||0;}async parseFile(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=(e)=>{try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array',cellFormula:false,cellNF:true});this.loadSkuLibrary(workbook);const sheet=workbook.Sheets[workbook.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',blankrows:false});const{columnMap,headerRowIndex}=this.findColumnsByHeaders(rows);const items=[];let totalVolume=0,totalQty=0,totalCartons=0;this.articleStats={byHeader:0,byAutoSearch:0,byFirstCol:0,byNameExtract:0,notFound:0};for(let i=headerRowIndex+1;i<rows.length;i++){const row=rows[i];if(!row||row.every(cell=>this.isValueEmpty(cell)))continue;const firstCell=String(row[0]||'').toLowerCase();if(firstCell=='итого'||firstCell=='total'||firstCell=='合计')continue;let article='';let articleConfidence='none';if(columnMap.article!==undefined&&columnMap.article<row.length){const cell=String(row[columnMap.article]||'').trim();if(cell&&this.isArticleLike(cell)&&cell!=='N/A'){article=cell;articleConfidence='header';this.articleStats.byHeader++;}}if(!article){const candidates=[];for(let col=0;col<Math.min(row.length,15);col++){const cell=String(row[col]||'').trim();if(!cell||cell=='N/A'||cell=='无'||cell=='None')continue;let score=0;if(/^[A-Z]{1,2}\d{4,}/i.test(cell))score+=10;if(/[-_\/]/.test(cell))score+=3;if(/[A-Za-z]/.test(cell)&&/\d/.test(cell))score+=5;if(cell.length>=4&&cell.length<=15)score+=2;if(col<3)score+=3;if(cell.length>40)score-=5;if(cell.includes(' '))score-=2;if(/^https?:/.test(cell))score-=10;if(/^(итого|total|合计)/i.test(cell))score-=10;if(score>=5&&this.isArticleLike(cell))candidates.push({col,cell,score});}if(candidates.length>0){candidates.sort((a,b)=>b.score-a.score);article=candidates[0].cell;articleConfidence=`auto (score: ${candidates[0].score})`;this.articleStats.byAutoSearch++;}}if(!article&&row.length>0){const fc=String(row[0]||'').trim();if(fc&&fc!=='N/A'&&fc.length>=3&&fc.length<=25&&/[A-Za-z]/.test(fc)&&/\d/.test(fc)&&!fc.includes(' ')){article=fc;articleConfidence='first_column_fallback';this.articleStats.byFirstCol++;}}if(!article){let nameForSearch='';if(columnMap.name!==undefined&&columnMap.name<row.length)nameForSearch=String(row[columnMap.name]||'').trim();else{for(let col=0;col<Math.min(row.length,10);col++){const cell=String(row[col]||'').trim();if(cell&&/[a-zA-Zа-яА-Я]{3,}/.test(cell)&&cell.length>nameForSearch.length&&!this.isArticleLike(cell))nameForSearch=cell;}}if(nameForSearch){const sm=nameForSearch.match(/^([A-Z]{1,2}\d{3,}[A-Z]?)/i);if(sm){article=sm[1];articleConfidence='extracted_from_name';this.articleStats.byNameExtract++;}}}if(!article){this.articleStats.notFound++;}let name='';if(columnMap.name!==undefined&&columnMap.name<row.length)name=String(row[columnMap.name]||'').trim();if(!name||/[\u4e00-\u9fff]/.test(name)){for(let col=0;col<Math.min(row.length,15);col++){const cell=String(row[col]||'').trim();if(cell&&/[a-zA-Zа-яА-Я]{3,}/.test(cell)&&!this.isArticleLike(cell)&&cell!=='N/A'){name=cell;break;}}}if(!name&&article)name=article;if(!name)continue;let cartons=0;if(columnMap.cartons!==undefined&&columnMap.cartons<row.length)cartons=this.parseNumber(row[columnMap.cartons]);let perCarton=0;if(columnMap.perCarton!==undefined&&columnMap.perCarton<row.length)perCarton=this.parseNumber(row[columnMap.perCarton]);if(perCarton===0&&article)perCarton=this.getFromSkuLibrary(article,'perCarton');let qty=0;if(columnMap.totalQty!==undefined&&columnMap.totalQty<row.length)qty=this.parseNumber(row[columnMap.totalQty]);if(qty===0&&perCarton>0&&cartons>0)qty=perCarton*cartons;let volume=0;if(columnMap.volume!==undefined&&columnMap.volume<row.length)volume=this.parseNumber(row[columnMap.volume]);if(volume>0&&volume<0.1&&cartons>1){const ptv=volume*cartons;if(ptv>0.1&&ptv<100)volume=ptv;}if(volume===0&&article){const l=this.getFromSkuLibrary(article,'length');const w=this.getFromSkuLibrary(article,'width');const h=this.getFromSkuLibrary(article,'height');if(l>0&&w>0&&h>0&&cartons>0)volume=(l*w*h/1000000)*cartons;}totalCartons+=cartons;totalQty+=qty;totalVolume+=volume;items.push({article:article||'N/A',name,cartons,perCarton,qty,volume:Math.round(volume*1000)/1000,row:i+1,articleConfidence});}const naCount=items.filter(i=>i.article=='N/A').length;resolve({success:true,items,totalCartons,totalQty,totalVolume:Math.round(totalVolume*1000)/1000,itemsCount:items.length,skuLibrarySize:Object.keys(this.skuLibrary).length,missingVolumeCount:items.filter(i=>i.volume===0).length,naCount});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения файла');reader.readAsArrayBuffer(file);});}}
+const vedParser=new FixedVedParser();
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
-function initApp() {
+function initApp(){
     initTheme();
-    const today = new Date().toISOString().slice(0, 10);
-    ['logDate', 'shipDateWildberries', 'shipDateOzon'].forEach(id => { const el = document.getElementById(id); if (el) el.value = today; });
-    const cityList = document.getElementById('cityList'); if (cityList) cityList.innerHTML = Object.keys(routesDB).map(c => `<option value="${c}">`).join('');
-    currentPage = localStorage.getItem('currentPage') || 'schedule';
-    currentSubPage = localStorage.getItem('currentSubPage') || 'weeks';
-    if (!vedTempLists.length) vedTempLists = [null];
+    const today=new Date().toISOString().slice(0,10);
+    ['logDate','shipDateWildberries','shipDateOzon'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
+    const cityList=document.getElementById('cityList');
+    if(cityList)cityList.innerHTML=Object.keys(routesDB).map(c=>`<option value="${c}">`).join('');
+    currentPage=localStorage.getItem('currentPage')||'schedule';
+    currentSubPage=localStorage.getItem('currentSubPage')||'weeks';
+    if(vedTempLists.length===0)vedTempLists=[null];
+    
+    // Загружаем локальные данные мгновенно
     loadAllFromLocalStorage();
+    
+    // Быстрый рендеринг текущей страницы
     switchPage(currentPage);
+    initDirectHandlers();
     
-    // Регистрация Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
+    // Асинхронная загрузка из Firebase с таймаутом
+    setTimeout(() => loadFromFirebase(), 100);
     
-    requestIdleCallback(() => { loadFromFirebase(); }, { timeout: 1000 });
-    console.log('v35.0 — Плавная версия');
+    console.log('v34.0 — Оптимизированная загрузка');
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
