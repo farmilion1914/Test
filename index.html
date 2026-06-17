@@ -202,7 +202,6 @@
         .field input.invalid { border-color: var(--danger); background: var(--status-reject-bg); }
         .field-calc { background: var(--status-wait-bg); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--accent); text-align: right; }
 
-        /* АНАЛИТИКА НОВОГО ДИЗАЙНА */
         .analytics-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -358,7 +357,6 @@
             color: var(--accent);
         }
 
-        /* СТОК (ОСТАТКИ) */
         .stock-upload-area {
             border: 2px dashed var(--border);
             border-radius: var(--radius-md);
@@ -400,7 +398,7 @@
             align-items: center;
             gap: 8px;
             justify-content: center;
-            margin-top: 8px;
+            margin-bottom: 16px;
         }
         .stock-file-name {
             font-size: 12px;
@@ -513,6 +511,44 @@
         .card-status select.status-sent { background: var(--status-sent-bg) !important; color: var(--status-sent-text) !important; border-color: var(--status-sent-text) !important; }
         .card-status select.status-ready { background: var(--status-ready-bg) !important; color: var(--status-ready-text) !important; border-color: var(--status-ready-text) !important; }
         .shipment-card .route-badge { font-size: 10px; color: var(--success); padding: 3px 10px; background: var(--status-sent-bg); border-radius: 10px; display: inline-block; font-weight: 500; }
+
+        .stock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .stock-badge.high { background: var(--status-sent-bg); color: var(--success); }
+        .stock-badge.medium { background: var(--status-work-bg); color: var(--warning); }
+        .stock-badge.low { background: var(--status-reject-bg); color: var(--danger); }
+        .stock-badge.zero { background: var(--status-wait-bg); color: var(--text-tertiary); }
+        .stock-empty-filter {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+        
+        .stock-match-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 1px;
+        }
+        .stock-match-indicator.wb-match { background: var(--badge-wb-bg); color: var(--wb); }
+        .stock-match-indicator.ozon-match { background: var(--badge-ozon-bg); color: var(--ozon); }
+        .stock-match-indicator.no-match { background: var(--status-wait-bg); color: var(--text-tertiary); }
+        
+        .stock-diff-positive { color: var(--success); font-weight: 600; }
+        .stock-diff-negative { color: var(--danger); font-weight: 600; }
+        .stock-diff-zero { color: var(--text-tertiary); }
 
         .ved-card { background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); transition: all 0.3s; position: relative; overflow: hidden; cursor: pointer; }
         .ved-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
@@ -664,27 +700,6 @@
         .btn-add-list:hover { opacity: 0.9; }
         .btn-add-list:disabled { background: #ccc; cursor: not-allowed; }
 
-        /* Стили для остатков */
-        .stock-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .stock-badge.high { background: var(--status-sent-bg); color: var(--success); }
-        .stock-badge.medium { background: var(--status-work-bg); color: var(--warning); }
-        .stock-badge.low { background: var(--status-reject-bg); color: var(--danger); }
-        .stock-badge.zero { background: var(--status-wait-bg); color: var(--text-tertiary); }
-        .stock-empty-filter {
-            text-align: center;
-            padding: 30px;
-            color: var(--text-tertiary);
-            font-size: 13px;
-        }
-
         a { color: var(--accent); }
 
         @media (max-width: 768px) {
@@ -722,12 +737,12 @@
 <!-- СВОДНАЯ -->
 <div class="page active" id="page-schedule">
     <h1>Сводная</h1>
-    <p class="subtitle">Загруженность склада, упаковки, прогноз и справочник</p>
+    <p class="subtitle">Загруженность склада, упаковки, прогноз и общие остатки</p>
     <div class="kpi-strip" id="kpiStrip"></div>
     <div class="sub-nav">
         <button type="button" class="sub-nav-btn active" data-sub-page="weeks">Загруженность по неделям</button>
         <button type="button" class="sub-nav-btn" data-sub-page="forecast">Прогноз загрузки</button>
-        <button type="button" class="sub-nav-btn" data-sub-page="reference">Справочник</button>
+        <button type="button" class="sub-nav-btn" data-sub-page="stock">Остатки (МС)</button>
     </div>
     <div class="sub-page active" id="sub-page-weeks">
         <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
@@ -747,9 +762,64 @@
         <div class="table-wrap"><table><thead><tr><th>Месяц</th><th class="num">План продаж, руб.</th><th class="num">Рост</th><th class="num">Приход, м³</th><th class="num">Расход, м³</th><th class="num">Остаток, м³</th><th class="num">Свободно, м³</th><th>Загрузка</th></tr></thead><tbody id="salesPlanEditor"></tbody></table></div>
         <div class="chart-card"><div class="chart-header"><div class="chart-title">График прихода и расхода</div><div class="chart-legend"><span><span class="legend-dot incoming"></span> Приход (ВЭД)</span><span><span class="legend-dot expense"></span> Расход (прогноз)</span></div></div><svg class="chart-svg" id="forecastChart" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
-    <div class="sub-page" id="sub-page-reference">
-        <div class="form-card"><div class="form-row"><div class="field"><label>Артикул</label><input type="text" id="skuArticle" placeholder="S20001-3/02"></div><div class="field"><label>Наименование</label><input type="text" id="skuName" placeholder="Headphones..."></div><div class="field"><label>Длина, см</label><input type="number" id="skuLength" step="0.1" placeholder="см"></div><div class="field"><label>Ширина, см</label><input type="number" id="skuWidth" step="0.1" placeholder="см"></div><div class="field"><label>Высота, см</label><input type="number" id="skuHeight" step="0.1" placeholder="см"></div><div class="field"><label>Шт/кор</label><input type="number" id="skuPerCarton" placeholder="шт"></div><div class="field" style="justify-content:flex-end;"><button type="button" class="btn btn-primary btn-sm" id="btnAddSku">Добавить</button></div></div></div>
-        <div class="table-wrap"><table id="skuTable"><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Длина, см</th><th class="num">Ширина, см</th><th class="num">Высота, см</th><th class="num">Шт/кор</th><th class="num">Объём короба, м³</th><th></th></tr></thead><tbody id="skuList"></tbody></table></div>
+    <div class="sub-page" id="sub-page-stock">
+        <div class="section-title">Общие остатки — Импорт из Excel (МойСклад)</div>
+        <div class="stock-upload-area" id="msStockUpload">
+            <div class="upload-icon">📦</div>
+            <div class="upload-text">Загрузите файл с общими остатками</div>
+            <div class="upload-hint">Excel (.xlsx, .xls) — автоматическое определение колонок: Артикул, Наименование, Ожидание, Остаток</div>
+            <input type="file" accept=".xlsx,.xls" id="msStockFileInput">
+        </div>
+        <div class="stock-file-info" id="msStockFileInfo" style="display:none;">
+            <span class="stock-file-name" id="msStockFileName"></span>
+            <button type="button" class="stock-file-remove" id="msStockFileRemove">✕</button>
+        </div>
+        <div class="stock-stats-strip" id="msStockStats"></div>
+        <div class="analytics-grid" id="msStockComparisonGrid" style="display:none;">
+            <div class="analytics-card wb-card" id="msWbComparisonCard">
+                <div class="ac-label"><span class="ac-icon">W</span>Совпадения с WB</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msWbMatchCount">0</div><div class="ac-metric-label">Позиций</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msWbMatchBalance">0</div><div class="ac-metric-label">Общий остаток WB</div></div>
+                </div>
+            </div>
+            <div class="analytics-card ozon-card" id="msOzonComparisonCard">
+                <div class="ac-label"><span class="ac-icon">O</span>Совпадения с Ozon</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msOzonMatchCount">0</div><div class="ac-metric-label">Позиций</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msOzonMatchBalance">0</div><div class="ac-metric-label">Общий остаток Ozon</div></div>
+                </div>
+            </div>
+            <div class="analytics-card total-card">
+                <div class="ac-label"><span class="ac-icon">∑</span>Сводка</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msMatchTotal">0</div><div class="ac-metric-label">Всего совпадений</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msUnmatchedCount">0</div><div class="ac-metric-label">Без привязки</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="stock-filters" id="msStockFilters" style="display:none;">
+            <input type="text" id="msStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
+            <select id="msStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="msStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
+            <select id="msStockMatchFilter">
+                <option value="all">Все позиции</option>
+                <option value="matched">С привязкой к площадкам</option>
+                <option value="unmatched">Без привязки</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExportMsStock">Экспорт CSV</button>
+            <button type="button" class="chip" id="btnResetMsStockFilters">Сброс</button>
+        </div>
+        <div class="table-wrap" id="msStockTable"><div class="empty-state">Загрузите файл для отображения общих остатков</div></div>
     </div>
 </div>
 
@@ -773,7 +843,7 @@
             <div class="upload-hint">Excel (.xlsx, .xls) — автоматическое определение колонок</div>
             <input type="file" accept=".xlsx,.xls" id="wbStockFileInput">
         </div>
-        <div class="stock-file-info" id="wbStockFileInfo" style="display:none;margin-bottom:16px;">
+        <div class="stock-file-info" id="wbStockFileInfo" style="display:none;">
             <span class="stock-file-name" id="wbStockFileName"></span>
             <button type="button" class="stock-file-remove" id="wbStockFileRemove">✕</button>
         </div>
@@ -818,7 +888,7 @@
             <div class="upload-hint">Excel (.xlsx, .xls) — автоматическое определение колонок</div>
             <input type="file" accept=".xlsx,.xls" id="ozonStockFileInput">
         </div>
-        <div class="stock-file-info" id="ozonStockFileInfo" style="display:none;margin-bottom:16px;">
+        <div class="stock-file-info" id="ozonStockFileInfo" style="display:none;">
             <span class="stock-file-name" id="ozonStockFileName"></span>
             <button type="button" class="stock-file-remove" id="ozonStockFileRemove">✕</button>
         </div>
@@ -848,7 +918,6 @@
     <h1>Логистика</h1>
     <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты. Импорт создаёт отгрузки WB/Ozon. Удаление — каскадное.</p>
     
-    <!-- НОВАЯ АНАЛИТИКА -->
     <div class="analytics-grid" id="logAnalyticsGrid"></div>
     
     <div class="analytics-history-block" id="logHistoryBlock">
@@ -920,7 +989,7 @@ const MAX_VED_LISTS = 4;
 let wbShipments = []; let ozonShipments = []; let logEntries = []; let vedSupplies = []; let weekCapacities = {}; let isOnline = false;
 let currentPage = 'schedule'; let currentSubPage = 'weeks'; let vedTempLists = []; let vedSearchQuery = ''; let vedExpandedId = null;
 let editingShipmentId = null; let logHistoryExpanded = false; let skuLibrary = {};
-let wbStockData = []; let ozonStockData = [];
+let wbStockData = []; let ozonStockData = []; let msStockData = [];
 let currentWbSubPage = 'shipments'; let currentOzonSubPage = 'shipments';
 let warehouseData = { totalCapacity: 2267, currentOccupancy: 1408, constantVolume: 85, baseExpense: 51.50, marchPlan: 311000000, salesPlan: { "Апрель": 343000000, "Май": 387000000, "Июнь": 428300000, "Июль": 494000000, "Август": 565000000, "Сентябрь": 629000000, "Октябрь": 697000000, "Ноябрь": 775000000, "Декабрь": 1149000000 } };
 
@@ -932,11 +1001,11 @@ function safeAddEventListener(id, event, handler) { const el = safeGetElement(id
 function validateCityInput(inputEl) { if (!inputEl) return; const city = inputEl.value.trim(); if (city.length === 0) { inputEl.classList.remove('invalid'); return; } if (!VALID_CITIES.has(city)) { inputEl.classList.add('invalid'); } else { inputEl.classList.remove('invalid'); } }
 
 // ========== УНИВЕРСАЛЬНАЯ ЗАГРУЗКА/СОХРАНЕНИЕ ==========
-function loadAllFromLocalStorage() { try { wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Wildberries' })); ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Ozon' })); logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false, linkId: e.linkId || null })); vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true })); weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}'); wbStockData = JSON.parse(localStorage.getItem('wbStock') || '[]'); ozonStockData = JSON.parse(localStorage.getItem('ozonStock') || '[]'); const savedWarehouse = localStorage.getItem('warehouseData'); if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.marchPlan = data.marchPlan || 311000000; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; } loadSkuLibrary(); } catch (e) { console.error('Ошибка загрузки из localStorage:', e); } }
-function saveAllToLocalStorage() { try { localStorage.setItem('wb', JSON.stringify(wbShipments)); localStorage.setItem('ozon', JSON.stringify(ozonShipments)); localStorage.setItem('log', JSON.stringify(logEntries)); localStorage.setItem('ved', JSON.stringify(vedSupplies)); localStorage.setItem('cap', JSON.stringify(weekCapacities)); localStorage.setItem('warehouseData', JSON.stringify(warehouseData)); localStorage.setItem('wbStock', JSON.stringify(wbStockData)); localStorage.setItem('ozonStock', JSON.stringify(ozonStockData)); localStorage.setItem('currentPage', currentPage); localStorage.setItem('currentSubPage', currentSubPage); } catch (e) { console.error('Ошибка сохранения в localStorage:', e); showToast('Ошибка сохранения'); } }
+function loadAllFromLocalStorage() { try { wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Wildberries' })); ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Ozon' })); logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false, linkId: e.linkId || null })); vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true })); weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}'); wbStockData = JSON.parse(localStorage.getItem('wbStock') || '[]'); ozonStockData = JSON.parse(localStorage.getItem('ozonStock') || '[]'); msStockData = JSON.parse(localStorage.getItem('msStock') || '[]'); const savedWarehouse = localStorage.getItem('warehouseData'); if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.marchPlan = data.marchPlan || 311000000; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; } } catch (e) { console.error('Ошибка загрузки из localStorage:', e); } }
+function saveAllToLocalStorage() { try { localStorage.setItem('wb', JSON.stringify(wbShipments)); localStorage.setItem('ozon', JSON.stringify(ozonShipments)); localStorage.setItem('log', JSON.stringify(logEntries)); localStorage.setItem('ved', JSON.stringify(vedSupplies)); localStorage.setItem('cap', JSON.stringify(weekCapacities)); localStorage.setItem('warehouseData', JSON.stringify(warehouseData)); localStorage.setItem('wbStock', JSON.stringify(wbStockData)); localStorage.setItem('ozonStock', JSON.stringify(ozonStockData)); localStorage.setItem('msStock', JSON.stringify(msStockData)); localStorage.setItem('currentPage', currentPage); localStorage.setItem('currentSubPage', currentSubPage); } catch (e) { console.error('Ошибка сохранения в localStorage:', e); showToast('Ошибка сохранения'); } }
 
 // ========== FIREBASE ==========
-async function loadFromFirebase() { try { updateSyncStatus('loading'); const collections = [{ name: 'shipments_wb', orderBy: 'date' },{ name: 'shipments_ozon', orderBy: 'date' },{ name: 'logistics', orderBy: 'date' },{ name: 'ved_supplies', orderBy: 'eta' }]; const snapshots = {}; for (const col of collections) { try { snapshots[col.name] = await db.collection(col.name).orderBy(col.orderBy).get(); } catch (e) { snapshots[col.name] = { empty: true, docs: [] }; } } let capDoc = { exists: false }, settingsDoc = { exists: false }, wbStockDoc = { exists: false }, ozonStockDoc = { exists: false }; try { capDoc = await db.collection('settings').doc('capacities').get(); } catch (e) {} try { settingsDoc = await db.collection('settings').doc('warehouseData').get(); } catch (e) {} try { wbStockDoc = await db.collection('settings').doc('wbStock').get(); } catch (e) {} try { ozonStockDoc = await db.collection('settings').doc('ozonStock').get(); } catch (e) {} wbShipments = snapshots['shipments_wb'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Wildberries' })); ozonShipments = snapshots['shipments_ozon'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Ozon' })); logEntries = snapshots['logistics'].docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false, linkId: d.data().linkId || null })); vedSupplies = snapshots['ved_supplies'].docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true })); weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {}; if (settingsDoc.exists) { const d = settingsDoc.data(); warehouseData.totalCapacity = d.totalCapacity || 2267; warehouseData.currentOccupancy = d.currentOccupancy || 1408; warehouseData.constantVolume = d.constantVolume || 85; warehouseData.baseExpense = d.baseExpense || 51.50; warehouseData.marchPlan = d.marchPlan || 311000000; warehouseData.salesPlan = d.salesPlan || warehouseData.salesPlan; } if (wbStockDoc.exists) wbStockData = wbStockDoc.data().items || []; if (ozonStockDoc.exists) ozonStockData = ozonStockDoc.data().items || []; isOnline = true; updateSyncStatus('online'); saveAllToLocalStorage(); renderAll(); showToast('Данные синхронизированы'); } catch (e) { console.error('Firebase error:', e); loadAllFromLocalStorage(); isOnline = false; updateSyncStatus('offline'); renderAll(); showToast('Офлайн-режим'); } }
+async function loadFromFirebase() { try { updateSyncStatus('loading'); const collections = [{ name: 'shipments_wb', orderBy: 'date' },{ name: 'shipments_ozon', orderBy: 'date' },{ name: 'logistics', orderBy: 'date' },{ name: 'ved_supplies', orderBy: 'eta' }]; const snapshots = {}; for (const col of collections) { try { snapshots[col.name] = await db.collection(col.name).orderBy(col.orderBy).get(); } catch (e) { snapshots[col.name] = { empty: true, docs: [] }; } } let capDoc = { exists: false }, settingsDoc = { exists: false }, wbStockDoc = { exists: false }, ozonStockDoc = { exists: false }, msStockDoc = { exists: false }; try { capDoc = await db.collection('settings').doc('capacities').get(); } catch (e) {} try { settingsDoc = await db.collection('settings').doc('warehouseData').get(); } catch (e) {} try { wbStockDoc = await db.collection('settings').doc('wbStock').get(); } catch (e) {} try { ozonStockDoc = await db.collection('settings').doc('ozonStock').get(); } catch (e) {} try { msStockDoc = await db.collection('settings').doc('msStock').get(); } catch (e) {} wbShipments = snapshots['shipments_wb'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Wildberries' })); ozonShipments = snapshots['shipments_ozon'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Ozon' })); logEntries = snapshots['logistics'].docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false, linkId: d.data().linkId || null })); vedSupplies = snapshots['ved_supplies'].docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true })); weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {}; if (settingsDoc.exists) { const d = settingsDoc.data(); warehouseData.totalCapacity = d.totalCapacity || 2267; warehouseData.currentOccupancy = d.currentOccupancy || 1408; warehouseData.constantVolume = d.constantVolume || 85; warehouseData.baseExpense = d.baseExpense || 51.50; warehouseData.marchPlan = d.marchPlan || 311000000; warehouseData.salesPlan = d.salesPlan || warehouseData.salesPlan; } if (wbStockDoc.exists) wbStockData = wbStockDoc.data().items || []; if (ozonStockDoc.exists) ozonStockData = ozonStockDoc.data().items || []; if (msStockDoc.exists) msStockData = msStockDoc.data().items || []; isOnline = true; updateSyncStatus('online'); saveAllToLocalStorage(); renderAll(); showToast('Данные синхронизированы'); } catch (e) { console.error('Firebase error:', e); loadAllFromLocalStorage(); isOnline = false; updateSyncStatus('offline'); renderAll(); showToast('Офлайн-режим'); } }
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ==========
 function generateUniqueId() { if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID(); return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9); }
@@ -944,9 +1013,6 @@ function normalizeDateString(ds) { if (!ds || typeof ds !== 'string') return nul
 function showToast(msg) { const t = document.getElementById('toast'); if (!t) return; t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m] || m); }
 function updateSyncStatus(s) { const el = document.getElementById('syncStatus'), dot = document.getElementById('syncDot'); if (!el||!dot) return; dot.className = 'sync-dot'; if (s==='online') { dot.classList.add('online'); el.textContent='Онлайн'; } else if (s==='offline') { dot.classList.add('offline'); el.textContent='Офлайн'; } else { dot.classList.add('loading'); el.textContent='Загрузка...'; } }
-function addSkuToLibrary(article, name, length, width, height, perCarton) { if (!article) return false; skuLibrary[article] = { name: name||article, length: parseFloat(length)||0, width: parseFloat(width)||0, height: parseFloat(height)||0, perCarton: parseFloat(perCarton)||0, volumePerBox: (parseFloat(length)||0)*(parseFloat(width)||0)*(parseFloat(height)||0)/1000000 }; saveSkuLibrary(); return true; }
-function loadSkuLibrary() { try { const s = localStorage.getItem('skuLibrary'); if (s) skuLibrary = JSON.parse(s); } catch (e) {} renderSkuTable(); }
-function saveSkuLibrary() { try { localStorage.setItem('skuLibrary', JSON.stringify(skuLibrary)); } catch (e) {} renderSkuTable(); }
 function formatAmount(n) { if (n >= 1000000) return (n / 1000000).toFixed(2) + ' млн'; if (n >= 1000) return (n / 1000).toFixed(0) + ' тыс.'; return n.toLocaleString('ru-RU'); }
 
 // ========== WB / OZON ==========
@@ -959,148 +1025,6 @@ function cancelEditQty(mp) { editingShipmentId = null; renderShipmentCards(mp); 
 async function saveEditQty(mp, id) { const input = document.getElementById('qty-input-' + id); if (!input) return; const newQty = parseInt(input.value) || 0; if (newQty <= 0) { showToast('Количество должно быть больше 0'); return; } const arr = mp === 'Wildberries' ? wbShipments : ozonShipments; const shipment = arr.find(s => String(s.id) === String(id)); if (shipment) { const oldQty = shipment.qty; shipment.qty = newQty; if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) logEntry.qty = newQty; } if (isOnline) { const col = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon'; try { await db.collection(col).doc(String(id)).update({ qty: newQty }); } catch(e) {} if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) { try { await db.collection('logistics').doc(String(logEntry.id)).update({ qty: newQty }); } catch(e) {} } } } saveAllToLocalStorage(); showToast('Количество изменено: ' + oldQty.toLocaleString('ru-RU') + ' → ' + newQty.toLocaleString('ru-RU')); } editingShipmentId = null; renderShipmentCards(mp); renderAll(); }
 function renderShipmentCards(mp) { const arr = mp==='Wildberries'?wbShipments:ozonShipments; const cid = mp==='Wildberries'?'wbCards':'ozonCards'; const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date)); const container = document.getElementById(cid); if (!container) return; if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; } let html = ''; for (let e of srt) { const cs = e.status||'in_work'; const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; const route = mp==='Wildberries'?(routesDB[e.city]||null):null; const accentClass = mp==='Wildberries'?'wb':'ozon'; const isEditing = editingShipmentId === String(e.id); html += `<div class="shipment-card"><div class="card-accent ${accentClass}"></div><div class="card-body"><div class="card-header"><div><div class="card-city">${escapeHtml(e.city)}</div><div class="card-date">${escapeHtml(e.date)}</div></div><div class="card-actions"><button type="button" class="card-edit" data-edit-mp="${mp}" data-edit-id="${e.id}" title="Редактировать количество">✎</button><button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}" title="Удалить">&times;</button></div></div>${isEditing ? `<div class="card-qty-row"><input type="number" class="card-qty-input" id="qty-input-${e.id}" value="${e.qty}" min="1" onkeydown="if(event.key==='Enter')saveEditQty('${mp}','${e.id}'); if(event.key==='Escape')cancelEditQty('${mp}');" onblur="saveEditQty('${mp}','${e.id}')"></div>` : `<div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>`}<div class="card-qty-label">единиц</div><div class="card-footer"><div class="card-status"><select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}">${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}</select></div>${route ? `<div><span class="route-badge">${route.delivery}</span></div>` : ''}</div></div></div>`; } container.innerHTML = html; }
 function handleStatusChange(event) { const s = event.target; if (!s.classList.contains('status-select')) return; const mp = s.dataset.mp, id = s.dataset.id, st = s.value; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const sh = arr.find(x => String(x.id)===String(id)); if (sh) { sh.status = st; saveAllToLocalStorage(); if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; db.collection(col).doc(String(id)).update({status:st}).catch(()=>{}); } renderShipmentCards(mp); } }
-
-// ========== НОВАЯ АНАЛИТИКА ЛОГИСТИКИ (СОВРЕМЕННЫЙ ДИЗАЙН) ==========
-function calculateMonthAnalytics(monthIndex, year) {
-    const wbEntries = logEntries.filter(e => e.marketplace === 'Wildberries' && e.date && new Date(e.date + 'T00:00:00').getMonth() === monthIndex && new Date(e.date + 'T00:00:00').getFullYear() === year);
-    const ozEntries = logEntries.filter(e => e.marketplace === 'Ozon' && e.date && new Date(e.date + 'T00:00:00').getMonth() === monthIndex && new Date(e.date + 'T00:00:00').getFullYear() === year);
-    
-    const calc = (entries) => {
-        const totalQty = entries.reduce((s, e) => s + (e.qty || 0), 0);
-        const totalAmount = entries.reduce((s, e) => s + (e.amountFull || e.amount || 0), 0);
-        const pricePerUnit = totalQty > 0 ? Math.round(totalAmount / totalQty) : 0;
-        const totalBoxes = entries.reduce((s, e) => s + (e.boxes || 0), 0);
-        return { qty: totalQty, amount: totalAmount, pricePerUnit, boxes: totalBoxes, entries: entries.length };
-    };
-    
-    const wb = calc(wbEntries);
-    const oz = calc(ozEntries);
-    const total = {
-        qty: wb.qty + oz.qty,
-        amount: wb.amount + oz.amount,
-        pricePerUnit: (wb.qty + oz.qty) > 0 ? Math.round((wb.amount + oz.amount) / (wb.qty + oz.qty)) : 0,
-        boxes: wb.boxes + oz.boxes,
-        entries: wb.entries + oz.entries
-    };
-    
-    return { wb, oz, total, month: MONTHS[monthIndex], year };
-}
-
-function renderLogAnalytics() {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const current = calculateMonthAnalytics(currentMonth, currentYear);
-    
-    // Сетка карточек
-    let gridHtml = '';
-    
-    // WB Card
-    gridHtml += `
-        <div class="analytics-card wb-card">
-            <div class="ac-label"><span class="ac-icon">W</span>Wildberries</div>
-            <div class="ac-metrics">
-                <div class="ac-metric"><div class="ac-metric-value">${current.wb.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.wb.amount)}</div><div class="ac-metric-label">Сумма</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${current.wb.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${current.wb.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div>
-            </div>
-            <div class="ac-subtitle">${current.wb.entries} записей в ${current.month}</div>
-        </div>
-    `;
-    
-    // Ozon Card
-    gridHtml += `
-        <div class="analytics-card ozon-card">
-            <div class="ac-label"><span class="ac-icon">O</span>Ozon</div>
-            <div class="ac-metrics">
-                <div class="ac-metric"><div class="ac-metric-value">${current.oz.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.oz.amount)}</div><div class="ac-metric-label">Сумма</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${current.oz.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${current.oz.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div>
-            </div>
-            <div class="ac-subtitle">${current.oz.entries} записей в ${current.month}</div>
-        </div>
-    `;
-    
-    // Total Card
-    gridHtml += `
-        <div class="analytics-card total-card">
-            <div class="ac-label"><span class="ac-icon">∑</span>Всего</div>
-            <div class="ac-metrics">
-                <div class="ac-metric"><div class="ac-metric-value">${current.total.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.total.amount)}</div><div class="ac-metric-label">Сумма</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${current.total.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div>
-                <div class="ac-metric"><div class="ac-metric-value">${current.total.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div>
-            </div>
-            <div class="ac-subtitle">${current.total.entries} записей всего</div>
-        </div>
-    `;
-    
-    const grid = document.getElementById('logAnalyticsGrid');
-    if (grid) grid.innerHTML = gridHtml;
-    
-    // История
-    const history = [];
-    for (let i = 0; i < 12; i++) {
-        let m = currentMonth - i;
-        let y = currentYear;
-        if (m < 0) { m += 12; y--; }
-        history.push(calculateMonthAnalytics(m, y));
-    }
-    
-    // Определяем тренды
-    const prevTotal = history.length > 1 ? history[1].total : null;
-    
-    let histHtml = `
-        <div style="overflow-x:auto;">
-            <table class="analytics-history-table">
-                <thead><tr>
-                    <th>Месяц</th>
-                    <th class="num">WB ед.</th><th class="num">WB руб.</th><th class="num">WB ₽/ед</th>
-                    <th class="num">Ozon ед.</th><th class="num">Ozon руб.</th><th class="num">Ozon ₽/ед</th>
-                    <th class="num">Всего ед.</th><th class="num">Всего руб.</th><th class="num">Паллет</th>
-                </tr></thead>
-                <tbody>`;
-    
-    history.forEach((h, idx) => {
-        const isCurrent = idx === 0;
-        const prevH = history[idx + 1];
-        const trend = (val, prev) => {
-            if (!prev || prev === 0) return '';
-            if (val > prev) return ' <span class="trend-up">▲</span>';
-            if (val < prev) return ' <span class="trend-down">▼</span>';
-            return '';
-        };
-        
-        histHtml += `<tr class="${isCurrent ? 'month-current' : ''}">
-            <td><b>${h.month} ${h.year}</b>${isCurrent ? ' <span class="badge badge-info">тек.</span>' : ''}</td>
-            <td class="num">${h.wb.qty.toLocaleString('ru-RU')}${prevH ? trend(h.wb.qty, prevH.wb.qty) : ''}</td>
-            <td class="num">${formatAmount(h.wb.amount)}</td>
-            <td class="num">${h.wb.pricePerUnit.toLocaleString('ru-RU')}</td>
-            <td class="num">${h.oz.qty.toLocaleString('ru-RU')}${prevH ? trend(h.oz.qty, prevH.oz.qty) : ''}</td>
-            <td class="num">${formatAmount(h.oz.amount)}</td>
-            <td class="num">${h.oz.pricePerUnit.toLocaleString('ru-RU')}</td>
-            <td class="num highlight-cell">${h.total.qty.toLocaleString('ru-RU')}</td>
-            <td class="num highlight-cell">${formatAmount(h.total.amount)}</td>
-            <td class="num">${h.total.boxes.toLocaleString('ru-RU')}</td>
-        </tr>`;
-    });
-    
-    histHtml += '</tbody></table></div>';
-    
-    const historyBody = document.getElementById('logHistoryBody');
-    if (historyBody) historyBody.innerHTML = histHtml;
-}
-
-function toggleLogHistory() {
-    logHistoryExpanded = !logHistoryExpanded;
-    const block = document.getElementById('logHistoryBlock');
-    if (block) {
-        if (logHistoryExpanded) block.classList.add('expanded');
-        else block.classList.remove('expanded');
-    }
-}
 
 // ========== ПАРСЕР ОСТАТКОВ (JS ВЕРСИЯ JAVA-КОДА) ==========
 class StockParserJS {
@@ -1233,7 +1157,7 @@ async function handleStockFileUpload(mp, file) {
             document.getElementById('wbStockFileInfo').style.display = 'flex';
             document.getElementById('wbStockUpload').classList.add('has-file');
             renderWbStock();
-        } else {
+        } else if (mp === 'OZON') {
             ozonStockData = result.items;
             document.getElementById('ozonStockFileName').textContent = result.fileName + ' (' + result.items.length + ' поз.)';
             document.getElementById('ozonStockFileInfo').style.display = 'flex';
@@ -1260,7 +1184,7 @@ function removeStockFile(mp) {
         document.getElementById('wbStockTable').innerHTML = '<div class="empty-state">Загрузите файл для отображения остатков</div>';
         document.getElementById('wbStockStats').innerHTML = '';
         document.getElementById('wbStockFilters').style.display = 'none';
-    } else {
+    } else if (mp === 'OZON') {
         ozonStockData = [];
         document.getElementById('ozonStockFileInfo').style.display = 'none';
         document.getElementById('ozonStockUpload').classList.remove('has-file');
@@ -1364,15 +1288,8 @@ function renderStockTable(mp) {
     container.innerHTML = html;
 }
 
-function renderWbStock() {
-    renderStockStats('WB');
-    renderStockTable('WB');
-}
-
-function renderOzonStock() {
-    renderStockStats('Ozon');
-    renderStockTable('Ozon');
-}
+function renderWbStock() { renderStockStats('WB'); renderStockTable('WB'); }
+function renderOzonStock() { renderStockStats('Ozon'); renderStockTable('Ozon'); }
 
 function exportStockCSV(mp) {
     const data = getFilteredStockData(mp);
@@ -1394,10 +1311,283 @@ function resetStockFilters(mp) {
     if (mp === 'WB') renderWbStock(); else renderOzonStock();
 }
 
+// ========== ОСТАТКИ МС (ОБЩИЕ) ==========
+async function handleMsStockFileUpload(file) {
+    try {
+        const result = await stockParser.parseStockReport(file);
+        msStockData = result.items;
+        saveAllToLocalStorage();
+        if (isOnline) {
+            db.collection('settings').doc('msStock').set({ items: msStockData }).catch(() => {});
+        }
+        
+        document.getElementById('msStockFileName').textContent = result.fileName + ' (' + result.items.length + ' поз.)';
+        document.getElementById('msStockFileInfo').style.display = 'flex';
+        document.getElementById('msStockUpload').classList.add('has-file');
+        renderMsStock();
+        showToast('МС: загружено ' + result.items.length + ' позиций');
+    } catch (err) {
+        showToast('Ошибка: ' + err.message);
+        console.error(err);
+    }
+}
+
+function removeMsStockFile() {
+    msStockData = [];
+    saveAllToLocalStorage();
+    document.getElementById('msStockFileInfo').style.display = 'none';
+    document.getElementById('msStockUpload').classList.remove('has-file');
+    document.getElementById('msStockTable').innerHTML = '<div class="empty-state">Загрузите файл для отображения общих остатков</div>';
+    document.getElementById('msStockStats').innerHTML = '';
+    document.getElementById('msStockFilters').style.display = 'none';
+    document.getElementById('msStockComparisonGrid').style.display = 'none';
+    showToast('Файл удалён');
+}
+
+function matchMsWithPlatforms(msItem) {
+    const result = { wb: null, ozon: null };
+    const wbMatch = wbStockData.find(i => i.article === msItem.article);
+    if (wbMatch) result.wb = wbMatch;
+    const ozonMatch = ozonStockData.find(i => i.article === msItem.article);
+    if (ozonMatch) result.ozon = ozonMatch;
+    if (!result.wb && wbStockData.length > 0) {
+        const fuzzyWb = wbStockData.find(i => i.article.includes(msItem.article) || msItem.article.includes(i.article));
+        if (fuzzyWb) result.wb = fuzzyWb;
+    }
+    if (!result.ozon && ozonStockData.length > 0) {
+        const fuzzyOzon = ozonStockData.find(i => i.article.includes(msItem.article) || msItem.article.includes(i.article));
+        if (fuzzyOzon) result.ozon = fuzzyOzon;
+    }
+    return result;
+}
+
+function getFilteredMsStockData() {
+    const searchEl = document.getElementById('msStockSearch');
+    const balanceEl = document.getElementById('msStockBalanceFilter');
+    const waitingEl = document.getElementById('msStockWaitingFilter');
+    const matchEl = document.getElementById('msStockMatchFilter');
+    
+    let filtered = [...msStockData];
+    const query = (searchEl?.value || '').trim().toLowerCase();
+    const balanceFilter = balanceEl?.value || 'all';
+    const waitingFilter = waitingEl?.value || 'all';
+    const matchFilter = matchEl?.value || 'all';
+    
+    if (query) {
+        filtered = filtered.filter(i => i.article.toLowerCase().includes(query) || i.name.toLowerCase().includes(query));
+    }
+    if (balanceFilter === 'positive') filtered = filtered.filter(i => i.balance > 0);
+    else if (balanceFilter === 'zero') filtered = filtered.filter(i => i.balance === 0);
+    else if (balanceFilter === 'negative') filtered = filtered.filter(i => i.balance < 0);
+    if (waitingFilter === 'positive') filtered = filtered.filter(i => i.waiting > 0);
+    else if (waitingFilter === 'zero') filtered = filtered.filter(i => i.waiting === 0);
+    if (matchFilter === 'matched' || matchFilter === 'unmatched') {
+        filtered = filtered.filter(i => {
+            const matches = matchMsWithPlatforms(i);
+            const hasMatch = matches.wb !== null || matches.ozon !== null;
+            return matchFilter === 'matched' ? hasMatch : !hasMatch;
+        });
+    }
+    return filtered;
+}
+
+function renderMsStockStats() {
+    const container = document.getElementById('msStockStats');
+    if (!container || !msStockData.length) { container.innerHTML = ''; return; }
+    
+    const totalBalance = msStockData.reduce((s, i) => s + i.balance, 0);
+    const totalWaiting = msStockData.reduce((s, i) => s + i.waiting, 0);
+    const withBalance = msStockData.filter(i => i.balance > 0).length;
+    let matchedCount = 0;
+    msStockData.forEach(i => { const matches = matchMsWithPlatforms(i); if (matches.wb || matches.ozon) matchedCount++; });
+    
+    container.innerHTML = `
+        <div class="stock-stat-card"><div class="ss-value">${msStockData.length.toLocaleString('ru-RU')}</div><div class="ss-label">Всего позиций</div></div>
+        <div class="stock-stat-card ss-success"><div class="ss-value">${totalBalance.toLocaleString('ru-RU')}</div><div class="ss-label">Общий остаток</div></div>
+        <div class="stock-stat-card ss-warning"><div class="ss-value">${totalWaiting.toLocaleString('ru-RU')}</div><div class="ss-label">В ожидании</div></div>
+        <div class="stock-stat-card ss-info"><div class="ss-value">${matchedCount.toLocaleString('ru-RU')}</div><div class="ss-label">С привязкой к площадкам</div></div>
+    `;
+}
+
+function renderMsStockComparison() {
+    const grid = document.getElementById('msStockComparisonGrid');
+    if (!grid || !msStockData.length) { if (grid) grid.style.display = 'none'; return; }
+    const hasWbData = wbStockData.length > 0;
+    const hasOzonData = ozonStockData.length > 0;
+    if (!hasWbData && !hasOzonData) { grid.style.display = 'none'; return; }
+    grid.style.display = 'grid';
+    
+    let wbMatchCount = 0, wbMatchBalance = 0, ozonMatchCount = 0, ozonMatchBalance = 0, totalMatched = 0, unmatched = 0;
+    msStockData.forEach(item => {
+        const matches = matchMsWithPlatforms(item);
+        let hasAny = false;
+        if (matches.wb) { wbMatchCount++; wbMatchBalance += matches.wb.balance; hasAny = true; }
+        if (matches.ozon) { ozonMatchCount++; ozonMatchBalance += matches.ozon.balance; hasAny = true; }
+        if (hasAny) totalMatched++; else unmatched++;
+    });
+    
+    if (hasWbData) {
+        document.getElementById('msWbMatchCount').textContent = wbMatchCount.toLocaleString('ru-RU');
+        document.getElementById('msWbMatchBalance').textContent = wbMatchBalance.toLocaleString('ru-RU');
+        document.getElementById('msWbComparisonCard').style.display = '';
+    } else { document.getElementById('msWbComparisonCard').style.display = 'none'; }
+    
+    if (hasOzonData) {
+        document.getElementById('msOzonMatchCount').textContent = ozonMatchCount.toLocaleString('ru-RU');
+        document.getElementById('msOzonMatchBalance').textContent = ozonMatchBalance.toLocaleString('ru-RU');
+        document.getElementById('msOzonComparisonCard').style.display = '';
+    } else { document.getElementById('msOzonComparisonCard').style.display = 'none'; }
+    
+    document.getElementById('msMatchTotal').textContent = totalMatched.toLocaleString('ru-RU');
+    document.getElementById('msUnmatchedCount').textContent = unmatched.toLocaleString('ru-RU');
+}
+
+function renderMsStockTable() {
+    const container = document.getElementById('msStockTable');
+    const filtersEl = document.getElementById('msStockFilters');
+    if (!container) return;
+    if (!msStockData.length) { container.innerHTML = '<div class="empty-state">Загрузите файл для отображения общих остатков</div>'; if (filtersEl) filtersEl.style.display = 'none'; return; }
+    if (filtersEl) filtersEl.style.display = 'flex';
+    const filtered = getFilteredMsStockData();
+    if (!filtered.length) { container.innerHTML = '<div class="stock-empty-filter">Нет данных, соответствующих фильтрам</div>'; return; }
+    
+    const hasWbData = wbStockData.length > 0;
+    const hasOzonData = ozonStockData.length > 0;
+    
+    let html = '<table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Ожидание</th><th class="num">Остаток МС</th>';
+    if (hasWbData) html += '<th class="num">Остаток WB</th><th>Разница</th>';
+    if (hasOzonData) html += '<th class="num">Остаток Ozon</th><th>Разница</th>';
+    html += '<th>Площадки</th><th>Статус</th></tr></thead><tbody>';
+    
+    for (const item of filtered) {
+        const matches = matchMsWithPlatforms(item);
+        let statusBadge = '';
+        if (item.balance > 100) statusBadge = '<span class="stock-badge high">✓ Высокий</span>';
+        else if (item.balance > 10) statusBadge = '<span class="stock-badge medium">⚠ Средний</span>';
+        else if (item.balance > 0) statusBadge = '<span class="stock-badge low">🔴 Низкий</span>';
+        else statusBadge = '<span class="stock-badge zero">— Нет</span>';
+        
+        let platformBadges = [];
+        if (matches.wb) platformBadges.push('<span class="stock-match-indicator wb-match">WB ✓</span>');
+        if (matches.ozon) platformBadges.push('<span class="stock-match-indicator ozon-match">Ozon ✓</span>');
+        if (!matches.wb && !matches.ozon) platformBadges.push('<span class="stock-match-indicator no-match">—</span>');
+        
+        html += `<tr><td style="font-family:monospace;font-size:12px;">${escapeHtml(item.article)}</td><td>${escapeHtml(item.name)}</td><td class="num">${item.waiting.toLocaleString('ru-RU')}</td><td class="num"><b>${item.balance.toLocaleString('ru-RU')}</b></td>`;
+        
+        if (hasWbData) {
+            const wbBalance = matches.wb ? matches.wb.balance : 0;
+            const diff = matches.wb ? item.balance - wbBalance : 0;
+            let diffClass = 'stock-diff-zero', diffText = '—';
+            if (matches.wb) {
+                diffClass = diff > 0 ? 'stock-diff-positive' : (diff < 0 ? 'stock-diff-negative' : 'stock-diff-zero');
+                diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString('ru-RU');
+            }
+            html += `<td class="num">${matches.wb ? wbBalance.toLocaleString('ru-RU') : '—'}</td><td class="num ${diffClass}">${diffText}</td>`;
+        }
+        
+        if (hasOzonData) {
+            const ozonBalance = matches.ozon ? matches.ozon.balance : 0;
+            const diff = matches.ozon ? item.balance - ozonBalance : 0;
+            let diffClass = 'stock-diff-zero', diffText = '—';
+            if (matches.ozon) {
+                diffClass = diff > 0 ? 'stock-diff-positive' : (diff < 0 ? 'stock-diff-negative' : 'stock-diff-zero');
+                diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString('ru-RU');
+            }
+            html += `<td class="num">${matches.ozon ? ozonBalance.toLocaleString('ru-RU') : '—'}</td><td class="num ${diffClass}">${diffText}</td>`;
+        }
+        
+        html += `<td>${platformBadges.join(' ')}</td><td>${statusBadge}</td></tr>`;
+    }
+    
+    html += '</tbody></table>';
+    html += `<div style="padding:10px 16px;font-size:11px;color:var(--text-tertiary);">Показано ${filtered.length} из ${msStockData.length} позиций</div>`;
+    container.innerHTML = html;
+}
+
+function renderMsStock() { renderMsStockStats(); renderMsStockComparison(); renderMsStockTable(); }
+
+function exportMsStockCSV() {
+    const data = getFilteredMsStockData();
+    if (!data.length) { showToast('Нет данных для экспорта'); return; }
+    const hasWb = wbStockData.length > 0;
+    const hasOzon = ozonStockData.length > 0;
+    let csv = 'Артикул;Наименование;Ожидание;Остаток МС';
+    if (hasWb) csv += ';Остаток WB;Разница WB';
+    if (hasOzon) csv += ';Остаток Ozon;Разница Ozon';
+    csv += ';Площадки\n';
+    for (const item of data) {
+        const matches = matchMsWithPlatforms(item);
+        const platforms = [];
+        if (matches.wb) platforms.push('WB');
+        if (matches.ozon) platforms.push('Ozon');
+        csv += `"${item.article}";"${item.name}";${item.waiting};${item.balance}`;
+        if (hasWb) { const wbBalance = matches.wb ? matches.wb.balance : 0; const diff = matches.wb ? item.balance - wbBalance : 0; csv += `;${matches.wb ? wbBalance : ''};${matches.wb ? diff : ''}`; }
+        if (hasOzon) { const ozonBalance = matches.ozon ? matches.ozon.balance : 0; const diff = matches.ozon ? item.balance - ozonBalance : 0; csv += `;${matches.ozon ? ozonBalance : ''};${matches.ozon ? diff : ''}`; }
+        csv += `;${platforms.join('+') || '—'}\n`;
+    }
+    downloadCSV(csv, 'остатки_мс.csv');
+}
+
+function resetMsStockFilters() {
+    const searchEl = document.getElementById('msStockSearch');
+    const balanceEl = document.getElementById('msStockBalanceFilter');
+    const waitingEl = document.getElementById('msStockWaitingFilter');
+    const matchEl = document.getElementById('msStockMatchFilter');
+    if (searchEl) searchEl.value = '';
+    if (balanceEl) balanceEl.value = 'all';
+    if (waitingEl) waitingEl.value = 'all';
+    if (matchEl) matchEl.value = 'all';
+    renderMsStock();
+}
+
+// ========== АНАЛИТИКА ЛОГИСТИКИ ==========
+function calculateMonthAnalytics(monthIndex, year) {
+    const wbEntries = logEntries.filter(e => e.marketplace === 'Wildberries' && e.date && new Date(e.date + 'T00:00:00').getMonth() === monthIndex && new Date(e.date + 'T00:00:00').getFullYear() === year);
+    const ozEntries = logEntries.filter(e => e.marketplace === 'Ozon' && e.date && new Date(e.date + 'T00:00:00').getMonth() === monthIndex && new Date(e.date + 'T00:00:00').getFullYear() === year);
+    const calc = (entries) => {
+        const totalQty = entries.reduce((s, e) => s + (e.qty || 0), 0);
+        const totalAmount = entries.reduce((s, e) => s + (e.amountFull || e.amount || 0), 0);
+        const pricePerUnit = totalQty > 0 ? Math.round(totalAmount / totalQty) : 0;
+        const totalBoxes = entries.reduce((s, e) => s + (e.boxes || 0), 0);
+        return { qty: totalQty, amount: totalAmount, pricePerUnit, boxes: totalBoxes, entries: entries.length };
+    };
+    const wb = calc(wbEntries), oz = calc(ozEntries);
+    return { wb, oz, total: { qty: wb.qty + oz.qty, amount: wb.amount + oz.amount, pricePerUnit: (wb.qty + oz.qty) > 0 ? Math.round((wb.amount + oz.amount) / (wb.qty + oz.qty)) : 0, boxes: wb.boxes + oz.boxes, entries: wb.entries + oz.entries }, month: MONTHS[monthIndex], year };
+}
+
+function renderLogAnalytics() {
+    const now = new Date();
+    const currentMonth = now.getMonth(), currentYear = now.getFullYear();
+    const current = calculateMonthAnalytics(currentMonth, currentYear);
+    
+    let gridHtml = '';
+    gridHtml += `<div class="analytics-card wb-card"><div class="ac-label"><span class="ac-icon">W</span>Wildberries</div><div class="ac-metrics"><div class="ac-metric"><div class="ac-metric-value">${current.wb.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.wb.amount)}</div><div class="ac-metric-label">Сумма</div></div><div class="ac-metric"><div class="ac-metric-value">${current.wb.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div><div class="ac-metric"><div class="ac-metric-value">${current.wb.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div></div><div class="ac-subtitle">${current.wb.entries} записей в ${current.month}</div></div>`;
+    gridHtml += `<div class="analytics-card ozon-card"><div class="ac-label"><span class="ac-icon">O</span>Ozon</div><div class="ac-metrics"><div class="ac-metric"><div class="ac-metric-value">${current.oz.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.oz.amount)}</div><div class="ac-metric-label">Сумма</div></div><div class="ac-metric"><div class="ac-metric-value">${current.oz.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div><div class="ac-metric"><div class="ac-metric-value">${current.oz.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div></div><div class="ac-subtitle">${current.oz.entries} записей в ${current.month}</div></div>`;
+    gridHtml += `<div class="analytics-card total-card"><div class="ac-label"><span class="ac-icon">∑</span>Всего</div><div class="ac-metrics"><div class="ac-metric"><div class="ac-metric-value">${current.total.qty.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Единиц</div></div><div class="ac-metric"><div class="ac-metric-value">${formatAmount(current.total.amount)}</div><div class="ac-metric-label">Сумма</div></div><div class="ac-metric"><div class="ac-metric-value">${current.total.pricePerUnit.toLocaleString('ru-RU')} ₽</div><div class="ac-metric-label">Цена/ед</div></div><div class="ac-metric"><div class="ac-metric-value">${current.total.boxes.toLocaleString('ru-RU')}</div><div class="ac-metric-label">Паллет</div></div></div><div class="ac-subtitle">${current.total.entries} записей всего</div></div>`;
+    document.getElementById('logAnalyticsGrid').innerHTML = gridHtml;
+    
+    const history = [];
+    for (let i = 0; i < 12; i++) { let m = currentMonth - i, y = currentYear; if (m < 0) { m += 12; y--; } history.push(calculateMonthAnalytics(m, y)); }
+    
+    let histHtml = `<div style="overflow-x:auto;"><table class="analytics-history-table"><thead><tr><th>Месяц</th><th class="num">WB ед.</th><th class="num">WB руб.</th><th class="num">WB ₽/ед</th><th class="num">Ozon ед.</th><th class="num">Ozon руб.</th><th class="num">Ozon ₽/ед</th><th class="num">Всего ед.</th><th class="num">Всего руб.</th><th class="num">Паллет</th></tr></thead><tbody>`;
+    history.forEach((h, idx) => {
+        const isCurrent = idx === 0;
+        const prevH = history[idx + 1];
+        const trend = (val, prev) => { if (!prev || prev === 0) return ''; if (val > prev) return ' <span class="trend-up">▲</span>'; if (val < prev) return ' <span class="trend-down">▼</span>'; return ''; };
+        histHtml += `<tr class="${isCurrent ? 'month-current' : ''}"><td><b>${h.month} ${h.year}</b>${isCurrent ? ' <span class="badge badge-info">тек.</span>' : ''}</td><td class="num">${h.wb.qty.toLocaleString('ru-RU')}${prevH ? trend(h.wb.qty, prevH.wb.qty) : ''}</td><td class="num">${formatAmount(h.wb.amount)}</td><td class="num">${h.wb.pricePerUnit.toLocaleString('ru-RU')}</td><td class="num">${h.oz.qty.toLocaleString('ru-RU')}${prevH ? trend(h.oz.qty, prevH.oz.qty) : ''}</td><td class="num">${formatAmount(h.oz.amount)}</td><td class="num">${h.oz.pricePerUnit.toLocaleString('ru-RU')}</td><td class="num highlight-cell">${h.total.qty.toLocaleString('ru-RU')}</td><td class="num highlight-cell">${formatAmount(h.total.amount)}</td><td class="num">${h.total.boxes.toLocaleString('ru-RU')}</td></tr>`;
+    });
+    histHtml += '</tbody></table></div>';
+    document.getElementById('logHistoryBody').innerHTML = histHtml;
+}
+
+function toggleLogHistory() {
+    logHistoryExpanded = !logHistoryExpanded;
+    const block = document.getElementById('logHistoryBlock');
+    if (block) { if (logHistoryExpanded) block.classList.add('expanded'); else block.classList.remove('expanded'); }
+}
+
 // ========== KPI-ПОЛОСА ==========
 function renderKpiStrip() { const strip = document.getElementById('kpiStrip'); if (!strip) return; const cwk = getCurrentWeekKey(); const all = getAllShipments(); let weekWb = 0, weekOzon = 0; all.forEach(s => { const wk = getWeekKey(s.date); if (wk.key === cwk) { if (s.marketplace === 'Wildberries') weekWb += s.qty || 0; else weekOzon += s.qty || 0; } }); let weekCap = weekCapacities[cwk] || 0; if (!weekCap) { const cwkDate = new Date(cwk + 'T00:00:00'); let bestKey = null; let bestDiff = Infinity; for (const [key, val] of Object.entries(weekCapacities)) { if (!val) continue; const keyDate = new Date(key + 'T00:00:00'); const diff = Math.abs(keyDate.getTime() - cwkDate.getTime()); if (diff < bestDiff && diff <= 3 * 24 * 60 * 60 * 1000) { bestDiff = diff; bestKey = key; } } if (bestKey) weekCap = weekCapacities[bestKey] || 0; } const weekTotal = weekWb + weekOzon; const packPct = weekCap > 0 ? Math.round((weekTotal / weekCap) * 100) : null; const occupied = warehouseData.currentOccupancy; const totalCap = warehouseData.totalCapacity; const free = totalCap - occupied; const loadPct = Math.round((occupied / totalCap) * 100); const transitSupplies = vedSupplies.filter(s => s.status === 'transit'); const transitVolume = transitSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0); const transitCount = transitSupplies.length; strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Текущая неделя:</span><span class="kpi-item-value">${weekTotal > 0 ? weekTotal.toLocaleString('ru-RU') + ' ед.' : 'Нет отгрузок'}</span>${weekTotal > 0 ? `<span style="font-size:11px;color:var(--text-tertiary);">(WB: ${weekWb.toLocaleString('ru-RU')} · Ozon: ${weekOzon.toLocaleString('ru-RU')})</span>` : ''}</div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Загрузка упаковки:</span>${weekCap > 0 ? `<span class="kpi-item-value" style="color:${packPct > 100 ? 'var(--danger)' : packPct > 80 ? 'var(--warning)' : 'var(--success)'}">${packPct}%</span><span style="font-size:11px;color:var(--text-tertiary);">(${weekTotal.toLocaleString('ru-RU')} из ${weekCap.toLocaleString('ru-RU')} ед.)</span>` : `<span class="kpi-item-value" style="color:var(--text-tertiary);">—</span><span style="font-size:11px;color:var(--text-tertiary);">(способность не задана)</span>`}</div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Загрузка склада:</span><span class="kpi-item-value" style="color:${loadPct > 85 ? 'var(--danger)' : loadPct > 70 ? 'var(--warning)' : 'var(--success)'}">${loadPct}%</span><span style="font-size:11px;color:var(--text-tertiary);">(занято ${occupied.toLocaleString('ru-RU')} / свободно ${free.toLocaleString('ru-RU')} из ${totalCap.toLocaleString('ru-RU')} м³)</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">ВЭД в пути:</span><span class="kpi-item-value" style="color:var(--ved);">${transitVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${transitCount} поставк${transitCount === 1 ? 'а' : transitCount >= 2 && transitCount <= 4 ? 'и' : 'ок'})</span></div>`; }
-
-// ========== KPI-ПОЛОСА (продолжение) ==========
 function renderVedKpiStrip() { const strip = document.getElementById('vedKpiStrip'); if (!strip) return; const total = vedSupplies.length; const inTransit = vedSupplies.filter(s => s.status === 'transit').length; const inCustoms = vedSupplies.filter(s => s.status === 'customs').length; const inSvh = vedSupplies.filter(s => s.status === 'svh').length; const arrived = vedSupplies.filter(s => s.status === 'arrived').length; const totalQty = vedSupplies.reduce((sum, s) => sum + (s.totalQty || 0), 0); const totalVolume = vedSupplies.reduce((sum, s) => sum + (s.totalVolume || 0), 0); strip.innerHTML = `<div class="kpi-item"><span class="kpi-item-label">Всего поставок:</span><span class="kpi-item-value">${total}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">В пути:</span><span class="kpi-item-value" style="color:var(--accent);">${inTransit}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Таможня:</span><span class="kpi-item-value" style="color:var(--warning);">${inCustoms}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">На СВХ:</span><span class="kpi-item-value" style="color:var(--danger);">${inSvh}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Прибыло:</span><span class="kpi-item-value" style="color:var(--success);">${arrived}</span></div><div class="kpi-divider"></div><div class="kpi-item"><span class="kpi-item-label">Общий объём:</span><span class="kpi-item-value" style="color:var(--ved);">${totalVolume.toFixed(1)} м³</span><span style="font-size:11px;color:var(--text-tertiary);">(${totalQty.toLocaleString('ru-RU')} ед.)</span></div>`; }
 
 // ========== ВЭД ==========
@@ -1456,10 +1646,6 @@ let showScheduleImport=false;
 function toggleScheduleImport(){showScheduleImport=!showScheduleImport;const block=document.getElementById('scheduleImportBlock');if(block)block.style.display=showScheduleImport?'block':'none';}
 async function doScheduleImport(){const textEl=document.getElementById('scheduleImportText');if(!textEl)return;const text=textEl.value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(String(cols[3]).replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const normalized=normalizeDateString(ds);if(!normalized)return;const shipment={id:generateUniqueId(),date:normalized,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();if(textEl)textEl.value='';toggleScheduleImport();renderAll();showToast('WB: '+iw+', Ozon: '+io);}
 
-// ========== SKU ==========
-function renderSkuTable(){const tbody=document.getElementById('skuList');if(!tbody)return;const items=Object.entries(skuLibrary);if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;">Нет данных</td></tr>';return;}let html='';for(const[article,data]of items){const vpb=(data.length*data.width*data.height/1000000).toFixed(6);html+=`<tr><td style="font-family:monospace;">${escapeHtml(article)}</td><td>${escapeHtml(data.name||'')}</td><td class="num">${data.length||0}</td><td class="num">${data.width||0}</td><td class="num">${data.height||0}</td><td class="num">${data.perCarton||0}</td><td class="num">${vpb}</td><td><button type="button" class="btn btn-danger-sm" data-sku-delete="${escapeHtml(article)}">Удалить</button></td></tr>`;}tbody.innerHTML=html;}
-function deleteSku(article){if(confirm('Удалить '+article+'?')){delete skuLibrary[article];saveSkuLibrary();showToast(article+' удалён');}}
-
 // ========== НАВИГАЦИЯ ==========
 function switchPage(page){
     currentPage = page; localStorage.setItem('currentPage', page);
@@ -1474,7 +1660,19 @@ function switchPage(page){
     if (page === 'logistics') { updateLogCalc(); renderLog(); renderLogAnalytics(); }
     if (page === 'ved') { if(vedTempLists.length===0) vedTempLists=[null]; renderVedLists(); vedExpandedId = null; renderVedCards(); renderVedKpiStrip(); const searchInput = document.getElementById('vedArticleSearch'); if (searchInput && vedSearchQuery) { searchInput.value = vedSearchQuery; } }
 }
-function switchSubPage(subPage) { currentSubPage = subPage; localStorage.setItem('currentSubPage', subPage); document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active')); const subPageEl = document.getElementById('sub-page-' + subPage); if (subPageEl) subPageEl.classList.add('active'); const subBtns = document.querySelectorAll('.sub-nav-btn'); const subMap = {weeks:0, forecast:1, reference:2}; if (subBtns[subMap[subPage]]) subBtns[subMap[subPage]].classList.add('active'); if (subPage === 'weeks') renderSchedule(); if (subPage === 'forecast') renderForecastTab(); if (subPage === 'reference') renderSkuTable(); }
+function switchSubPage(subPage) { 
+    currentSubPage = subPage; localStorage.setItem('currentSubPage', subPage); 
+    document.querySelectorAll('#page-schedule .sub-page').forEach(p => p.classList.remove('active')); 
+    document.querySelectorAll('#page-schedule .sub-nav-btn').forEach(b => b.classList.remove('active')); 
+    const subPageEl = document.getElementById('sub-page-' + subPage); 
+    if (subPageEl) subPageEl.classList.add('active'); 
+    const subBtns = document.querySelectorAll('#page-schedule .sub-nav-btn'); 
+    const subMap = {weeks:0, forecast:1, stock:2}; 
+    if (subBtns[subMap[subPage]]) subBtns[subMap[subPage]].classList.add('active'); 
+    if (subPage === 'weeks') renderSchedule(); 
+    if (subPage === 'forecast') renderForecastTab(); 
+    if (subPage === 'stock') renderMsStock(); 
+}
 function switchWbSubPage(sub) {
     currentWbSubPage = sub;
     document.querySelectorAll('#page-wb .sub-nav-btn').forEach(b => b.classList.remove('active'));
@@ -1495,7 +1693,12 @@ function switchOzonSubPage(sub) {
     if (page) page.classList.add('active');
     if (sub === 'stock') renderOzonStock();
 }
-function renderAll() { if (currentPage === 'schedule') { renderKpiStrip(); if (currentSubPage === 'weeks') renderSchedule(); if (currentSubPage === 'forecast') renderForecastTab(); if (currentSubPage === 'reference') renderSkuTable(); } if (currentPage === 'wb' && currentWbSubPage === 'stock') renderWbStock(); if (currentPage === 'ozon' && currentOzonSubPage === 'stock') renderOzonStock(); renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); renderLogAnalytics(); renderVedCards(); renderVedKpiStrip(); }
+function renderAll() { 
+    if (currentPage === 'schedule') { renderKpiStrip(); if (currentSubPage === 'weeks') renderSchedule(); if (currentSubPage === 'forecast') renderForecastTab(); if (currentSubPage === 'stock') renderMsStock(); } 
+    if (currentPage === 'wb' && currentWbSubPage === 'stock') renderWbStock(); 
+    if (currentPage === 'ozon' && currentOzonSubPage === 'stock') renderOzonStock(); 
+    renderShipmentCards('Wildberries'); renderShipmentCards('Ozon'); renderLog(); renderLogAnalytics(); renderVedCards(); renderVedKpiStrip(); 
+}
 
 // ========== ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ==========
 document.addEventListener('click',function(e){
@@ -1509,7 +1712,6 @@ document.addEventListener('click',function(e){
     const vedBody = t.closest('.ved-card .card-body'); if (vedBody && vedBody.hasAttribute('data-ved-toggle')) { if (t.tagName === 'SELECT' || t.tagName === 'BUTTON' || t.closest('select') || t.closest('button')) return; toggleVedDetails(vedBody.getAttribute('data-ved-toggle')); return; }
     if(t.hasAttribute('data-log-paid')){toggleLogPaid(t.getAttribute('data-log-paid'));return;}
     if(t.hasAttribute('data-log-delete')){deleteLogEntry(t.getAttribute('data-log-delete'));return;}
-    if(t.hasAttribute('data-sku-delete')){deleteSku(t.getAttribute('data-sku-delete'));return;}
     if(t.hasAttribute('data-week-toggle')){toggleWeekDetails(t.getAttribute('data-week-toggle'));return;}
     const wr=t.closest('[data-week-toggle]');if(wr){toggleWeekDetails(wr.getAttribute('data-week-toggle'));return;}
     if(t.id==='btnResetLogFilters'||t.closest('#btnResetLogFilters')){resetLogFilters();return;}
@@ -1517,10 +1719,13 @@ document.addEventListener('click',function(e){
     if(t.id==='logHistoryHeader'||t.closest('#logHistoryHeader')){toggleLogHistory();return;}
     if(t.id==='wbStockFileRemove'){removeStockFile('WB');return;}
     if(t.id==='ozonStockFileRemove'){removeStockFile('Ozon');return;}
+    if(t.id==='msStockFileRemove'){removeMsStockFile();return;}
     if(t.id==='btnExportWbStock'){exportStockCSV('WB');return;}
     if(t.id==='btnExportOzonStock'){exportStockCSV('Ozon');return;}
+    if(t.id==='btnExportMsStock'){exportMsStockCSV();return;}
     if(t.id==='btnResetWbStockFilters'){resetStockFilters('WB');return;}
     if(t.id==='btnResetOzonStockFilters'){resetStockFilters('Ozon');return;}
+    if(t.id==='btnResetMsStockFilters'){resetMsStockFilters();return;}
     const wbSubBtn = t.closest('[data-wb-sub]'); if (wbSubBtn) { switchWbSubPage(wbSubBtn.getAttribute('data-wb-sub')); return; }
     const ozonSubBtn = t.closest('[data-ozon-sub]'); if (ozonSubBtn) { switchOzonSubPage(ozonSubBtn.getAttribute('data-ozon-sub')); return; }
 });
@@ -1534,13 +1739,24 @@ document.addEventListener('change',function(e){
     if(t.hasAttribute('data-log-amount')){updateLogAmount(t.getAttribute('data-log-amount'),t.value);return;}
     if(t.hasAttribute('data-week-cap')){updateWeekCapacity(t.getAttribute('data-week-cap'),t.value);return;}
 });
-document.addEventListener('input',function(e){ const t=e.target; if(t.hasAttribute('data-sales-month')){updateSalesPlan(t.getAttribute('data-sales-month'),t.value);return;} if(t.id==='shipCityWildberries'||t.id==='shipCityOzon'||t.id==='logCity'){validateCityInput(t);} if(t.id==='vedArticleSearch'){handleVedSearch(t.value);return;} if(t.id==='wbStockSearch'){renderWbStock();return;} if(t.id==='ozonStockSearch'){renderOzonStock();return;} if(t.id==='wbStockBalanceFilter'||t.id==='wbStockWaitingFilter'){renderWbStock();return;} if(t.id==='ozonStockBalanceFilter'||t.id==='ozonStockWaitingFilter'){renderOzonStock();return;} });
+document.addEventListener('input',function(e){ 
+    const t=e.target; 
+    if(t.hasAttribute('data-sales-month')){updateSalesPlan(t.getAttribute('data-sales-month'),t.value);return;} 
+    if(t.id==='shipCityWildberries'||t.id==='shipCityOzon'||t.id==='logCity'){validateCityInput(t);} 
+    if(t.id==='vedArticleSearch'){handleVedSearch(t.value);return;} 
+    if(t.id==='wbStockSearch'){renderWbStock();return;} 
+    if(t.id==='ozonStockSearch'){renderOzonStock();return;} 
+    if(t.id==='msStockSearch'){renderMsStock();return;} 
+    if(t.id==='wbStockBalanceFilter'||t.id==='wbStockWaitingFilter'){renderWbStock();return;} 
+    if(t.id==='ozonStockBalanceFilter'||t.id==='ozonStockWaitingFilter'){renderOzonStock();return;} 
+    if(t.id==='msStockBalanceFilter'||t.id==='msStockWaitingFilter'||t.id==='msStockMatchFilter'){renderMsStock();return;} 
+});
 
 // ========== ПРЯМЫЕ ОБРАБОТЧИКИ ==========
 function initDirectHandlers(){
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     document.querySelectorAll('.nav-btn').forEach(b=>{b.addEventListener('click',function(){switchPage(this.dataset.page);});});
-    document.querySelectorAll('.sub-nav-btn').forEach(b=>{b.addEventListener('click',function(){switchSubPage(this.dataset.subPage);});});
+    document.querySelectorAll('#page-schedule .sub-nav-btn').forEach(b=>{b.addEventListener('click',function(){switchSubPage(this.dataset.subPage);});});
     safeAddEventListener('btnSyncNow','click',loadFromFirebase);
     safeAddEventListener('btnImportSchedule','click',toggleScheduleImport);
     safeAddEventListener('btnDoScheduleImport','click',doScheduleImport);
@@ -1563,47 +1779,43 @@ function initDirectHandlers(){
     safeAddEventListener('btnSaveWarehouseSettings','click',saveWarehouseSettings);
     safeAddEventListener('btnResetSalesPlan','click',()=>{if(confirm('Сбросить план?')){warehouseData.salesPlan={"Апрель":343000000,"Май":387000000,"Июнь":428300000,"Июль":494000000,"Август":565000000,"Сентябрь":629000000,"Октябрь":697000000,"Ноябрь":775000000,"Декабрь":1149000000};renderForecastTab();renderKpiStrip();showToast('План сброшен');}});
     safeAddEventListener('btnImportExcelForSettings','click',()=>{const input=document.createElement('input');input.type='file';input.accept='.xlsx,.xls';input.onchange=async(ev)=>{const file=ev.target.files[0];if(!file)return;try{showToast('Импорт...');const result=await importExcelModel(file);showToast('Импортировано: план '+result.salesPlanCount+' мес.');renderForecastTab();renderKpiStrip();}catch(err){alert('Ошибка: '+err);}};input.click();});
-    safeAddEventListener('btnAddSku','click',()=>{const ae=document.getElementById('skuArticle'),ne=document.getElementById('skuName'),le=document.getElementById('skuLength'),we=document.getElementById('skuWidth'),he=document.getElementById('skuHeight'),pe=document.getElementById('skuPerCarton');if(!ae)return;const article=ae.value.trim(),name=ne?ne.value.trim():'',length=le?parseFloat(le.value):0,width=we?parseFloat(we.value):0,height=he?parseFloat(he.value):0,perCarton=pe?parseFloat(pe.value):0;if(!article)return alert('Введите артикул');if(isNaN(length)||isNaN(width)||isNaN(height))return alert('Введите габариты');addSkuToLibrary(article,name,length,width,height,perCarton);if(ae)ae.value='';if(ne)ne.value='';if(le)le.value='';if(we)we.value='';if(he)he.value='';if(pe)pe.value='';showToast(article+' добавлен');});
+    
     const shipCityWb=document.getElementById('shipCityWildberries');if(shipCityWb){shipCityWb.addEventListener('input',showRouteInfo);shipCityWb.addEventListener('blur',function(){validateCityInput(this);});}
     const shipCityOz=document.getElementById('shipCityOzon');if(shipCityOz){shipCityOz.addEventListener('blur',function(){validateCityInput(this);});}
     const logCity=document.getElementById('logCity');if(logCity){logCity.addEventListener('blur',function(){validateCityInput(this);});}
     
-    // Сток-загрузка
-    const wbUpload = document.getElementById('wbStockUpload');
-    if (wbUpload) {
-        wbUpload.addEventListener('click', function(e) {
-            if (e.target.tagName === 'INPUT') return;
-            document.getElementById('wbStockFileInput').click();
-        });
-        wbUpload.addEventListener('dragover', e => { e.preventDefault(); wbUpload.style.borderColor = 'var(--wb)'; });
-        wbUpload.addEventListener('dragleave', () => { wbUpload.style.borderColor = ''; });
-        wbUpload.addEventListener('drop', e => {
-            e.preventDefault();
-            wbUpload.style.borderColor = '';
-            const file = e.dataTransfer.files[0];
-            if (file) handleStockFileUpload('WB', file);
-        });
-    }
-    const wbFileInput = document.getElementById('wbStockFileInput');
-    if (wbFileInput) wbFileInput.addEventListener('change', function() { if (this.files[0]) handleStockFileUpload('WB', this.files[0]); });
+    // Сток-загрузки
+    const stockUploads = [
+        { uploadId: 'wbStockUpload', inputId: 'wbStockFileInput', mp: 'WB', borderColor: 'var(--wb)' },
+        { uploadId: 'ozonStockUpload', inputId: 'ozonStockFileInput', mp: 'OZON', borderColor: 'var(--ozon)' },
+        { uploadId: 'msStockUpload', inputId: 'msStockFileInput', mp: 'MS', borderColor: 'var(--ved)' }
+    ];
     
-    const ozonUpload = document.getElementById('ozonStockUpload');
-    if (ozonUpload) {
-        ozonUpload.addEventListener('click', function(e) {
-            if (e.target.tagName === 'INPUT') return;
-            document.getElementById('ozonStockFileInput').click();
-        });
-        ozonUpload.addEventListener('dragover', e => { e.preventDefault(); ozonUpload.style.borderColor = 'var(--ozon)'; });
-        ozonUpload.addEventListener('dragleave', () => { ozonUpload.style.borderColor = ''; });
-        ozonUpload.addEventListener('drop', e => {
-            e.preventDefault();
-            ozonUpload.style.borderColor = '';
-            const file = e.dataTransfer.files[0];
-            if (file) handleStockFileUpload('Ozon', file);
-        });
-    }
-    const ozonFileInput = document.getElementById('ozonStockFileInput');
-    if (ozonFileInput) ozonFileInput.addEventListener('change', function() { if (this.files[0]) handleStockFileUpload('Ozon', this.files[0]); });
+    stockUploads.forEach(({ uploadId, inputId, mp, borderColor }) => {
+        const upload = document.getElementById(uploadId);
+        const fileInput = document.getElementById(inputId);
+        if (upload && fileInput) {
+            upload.addEventListener('click', function(e) { if (e.target.tagName === 'INPUT') return; fileInput.click(); });
+            upload.addEventListener('dragover', e => { e.preventDefault(); upload.style.borderColor = borderColor; });
+            upload.addEventListener('dragleave', () => { upload.style.borderColor = ''; });
+            upload.addEventListener('drop', e => {
+                e.preventDefault(); upload.style.borderColor = '';
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    if (mp === 'WB') handleStockFileUpload('WB', file);
+                    else if (mp === 'OZON') handleStockFileUpload('Ozon', file);
+                    else if (mp === 'MS') handleMsStockFileUpload(file);
+                }
+            });
+            fileInput.addEventListener('change', function() {
+                if (this.files[0]) {
+                    if (mp === 'WB') handleStockFileUpload('WB', this.files[0]);
+                    else if (mp === 'OZON') handleStockFileUpload('Ozon', this.files[0]);
+                    else if (mp === 'MS') handleMsStockFileUpload(this.files[0]);
+                }
+            });
+        }
+    });
 }
 
 // ========== ПАРСЕР ВЭД ==========
@@ -1623,7 +1835,7 @@ function initApp(){
     switchPage(currentPage);
     initDirectHandlers();
     loadFromFirebase();
-    console.log('v30.0 — Аналитика логистики + вкладка Остатки WB/Ozon');
+    console.log('v31.0 — Сводная: Остатки МС + Аналитика логистики + Остатки WB/Ozon');
 }
 
 document.addEventListener('DOMContentLoaded',initApp);
