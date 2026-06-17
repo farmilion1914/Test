@@ -730,6 +730,745 @@
 <datalist id="cityList"></datalist>
 
 <script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>График отгрузок</title>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg: #f2f4f7;
+            --surface: #ffffff;
+            --surface-hover: #f8f9fa;
+            --text-primary: #1a1c1e;
+            --text-secondary: #5f6368;
+            --text-tertiary: #9aa0a6;
+            --border: #e8eaed;
+            --separator: #f1f3f4;
+            --accent: #1a73e8;
+            --accent-hover: #1557b0;
+            --wb: #6c3a9e;
+            --wb-light: #f3edf8;
+            --wb-gradient: linear-gradient(135deg, #6c3a9e 0%, #8e5cc4 100%);
+            --ozon: #1a6fb5;
+            --ozon-light: #e8f4fc;
+            --ozon-gradient: linear-gradient(135deg, #1a6fb5 0%, #3d9be0 100%);
+            --ved: #00695c;
+            --ved-light: #e0f2f1;
+            --success: #0d904f;
+            --warning: #f9ab00;
+            --danger: #ea4335;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --input-bg: #fafbfc;
+            --table-header-bg: #fafbfc;
+            --badge-wb-bg: #f3e5f5;
+            --badge-ozon-bg: #e1f5fe;
+            --file-upload-bg: #fafbfc;
+            --route-info-bg: #e6f4ea;
+            --chart-bg: #fafbfc;
+            --toast-bg: #1a1c1e;
+            --toast-text: #ffffff;
+            --modal-overlay: rgba(0,0,0,0.5);
+            --status-work-bg: #fef7e0;
+            --status-work-text: #e37400;
+            --status-wait-bg: #f1f3f4;
+            --status-wait-text: #5f6368;
+            --status-reject-bg: #fce8e6;
+            --status-reject-text: #c5221f;
+            --status-sent-bg: #e6f4ea;
+            --status-sent-text: #137333;
+            --status-ready-bg: #e8f0fe;
+            --status-ready-text: #1a73e8;
+            --analytics-card-bg: #f8fafc;
+            --analytics-border: #e2e8f0;
+            --analytics-accent: #6366f1;
+            --analytics-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .dark-theme {
+            --bg: #1a1c1e;
+            --surface: #2d2f31;
+            --surface-hover: #3a3c3e;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-tertiary: #6e7378;
+            --border: #3c4043;
+            --separator: #2d2f31;
+            --accent: #8ab4f8;
+            --accent-hover: #aecbfa;
+            --wb: #b388d9;
+            --wb-light: #2d2438;
+            --wb-gradient: linear-gradient(135deg, #5c2d8a 0%, #7b4db5 100%);
+            --ozon: #7ab8e8;
+            --ozon-light: #1e2e3d;
+            --ozon-gradient: linear-gradient(135deg, #155a8a 0%, #2d8bc5 100%);
+            --ved: #4db6a0;
+            --ved-light: #1e3d35;
+            --success: #34a853;
+            --warning: #fdd663;
+            --danger: #f28b82;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.3);
+            --input-bg: #3a3c3e;
+            --table-header-bg: #3a3c3e;
+            --badge-wb-bg: #2d2438;
+            --badge-ozon-bg: #1e2e3d;
+            --file-upload-bg: #3a3c3e;
+            --route-info-bg: #1e3d32;
+            --chart-bg: #3a3c3e;
+            --toast-bg: #e8eaed;
+            --toast-text: #1a1c1e;
+            --modal-overlay: rgba(0,0,0,0.7);
+            --status-work-bg: #3d3520;
+            --status-work-text: #fdd663;
+            --status-wait-bg: #3a3c3e;
+            --status-wait-text: #9aa0a6;
+            --status-reject-bg: #3d2020;
+            --status-reject-text: #f28b82;
+            --status-sent-bg: #1e3d2e;
+            --status-sent-text: #34a853;
+            --status-ready-bg: #1e2e3d;
+            --status-ready-text: #8ab4f8;
+            --analytics-card-bg: #2d2f31;
+            --analytics-border: #3c4043;
+            --analytics-accent: #8b5cf6;
+            --analytics-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.4;
+            padding: 20px 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+            -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); }
+        .header-status { display: flex; align-items: center; gap: 12px; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #0d904f; box-shadow: 0 0 0 3px rgba(13,144,79,0.2); }
+        .sync-dot.offline { background: #ea4335; box-shadow: 0 0 0 3px rgba(234,67,53,0.2); }
+        .sync-dot.loading { background: #f9ab00; box-shadow: 0 0 0 3px rgba(249,171,0,0.2); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .sync-text { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+
+        .theme-toggle { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 16px; cursor: pointer; transition: all 0.2s; color: var(--text-primary); }
+        .theme-toggle:hover { background: var(--surface-hover); }
+
+        button, .btn, .nav-btn, .sub-nav-btn, .chip, .card-delete, .card-edit, .include-model, .btn-status {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        button:disabled, .btn:disabled { pointer-events: none !important; opacity: 0.5; cursor: not-allowed !important; }
+
+        .btn { padding: 8px 16px; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { background: var(--surface-hover); }
+        .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 14px; }
+        .btn-wb { background: var(--wb); color: #fff; }
+        .btn-wb:hover { opacity: 0.9; }
+        .btn-ozon { background: var(--ozon); color: #fff; }
+        .btn-ozon:hover { opacity: 0.9; }
+        .btn-log { background: #3c4043; color: #fff; }
+        .btn-log:hover { opacity: 0.9; }
+        .btn-ved { background: var(--ved); color: #fff; }
+        .btn-ved:hover { opacity: 0.9; }
+        .btn-danger-sm { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 10px; font-size: 11px; border-radius: 14px; cursor: pointer; font-family: inherit; font-weight: 600; }
+        .btn-danger-sm:hover { background: var(--status-reject-bg); }
+        .btn-status { padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+        .btn-status.paid { background: #e6f4ea; color: #137333; }
+        .btn-status.unpaid { background: #fef7e0; color: #e37400; }
+        .dark-theme .btn-status.paid { background: #1e3d2e; color: #34a853; }
+        .dark-theme .btn-status.unpaid { background: #3d3520; color: #fdd663; }
+
+        .nav { display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-md); padding: 4px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+        .nav-btn { flex: 1; padding: 10px 14px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; font-family: inherit; text-align: center; white-space: nowrap; }
+        .nav-btn:hover { background: var(--surface-hover); }
+        .nav-btn.active { background: var(--accent); color: #fff; }
+        .nav-btn.wb-active { background: var(--wb); color: #fff; }
+        .nav-btn.ozon-active { background: var(--ozon); color: #fff; }
+        .nav-btn.logistics-active { background: #3c4043; color: #fff; }
+        .nav-btn.ved-active { background: var(--ved); color: #fff; }
+
+        .sub-nav { display: flex; gap: 4px; background: var(--surface); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 20px; box-shadow: var(--shadow-sm); flex-wrap: wrap; }
+        .sub-nav-btn { flex: 1; padding: 8px 12px; border: none; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; font-family: inherit; text-align: center; white-space: nowrap; min-width: 80px; }
+        .sub-nav-btn:hover { background: var(--surface-hover); }
+        .sub-nav-btn.active { background: var(--accent); color: #fff; }
+
+        #page-wb .sub-nav-btn.active { background: var(--wb); color: #fff; }
+        #page-wb .sub-nav-btn:hover { background: var(--wb-light); }
+        #page-ozon .sub-nav-btn.active { background: var(--ozon); color: #fff; }
+        #page-ozon .sub-nav-btn:hover { background: var(--ozon-light); }
+
+        .sub-page { display: none; }
+        .sub-page.active { display: block; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
+        .subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; }
+
+        .form-card { background: var(--surface); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+        .field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }
+        .field input, .field select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; background: var(--input-bg); color: var(--text-primary); width: 100%; }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+        .field input.invalid { border-color: var(--danger); background: var(--status-reject-bg); }
+        .field-calc { background: var(--status-wait-bg); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--accent); text-align: right; }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 900px) { .analytics-grid { grid-template-columns: 1fr; } }
+        .analytics-card {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--analytics-border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .analytics-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .analytics-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .analytics-card.wb-card::before { background: var(--wb-gradient); }
+        .analytics-card.ozon-card::before { background: var(--ozon-gradient); }
+        .analytics-card.total-card::before { background: var(--analytics-gradient); }
+        .analytics-card .ac-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .analytics-card .ac-label .ac-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+        .analytics-card.wb-card .ac-icon { background: var(--wb); }
+        .analytics-card.ozon-card .ac-icon { background: var(--ozon); }
+        .analytics-card.total-card .ac-icon { background: var(--analytics-accent); }
+        .analytics-card .ac-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .analytics-card .ac-metric { background: var(--analytics-card-bg); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+        .analytics-card .ac-metric-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); line-height: 1.2; }
+        .analytics-card .ac-metric-label { font-size: 9px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-top: 4px; }
+        .analytics-card .ac-subtitle { font-size: 10px; color: var(--text-tertiary); margin-top: 8px; }
+
+        .analytics-history-block {
+            background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            border: 1px solid var(--analytics-border); margin-bottom: 20px; overflow: hidden;
+        }
+        .analytics-history-block .ah-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .analytics-history-block .ah-header:hover { background: var(--surface-hover); }
+        .analytics-history-block .ah-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .analytics-history-block .ah-toggle { font-size: 12px; color: var(--text-tertiary); transition: transform 0.2s; }
+        .analytics-history-block.expanded .ah-toggle { transform: rotate(180deg); }
+        .analytics-history-block .ah-body { display: none; padding: 0 20px 20px 20px; overflow-x: auto; }
+        .analytics-history-block.expanded .ah-body { display: block; }
+        .analytics-history-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .analytics-history-table th { font-size: 10px; padding: 10px 12px; text-align: left; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 2px solid var(--border); white-space: nowrap; letter-spacing: 0.5px; }
+        .analytics-history-table td { padding: 8px 12px; border-bottom: 1px solid var(--separator); white-space: nowrap; }
+        .analytics-history-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .analytics-history-table .trend-up { color: var(--success); }
+        .analytics-history-table .trend-down { color: var(--danger); }
+        .analytics-history-table .month-current { background: var(--status-wait-bg); font-weight: 600; }
+        .analytics-history-table .highlight-cell { font-weight: 700; color: var(--accent); }
+
+        .stock-upload-area {
+            border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 40px 20px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: var(--file-upload-bg); margin-bottom: 20px; position: relative;
+        }
+        .stock-upload-area:hover { border-color: var(--accent); background: var(--surface-hover); }
+        .stock-upload-area.has-file { border-color: var(--success); background: var(--status-sent-bg); border-style: solid; }
+        .stock-upload-area .upload-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.6; }
+        .stock-upload-area .upload-text { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .stock-upload-area .upload-hint { font-size: 11px; color: var(--text-tertiary); }
+        .stock-upload-area input[type="file"] { display: none; }
+        .stock-file-info { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        .stock-file-name { font-size: 12px; font-weight: 600; color: var(--success); }
+        .stock-file-remove { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 6px; }
+        .stock-file-remove:hover { background: var(--status-reject-bg); color: var(--danger); }
+
+        .stock-stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .stock-stats-strip { grid-template-columns: repeat(2, 1fr); } }
+        .stock-stat-card {
+            background: var(--surface); border-radius: var(--radius-sm); padding: 16px; text-align: center;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .stock-stat-card.clickable { cursor: pointer; }
+        .stock-stat-card.clickable:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        .stock-stat-card .ss-value { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); line-height: 1.2; }
+        .stock-stat-card .ss-label { font-size: 10px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-top: 4px; }
+        .stock-stat-card.ss-warning .ss-value { color: var(--warning); }
+        .stock-stat-card.ss-success .ss-value { color: var(--success); }
+        .stock-stat-card.ss-info .ss-value { color: var(--accent); }
+
+        .stock-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .stock-filters input, .stock-filters select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--input-bg); color: var(--text-primary); font-family: inherit; }
+        .stock-filters input:focus, .stock-filters select:focus { outline: none; border-color: var(--accent); }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .shipment-card {
+            background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .shipment-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .shipment-card .card-accent { height: 3px; width: 100%; }
+        .shipment-card .card-accent.wb { background: var(--wb-gradient); }
+        .shipment-card .card-accent.ozon { background: var(--ozon-gradient); }
+        .shipment-card .card-body { padding: 16px 18px; }
+        .shipment-card .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .shipment-card .card-city { font-size: 17px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
+        .shipment-card .card-date { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+        .shipment-card .card-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+        .shipment-card:hover .card-actions { opacity: 1; }
+        .shipment-card .card-delete, .shipment-card .card-edit { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; }
+        .shipment-card .card-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .shipment-card .card-edit:hover { background: var(--status-wait-bg); color: var(--accent); }
+        .shipment-card .card-qty-row { display: flex; align-items: center; gap: 8px; margin: 12px 0 4px 0; }
+        .shipment-card .card-qty { font-size: 32px; font-weight: 700; letter-spacing: -1px; color: var(--text-primary); line-height: 1; }
+        .shipment-card .card-qty-input { font-size: 28px; font-weight: 700; letter-spacing: -1px; color: var(--text-primary); line-height: 1; width: 120px; padding: 4px 8px; border: 2px solid var(--accent); border-radius: 8px; background: var(--input-bg); font-family: inherit; }
+        .shipment-card .card-qty-input:focus { outline: none; border-color: var(--accent); }
+        .shipment-card .card-qty-label { font-size: 10px; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.5px; margin-bottom: 14px; }
+        .shipment-card .card-footer { display: flex; flex-direction: column; gap: 8px; }
+        .shipment-card .card-status select { width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; appearance: none; -webkit-appearance: none; }
+        .card-status select.status-work { background: var(--status-work-bg) !important; color: var(--status-work-text) !important; border-color: var(--status-work-text) !important; }
+        .card-status select.status-wait { background: var(--status-wait-bg) !important; color: var(--status-wait-text) !important; border-color: var(--status-wait-text) !important; }
+        .card-status select.status-reject { background: var(--status-reject-bg) !important; color: var(--status-reject-text) !important; border-color: var(--status-reject-text) !important; }
+        .card-status select.status-sent { background: var(--status-sent-bg) !important; color: var(--status-sent-text) !important; border-color: var(--status-sent-text) !important; }
+        .card-status select.status-ready { background: var(--status-ready-bg) !important; color: var(--status-ready-text) !important; border-color: var(--status-ready-text) !important; }
+        .shipment-card .route-badge { font-size: 10px; color: var(--success); padding: 3px 10px; background: var(--status-sent-bg); border-radius: 10px; display: inline-block; font-weight: 500; }
+
+        .stock-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .stock-badge.high { background: var(--status-sent-bg); color: var(--success); }
+        .stock-badge.medium { background: var(--status-work-bg); color: var(--warning); }
+        .stock-badge.low { background: var(--status-reject-bg); color: var(--danger); }
+        .stock-badge.zero { background: var(--status-wait-bg); color: var(--text-tertiary); }
+        .stock-empty-filter { text-align: center; padding: 30px; color: var(--text-tertiary); font-size: 13px; }
+        .stock-match-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 600; margin: 1px; }
+        .stock-match-indicator.wb-match { background: var(--badge-wb-bg); color: var(--wb); }
+        .stock-match-indicator.ozon-match { background: var(--badge-ozon-bg); color: var(--ozon); }
+        .stock-match-indicator.no-match { background: var(--status-wait-bg); color: var(--text-tertiary); }
+        .stock-diff-positive { color: var(--success); font-weight: 600; }
+        .stock-diff-negative { color: var(--danger); font-weight: 600; }
+        .stock-diff-zero { color: var(--text-tertiary); }
+
+        .ved-card { background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); transition: all 0.3s; position: relative; overflow: hidden; cursor: pointer; }
+        .ved-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .ved-card.expanded { grid-column: 1 / -1; cursor: default; }
+        .ved-card .card-accent { height: 3px; width: 100%; background: var(--ved); transition: background 0.3s; }
+        .ved-card.match-highlight .card-accent { background: var(--warning); animation: accentPulse 1.5s infinite; }
+        @keyframes accentPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .ved-card .card-body { padding: 16px 18px; }
+        .ved-card .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .ved-card .card-number { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .ved-card .card-supplier { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .ved-card .card-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text-tertiary); margin: 8px 0; }
+        .ved-card .card-meta span { display: flex; align-items: center; gap: 4px; }
+        .ved-card .card-volume { font-size: 18px; font-weight: 700; color: var(--ved); margin: 6px 0; }
+        .ved-card .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--separator); }
+        .ved-card .card-status-row { display: flex; align-items: center; gap: 8px; }
+        .ved-card .card-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 15px; padding: 4px 8px; border-radius: 6px; opacity: 0; transition: opacity 0.15s; position: absolute; top: 12px; right: 10px; z-index: 2; }
+        .ved-card:hover .card-delete { opacity: 1; }
+        .ved-card .card-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .ved-card .card-expand-icon { font-size: 11px; color: var(--text-tertiary); transition: transform 0.3s; }
+        .ved-card.expanded .card-expand-icon { transform: rotate(180deg); }
+        .ved-card .card-details { display: none; padding: 0 18px 18px 18px; border-top: 1px solid var(--separator); margin-top: 4px; }
+        .ved-card.expanded .card-details { display: block; }
+        .ved-card .card-details table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .ved-card .card-details th { font-size: 10px; padding: 10px 12px; background: var(--table-header-bg); text-align: left; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 2px solid var(--border); white-space: nowrap; }
+        .ved-card .card-details td { padding: 8px 12px; border-bottom: 1px solid var(--separator); color: var(--text-primary); font-size: 12px; white-space: nowrap; }
+        .ved-card .card-details td.name-cell { max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ved-card.expanded .card-details td.name-cell { max-width: 500px; }
+        .ved-card .card-details .num { text-align: right; }
+        .ved-card .card-details .item-match { background: var(--status-work-bg); border-radius: 3px; }
+        .ved-search { margin-bottom: 16px; }
+        .ved-search input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-family: inherit; background: var(--input-bg); color: var(--text-primary); }
+        .ved-search input:focus { outline: none; border-color: var(--ved); }
+        .ved-search-results { font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: none; }
+        .ved-search-results.show { display: block; }
+
+        .file-upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 12px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--file-upload-bg); color: var(--text-primary); }
+        .file-upload-box:hover { border-color: var(--ved); background: var(--surface-hover); }
+        .file-upload-box.has-file { border-color: var(--success); background: var(--status-sent-bg); border-style: solid; }
+        .file-upload-box input[type="file"] { display: none; }
+        .file-name { font-size: 12px; font-weight: 600; color: var(--success); margin-top: 4px; }
+        .file-delete { position: absolute; top: 6px; right: 10px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 6px; z-index: 2; }
+        .file-delete:hover { background: var(--status-reject-bg); color: var(--danger); }
+        .file-preview { margin-top: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 11px; max-height: 400px; overflow-y: auto; display: none; }
+        .file-preview.show { display: block; }
+        .file-preview table { width: 100%; font-size: 11px; border-collapse: collapse; }
+        .file-preview th { font-size: 9px; padding: 8px; background: var(--table-header-bg); text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); color: var(--text-tertiary); }
+        .file-preview td { padding: 6px 8px; border-bottom: 1px solid var(--separator); color: var(--text-primary); }
+
+        .supply-card { display: none; }
+        .status-transit { background: var(--status-wait-bg); color: var(--status-wait-text); }
+        .status-customs { background: var(--status-work-bg); color: var(--status-work-text); }
+        .status-svh { background: var(--status-reject-bg); color: var(--status-reject-text); }
+        .status-arrived { background: var(--status-sent-bg); color: var(--status-sent-text); }
+
+        .table-wrap { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow-x: auto; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+        th { text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); border-bottom: 1px solid var(--border); background: var(--table-header-bg); position: sticky; top: 0; z-index: 1; }
+        td { padding: 10px 16px; border-bottom: 1px solid var(--separator); color: var(--text-primary); }
+        tr:hover { background: var(--surface-hover); }
+        .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+        .badge-wb { background: var(--badge-wb-bg); color: var(--wb); }
+        .badge-ozon { background: var(--badge-ozon-bg); color: var(--ozon); }
+        .badge-info { background: var(--status-wait-bg); color: var(--accent); }
+        .badge-success { background: var(--status-sent-bg); color: var(--success); }
+        .badge-warning { background: var(--status-work-bg); color: var(--warning); }
+        .badge-danger { background: var(--status-reject-bg); color: var(--danger); }
+
+        .kpi-strip { display: flex; gap: 16px; flex-wrap: wrap; background: var(--surface); border-radius: var(--radius-md); padding: 14px 20px; box-shadow: var(--shadow-sm); margin-bottom: 20px; align-items: center; }
+        .kpi-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .kpi-item-value { font-weight: 700; color: var(--text-primary); }
+        .kpi-item-label { color: var(--text-tertiary); font-size: 11px; }
+        .kpi-divider { width: 1px; height: 24px; background: var(--separator); }
+
+        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--toast-bg); color: var(--toast-text); padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; z-index: 1000; opacity: 0; transform: translateY(10px); transition: all 0.3s; box-shadow: 0 10px 15px rgba(0,0,0,0.15); }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-tertiary); font-size: 13px; }
+
+        .progress-bar { height: 4px; border-radius: 2px; background: var(--separator); margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 2px; }
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+        .capacity-input { width: 70px; text-align: center; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--input-bg); color: var(--text-primary); }
+        .capacity-input:focus { outline: none; border-color: var(--accent); }
+        .sales-plan-input { width: 120px; padding: 6px 8px; text-align: right; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-family: inherit; background: var(--input-bg); color: var(--text-primary); }
+        .sales-plan-input:focus { outline: none; border-color: var(--accent); }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+        .filters select, .filters input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--input-bg); color: var(--text-primary); }
+        .chip { display: inline-flex; align-items: center; gap: 4px; background: var(--separator); padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 500; cursor: pointer; color: var(--text-primary); }
+        .chip:hover { background: var(--border); }
+        .import-area { margin-bottom: 16px; }
+        .import-area textarea { width: 100%; height: 100px; font-family: 'SF Mono', monospace; font-size: 11px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; resize: vertical; background: var(--input-bg); color: var(--text-primary); }
+        .week-row { cursor: pointer; }
+        .week-row.current { background: var(--status-wait-bg); }
+        .toggle-icon { display: inline-block; transition: transform 0.2s; font-size: 10px; margin-left: 4px; color: var(--text-tertiary); }
+        .toggle-icon.open { transform: rotate(180deg); }
+        .log-edit-input { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--input-bg); color: var(--text-primary); font-family: inherit; }
+        .log-edit-input:focus { outline: none; border-color: var(--accent); }
+        .log-select { padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--input-bg); color: var(--text-primary); font-family: inherit; }
+        .route-info { background: var(--route-info-bg); border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 12px; display: none; color: var(--text-primary); }
+        .route-info.show { display: block; }
+        .route-chip { background: var(--status-sent-bg); color: var(--success); padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; display: inline-block; margin: 2px; }
+
+        .chart-card { background: var(--surface); border-radius: var(--radius-lg); padding: 20px 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .chart-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .chart-legend { display: flex; gap: 16px; font-size: 11px; color: var(--text-secondary); align-items: center; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .legend-dot.incoming { background: var(--ved); }
+        .legend-dot.expense { background: #e37400; }
+        .chart-svg { width: 100%; height: 240px; background: var(--chart-bg); border-radius: 12px; }
+        .chart-grid { stroke: var(--border); stroke-width: 0.5; }
+        .chart-axis { font-size: 9px; fill: var(--text-tertiary); }
+        .chart-line { fill: none; stroke-width: 2.5; }
+        .chart-line.incoming { stroke: var(--ved); }
+        .chart-line.expense { stroke: #e37400; stroke-dasharray: 5,3; }
+        .chart-dot { cursor: pointer; }
+        .route-badge { font-size: 10px; color: var(--success); padding: 3px 10px; background: var(--status-sent-bg); border-radius: 10px; display: inline-block; font-weight: 500; }
+
+        .parser-summary { background: var(--status-sent-bg); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-primary); }
+        .parser-summary b { color: var(--ved); }
+        .na-highlight { background: #fff3cd !important; color: #1a1c1e !important; }
+        .include-model { width: 60px; text-align: center; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+        .include-model.yes { background: var(--status-sent-bg); color: var(--success); }
+        .include-model.no { background: var(--status-reject-bg); color: var(--danger); }
+        .section-title { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid var(--separator); color: var(--text-primary); }
+        .settings-note { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+        .ved-lists-container { display: flex; flex-direction: column; gap: 8px; }
+        .ved-list-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--file-upload-bg); }
+        .ved-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .ved-list-title { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
+        .ved-list-status { font-size: 11px; color: var(--text-primary); }
+        .btn-add-list { margin-top: 6px; padding: 6px 14px; background: var(--ved); color: #fff; border: none; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+        .btn-add-list:hover { opacity: 0.9; }
+        .btn-add-list:disabled { background: #ccc; cursor: not-allowed; }
+        a { color: var(--accent); }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .nav-btn { font-size: 11px; padding: 8px 10px; }
+            .sales-plan-input { width: 90px; }
+            .kpi-strip { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .kpi-divider { width: 100%; height: 1px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">Отгрузки</div>
+    <div class="header-status">
+        <button type="button" class="theme-toggle" id="themeToggle" title="Сменить тему">🌙</button>
+        <div class="sync-dot loading" id="syncDot"></div>
+        <span class="sync-text" id="syncStatus">Синхронизация...</span>
+        <button type="button" class="btn btn-outline btn-sm" id="btnSyncNow" style="margin-left:4px;">Обновить</button>
+    </div>
+</div>
+
+<div class="nav">
+    <button type="button" class="nav-btn active" data-page="schedule">Сводная</button>
+    <button type="button" class="nav-btn" data-page="wb">WB</button>
+    <button type="button" class="nav-btn" data-page="ozon">Ozon</button>
+    <button type="button" class="nav-btn" data-page="logistics">Логистика</button>
+    <button type="button" class="nav-btn" data-page="ved">ВЭД</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- СВОДНАЯ -->
+<div class="page active" id="page-schedule">
+    <h1>Сводная</h1>
+    <p class="subtitle">Загруженность склада, упаковки, прогноз и общие остатки</p>
+    <div class="kpi-strip" id="kpiStrip"></div>
+    <div class="sub-nav">
+        <button type="button" class="sub-nav-btn active" data-sub-page="weeks">Загруженность по неделям</button>
+        <button type="button" class="sub-nav-btn" data-sub-page="forecast">Прогноз загрузки</button>
+        <button type="button" class="sub-nav-btn" data-sub-page="stock">Остатки (МС)</button>
+    </div>
+    <div class="sub-page active" id="sub-page-weeks">
+        <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+            <button type="button" class="btn btn-primary btn-sm" id="btnImportSchedule">Импорт отгрузок</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExportSchedule">CSV</button>
+            <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">Недель: <b id="scheduleWeekCount">0</b> · Строк: <b id="scheduleTotalRows">0</b></span>
+        </div>
+        <div class="import-area" id="scheduleImportBlock" style="display:none;">
+            <textarea id="scheduleImportText" placeholder="Вставь строки (дата	МП	город	кол-во)"></textarea>
+            <button type="button" class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoScheduleImport">Загрузить</button>
+        </div>
+        <div class="table-wrap" id="scheduleTable"><div class="empty-state">Нет данных</div></div>
+    </div>
+    <div class="sub-page" id="sub-page-forecast">
+        <div class="form-card"><div class="form-row"><div class="field"><label>Ёмкость складов, м³</label><input type="number" id="totalCapacity" step="1" value="2267"></div><div class="field"><label>Текущая занятость, м³</label><input type="number" id="currentOccupancy" step="1" value="1408"></div><div class="field"><label>Постоянный объём, м³</label><input type="number" id="constantVolume" step="1" value="85"></div><div class="field"><label>Расход марта (база), м³</label><input type="number" id="baseExpense" step="0.01" value="51.50"></div><div class="field"><label>План марта, руб.</label><input type="number" id="marchPlan" step="1000000" value="311000000"></div></div><div style="margin-top:12px;display:flex;gap:8px;"><button type="button" class="btn btn-primary btn-sm" id="btnSaveWarehouseSettings">Сохранить настройки</button><button type="button" class="btn btn-outline btn-sm" id="btnImportExcelForSettings">Импорт из Excel-модели</button><button type="button" class="btn btn-outline btn-sm" id="btnResetSalesPlan">Сбросить план</button></div><div class="settings-note">Изменение настроек или плана продаж автоматически пересчитывает прогноз</div></div>
+        <div class="section-title">План продаж и прогноз</div>
+        <div class="table-wrap"><table><thead><tr><th>Месяц</th><th class="num">План продаж, руб.</th><th class="num">Рост</th><th class="num">Приход, м³</th><th class="num">Расход, м³</th><th class="num">Остаток, м³</th><th class="num">Свободно, м³</th><th>Загрузка</th></tr></thead><tbody id="salesPlanEditor"></tbody></table></div>
+        <div class="chart-card"><div class="chart-header"><div class="chart-title">График прихода и расхода</div><div class="chart-legend"><span><span class="legend-dot incoming"></span> Приход (ВЭД)</span><span><span class="legend-dot expense"></span> Расход (прогноз)</span></div></div><svg class="chart-svg" id="forecastChart" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet"></svg></div>
+    </div>
+    <div class="sub-page" id="sub-page-stock">
+        <div class="section-title">Общие остатки — Импорт из Excel (МойСклад)</div>
+        <div class="stock-upload-area" id="msStockUpload">
+            <div class="upload-icon">📦</div>
+            <div class="upload-text">Загрузите файл с общими остатками</div>
+            <div class="upload-hint">Excel (.xlsx, .xls) — автоматическое определение колонок: Артикул, Наименование, Ожидание, Остаток</div>
+            <input type="file" accept=".xlsx,.xls" id="msStockFileInput">
+        </div>
+        <div class="stock-file-info" id="msStockFileInfo" style="display:none;">
+            <span class="stock-file-name" id="msStockFileName"></span>
+            <button type="button" class="stock-file-remove" id="msStockFileRemove">✕</button>
+        </div>
+        <div class="stock-stats-strip" id="msStockStats"></div>
+        <div class="analytics-grid" id="msStockComparisonGrid" style="display:none;">
+            <div class="analytics-card wb-card" id="msWbComparisonCard">
+                <div class="ac-label"><span class="ac-icon">W</span>Совпадения с WB</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msWbMatchCount">0</div><div class="ac-metric-label">Позиций</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msWbMatchBalance">0</div><div class="ac-metric-label">Общий остаток WB</div></div>
+                </div>
+            </div>
+            <div class="analytics-card ozon-card" id="msOzonComparisonCard">
+                <div class="ac-label"><span class="ac-icon">O</span>Совпадения с Ozon</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msOzonMatchCount">0</div><div class="ac-metric-label">Позиций</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msOzonMatchBalance">0</div><div class="ac-metric-label">Общий остаток Ozon</div></div>
+                </div>
+            </div>
+            <div class="analytics-card total-card">
+                <div class="ac-label"><span class="ac-icon">∑</span>Сводка</div>
+                <div class="ac-metrics">
+                    <div class="ac-metric"><div class="ac-metric-value" id="msMatchTotal">0</div><div class="ac-metric-label">Всего совпадений</div></div>
+                    <div class="ac-metric"><div class="ac-metric-value" id="msUnmatchedCount">0</div><div class="ac-metric-label">Без привязки</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="stock-filters" id="msStockFilters" style="display:none;">
+            <input type="text" id="msStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
+            <select id="msStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="msStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
+            <select id="msStockMatchFilter">
+                <option value="all">Все позиции</option>
+                <option value="matched">С привязкой к площадкам</option>
+                <option value="unmatched">Без привязки</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExportMsStock">Экспорт CSV</button>
+            <button type="button" class="chip" id="btnResetMsStockFilters">Сброс</button>
+        </div>
+        <div class="table-wrap" id="msStockTable"><div class="empty-state">Загрузите файл для отображения общих остатков</div></div>
+    </div>
+</div>
+
+<!-- WB -->
+<div class="page" id="page-wb">
+    <h1>Wildberries</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса и редактированием количества</p>
+    <div class="sub-nav">
+        <button type="button" class="sub-nav-btn active" data-wb-sub="shipments">Отгрузки</button>
+        <button type="button" class="sub-nav-btn" data-wb-sub="stock">Остатки</button>
+    </div>
+    <div class="sub-page active" id="wb-sub-shipments">
+        <div class="form-card"><div class="form-row"><div class="field"><label>Дата</label><input type="date" id="shipDateWildberries"></div><div class="field"><label>Город</label><input type="text" id="shipCityWildberries" placeholder="Начните вводить" list="cityList"></div><div class="field" style="max-width:100px;"><label>Кол-во</label><input type="number" id="shipQtyWildberries" min="1" placeholder="0"></div><div class="field" style="justify-content:flex-end;"><button type="button" class="btn btn-wb btn-sm" id="btnSaveWb">Сохранить</button><button type="button" class="btn btn-outline btn-sm" id="btnClearWb">Очистить</button></div></div><div class="route-info" id="routeInfoWildberries"><div class="route-title" id="routeTitleWildberries"></div><div class="route-detail" id="routeDetailWildberries" style="font-size:11px;"></div><div class="route-schedule" id="routeScheduleWildberries" style="margin-top:4px;"></div></div></div>
+        <div class="cards-grid" id="wbCards"><div class="empty-state">Нет отгрузок</div></div>
+    </div>
+    <div class="sub-page" id="wb-sub-stock">
+        <div class="section-title">Остатки WB — Импорт из Excel</div>
+        <div class="stock-upload-area" id="wbStockUpload">
+            <div class="upload-icon">📊</div>
+            <div class="upload-text">Загрузите файл отчёта по остаткам WB</div>
+            <div class="upload-hint">Excel (.xlsx, .xls) — автоматическое определение колонок</div>
+            <input type="file" accept=".xlsx,.xls" id="wbStockFileInput">
+        </div>
+        <div class="stock-file-info" id="wbStockFileInfo" style="display:none;">
+            <span class="stock-file-name" id="wbStockFileName"></span>
+            <button type="button" class="stock-file-remove" id="wbStockFileRemove">✕</button>
+        </div>
+        <div class="stock-stats-strip" id="wbStockStats"></div>
+        <div class="stock-filters" id="wbStockFilters" style="display:none;">
+            <input type="text" id="wbStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
+            <select id="wbStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="wbStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExportWbStock">Экспорт CSV</button>
+            <button type="button" class="chip" id="btnResetWbStockFilters">Сброс</button>
+        </div>
+        <div class="table-wrap" id="wbStockTable"><div class="empty-state">Загрузите файл для отображения остатков</div></div>
+    </div>
+</div>
+
+<!-- OZON -->
+<div class="page" id="page-ozon">
+    <h1>Ozon</h1>
+    <p class="subtitle">Карточки отгрузок с выбором статуса и редактированием количества</p>
+    <div class="sub-nav">
+        <button type="button" class="sub-nav-btn active" data-ozon-sub="shipments">Отгрузки</button>
+        <button type="button" class="sub-nav-btn" data-ozon-sub="stock">Остатки</button>
+    </div>
+    <div class="sub-page active" id="ozon-sub-shipments">
+        <div class="form-card"><div class="form-row"><div class="field"><label>Дата</label><input type="date" id="shipDateOzon"></div><div class="field"><label>Город</label><input type="text" id="shipCityOzon" placeholder="Начните вводить" list="cityList"></div><div class="field" style="max-width:100px;"><label>Кол-во</label><input type="number" id="shipQtyOzon" min="1" placeholder="0"></div><div class="field" style="justify-content:flex-end;"><button type="button" class="btn btn-ozon btn-sm" id="btnSaveOzon">Сохранить</button><button type="button" class="btn btn-outline btn-sm" id="btnClearOzon">Очистить</button></div></div></div>
+        <div class="cards-grid" id="ozonCards"><div class="empty-state">Нет отгрузок</div></div>
+    </div>
+    <div class="sub-page" id="ozon-sub-stock">
+        <div class="section-title">Остатки Ozon — Импорт из Excel</div>
+        <div class="stock-upload-area" id="ozonStockUpload">
+            <div class="upload-icon">📊</div>
+            <div class="upload-text">Загрузите файл отчёта по остаткам Ozon</div>
+            <div class="upload-hint">Excel (.xlsx, .xls) — автоматическое определение колонок</div>
+            <input type="file" accept=".xlsx,.xls" id="ozonStockFileInput">
+        </div>
+        <div class="stock-file-info" id="ozonStockFileInfo" style="display:none;">
+            <span class="stock-file-name" id="ozonStockFileName"></span>
+            <button type="button" class="stock-file-remove" id="ozonStockFileRemove">✕</button>
+        </div>
+        <div class="stock-stats-strip" id="ozonStockStats"></div>
+        <div class="stock-filters" id="ozonStockFilters" style="display:none;">
+            <input type="text" id="ozonStockSearch" placeholder="🔍 Поиск по артикулу или наименованию..." style="flex:1;min-width:200px;">
+            <select id="ozonStockBalanceFilter">
+                <option value="all">Все остатки</option>
+                <option value="positive">Остаток > 0</option>
+                <option value="zero">Остаток = 0</option>
+                <option value="negative">Остаток < 0</option>
+            </select>
+            <select id="ozonStockWaitingFilter">
+                <option value="all">Всё ожидание</option>
+                <option value="positive">Ожидание > 0</option>
+                <option value="zero">Ожидание = 0</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExportOzonStock">Экспорт CSV</button>
+            <button type="button" class="chip" id="btnResetOzonStockFilters">Сброс</button>
+        </div>
+        <div class="table-wrap" id="ozonStockTable"><div class="empty-state">Загрузите файл для отображения остатков</div></div>
+    </div>
+</div>
+
+<!-- ЛОГИСТИКА -->
+<div class="page" id="page-logistics">
+    <h1>Логистика</h1>
+    <p class="subtitle">Редактирование: поставщик, паллеты, сумма, НДС, статус оплаты. Импорт создаёт отгрузки WB/Ozon. Удаление — каскадное.</p>
+    <div class="analytics-grid" id="logAnalyticsGrid"></div>
+    <div class="analytics-history-block" id="logHistoryBlock">
+        <div class="ah-header" id="logHistoryHeader">
+            <span class="ah-title">📅 История за 12 месяцев</span>
+            <span class="ah-toggle">▼</span>
+        </div>
+        <div class="ah-body" id="logHistoryBody"></div>
+    </div>
+    <div class="top-bar" style="display:flex;gap:8px;margin-bottom:16px;">
+        <button type="button" class="btn btn-outline btn-sm" id="btnToggleLogImport">Импорт</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btnExportLog">CSV</button>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:auto;">Строк: <b id="logCount">0</b></span>
+    </div>
+    <div class="import-area" id="logImportBlock" style="display:none;">
+        <textarea id="logImportText" placeholder="Вставь строки (дата МП тип поставщик город кол-во паллет сумма статус НДС%)"></textarea>
+        <button type="button" class="btn btn-primary btn-sm" style="margin-top:6px;" id="btnDoLogImport">Загрузить</button>
+    </div>
+    <div class="form-card"><div class="form-row"><div class="field"><label>Дата</label><input type="date" id="logDate"></div><div class="field"><label>МП</label><select id="logMP"><option>Wildberries</option><option>Ozon</option></select></div><div class="field"><label>Тип</label><select id="logType"><option>FBO</option><option>FBS</option></select></div><div class="field"><label>Поставщик</label><select id="logSupplier"><option value="">—</option><option>Большие Амбиции</option><option>ИП Орищенко</option><option>НордТрансСклад</option><option>Тессар</option></select></div><div class="field"><label>Город</label><input type="text" id="logCity" placeholder="Город" list="cityList"></div><div class="field" style="max-width:80px;"><label>Кол-во</label><input type="number" id="logQty" min="1"></div><div class="field" style="max-width:70px;"><label>Паллет</label><input type="number" id="logBoxes" min="1"></div><div class="field" style="max-width:100px;"><label>Сумма, руб.</label><input type="number" id="logAmount" step="0.01"></div><div class="field" style="max-width:80px;"><label>НДС</label><select id="logNDS"><option value="22%">22%</option><option value="7%">7%</option></select></div><div class="field" style="max-width:110px;"><label>С НДС</label><div class="field-calc" id="logCalcFull">0 руб.</div></div><div class="field" style="justify-content:flex-end;"><button type="button" class="btn btn-log btn-sm" id="btnAddLog">+ Добавить</button></div></div></div>
+    <div class="filters"><input type="month" id="logFilterMonth" style="width:130px;"><select id="logFilterStatus"><option value="all">Все</option><option value="paid">Оплачен</option><option value="unpaid">Не оплачен</option></select><select id="logFilterMP"><option value="all">Все МП</option><option>Wildberries</option><option>Ozon</option></select><button type="button" class="chip" id="btnResetLogFilters">Сброс</button></div>
+    <div class="table-wrap" id="logTable"><div class="empty-state">Нет записей</div></div>
+</div>
+
+<!-- ВЭД -->
+<div class="page" id="page-ved">
+    <h1>ВЭД — Поставки из Китая</h1>
+    <p class="subtitle">Умный парсер: автоопределение артикула, наименования, коробов, шт/кор, всего, объёма. До 4 списков в одной поставке.</p>
+    <div class="kpi-strip" id="vedKpiStrip"></div>
+    <div class="form-card"><div class="form-row"><div class="field"><label>Номер поставки</label><input type="text" id="vedNumber" placeholder="W-1603-3003"></div><div class="field"><label>Ожидаемая дата прибытия</label><input type="date" id="vedEta"></div><div class="field"><label>Поставщик</label><input type="text" id="vedSupplier" placeholder="蓉信电子"></div><div class="field"><label>Склад выгрузки</label><select id="vedWarehouse"><option value="Москва">Москва</option><option value="Пушкино">Пушкино</option></select></div><div class="field"><label>Статус</label><select id="vedStatus"><option value="transit">В пути</option><option value="customs">Таможня</option><option value="svh">На СВХ</option><option value="arrived">Прибыла</option></select></div><div class="field"><label>Вкл. в модель</label><select id="vedIncludeInModel"><option value="yes">Да</option><option value="no">Нет</option></select></div></div><div style="margin-top:14px;border-top:1px solid var(--separator);padding-top:14px;"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">Товарные списки (до 4) — Автоопределение всех колонок</div><div class="ved-lists-container" id="vedListsContainer"></div><button type="button" class="btn-add-list" id="btnAddVedList" style="display:none;">+ Добавить список</button><div class="parser-summary" id="vedTotalSummary" style="display:none;"></div></div><div style="margin-top:14px;display:flex;gap:8px;"><button type="button" class="btn btn-ved btn-sm" id="btnSaveVed">Сохранить поставку</button><button type="button" class="btn btn-outline btn-sm" id="btnClearVed">Очистить</button></div></div>
+    <div class="ved-search"><input type="text" id="vedArticleSearch" placeholder="Поиск по артикулу..."><div class="ved-search-results" id="vedSearchResults"></div></div>
+    <div class="cards-grid" id="vedCards"><div class="empty-state">Нет поставок</div></div>
+</div>
+
+<datalist id="cityList"></datalist>
+
+<script>
+// ========== АСИНХРОННАЯ ЗАГРУЗКА XLSX ==========
+(function() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+    script.async = true;
+    script.onload = function() { console.log('XLSX загружен асинхронно'); };
+    script.onerror = function() { console.warn('Не удалось загрузить XLSX. Импорт Excel будет недоступен.'); };
+    document.head.appendChild(script);
+})();
+
 // ========== FIREBASE ==========
 const firebaseConfig = {
   apiKey: "AIzaSyBCGOXZtpRY_aWOkcUWuW34uJBsNgrgdDA",
@@ -741,6 +1480,15 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// Включаем кэширование Firebase для офлайн-доступа
+try {
+    db.settings({
+        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+    });
+} catch(e) {
+    console.warn('Не удалось настроить кэш Firebase:', e);
+}
 
 // ========== ТЕМА ==========
 function initTheme() { const saved = localStorage.getItem('theme'); if (saved === 'dark') { document.body.classList.add('dark-theme'); document.getElementById('themeToggle').textContent = '☀️'; } }
@@ -779,8 +1527,90 @@ function validateCityInput(inputEl) { if (!inputEl) return; const city = inputEl
 function loadAllFromLocalStorage() { try { wbShipments = JSON.parse(localStorage.getItem('wb') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Wildberries' })); ozonShipments = JSON.parse(localStorage.getItem('ozon') || '[]').map(s => ({ ...s, status: s.status || 'in_work', linkId: s.linkId || null, source: s.source || 'Ozon' })); logEntries = JSON.parse(localStorage.getItem('log') || '[]').map(e => ({ ...e, paid: e.paid || false, linkId: e.linkId || null })); vedSupplies = JSON.parse(localStorage.getItem('ved') || '[]').map(s => ({ ...s, includeInModel: s.includeInModel !== undefined ? s.includeInModel : true })); weekCapacities = JSON.parse(localStorage.getItem('cap') || '{}'); wbStockData = JSON.parse(localStorage.getItem('wbStock') || '[]'); ozonStockData = JSON.parse(localStorage.getItem('ozonStock') || '[]'); msStockData = JSON.parse(localStorage.getItem('msStock') || '[]'); const savedWarehouse = localStorage.getItem('warehouseData'); if (savedWarehouse) { const data = JSON.parse(savedWarehouse); warehouseData.totalCapacity = data.totalCapacity || 2267; warehouseData.currentOccupancy = data.currentOccupancy || 1408; warehouseData.constantVolume = data.constantVolume || 85; warehouseData.baseExpense = data.baseExpense || 51.50; warehouseData.marchPlan = data.marchPlan || 311000000; warehouseData.salesPlan = data.salesPlan || warehouseData.salesPlan; } } catch (e) { console.error('Ошибка загрузки из localStorage:', e); } }
 function saveAllToLocalStorage() { try { localStorage.setItem('wb', JSON.stringify(wbShipments)); localStorage.setItem('ozon', JSON.stringify(ozonShipments)); localStorage.setItem('log', JSON.stringify(logEntries)); localStorage.setItem('ved', JSON.stringify(vedSupplies)); localStorage.setItem('cap', JSON.stringify(weekCapacities)); localStorage.setItem('warehouseData', JSON.stringify(warehouseData)); localStorage.setItem('wbStock', JSON.stringify(wbStockData)); localStorage.setItem('ozonStock', JSON.stringify(ozonStockData)); localStorage.setItem('msStock', JSON.stringify(msStockData)); localStorage.setItem('currentPage', currentPage); localStorage.setItem('currentSubPage', currentSubPage); } catch (e) { console.error('Ошибка сохранения в localStorage:', e); showToast('Ошибка сохранения'); } }
 
-// ========== FIREBASE ==========
-async function loadFromFirebase() { try { updateSyncStatus('loading'); const collections = [{ name: 'shipments_wb', orderBy: 'date' },{ name: 'shipments_ozon', orderBy: 'date' },{ name: 'logistics', orderBy: 'date' },{ name: 'ved_supplies', orderBy: 'eta' }]; const snapshots = {}; for (const col of collections) { try { snapshots[col.name] = await db.collection(col.name).orderBy(col.orderBy).get(); } catch (e) { snapshots[col.name] = { empty: true, docs: [] }; } } let capDoc = { exists: false }, settingsDoc = { exists: false }, wbStockDoc = { exists: false }, ozonStockDoc = { exists: false }, msStockDoc = { exists: false }; try { capDoc = await db.collection('settings').doc('capacities').get(); } catch (e) {} try { settingsDoc = await db.collection('settings').doc('warehouseData').get(); } catch (e) {} try { wbStockDoc = await db.collection('settings').doc('wbStock').get(); } catch (e) {} try { ozonStockDoc = await db.collection('settings').doc('ozonStock').get(); } catch (e) {} try { msStockDoc = await db.collection('settings').doc('msStock').get(); } catch (e) {} wbShipments = snapshots['shipments_wb'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Wildberries' })); ozonShipments = snapshots['shipments_ozon'].docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Ozon' })); logEntries = snapshots['logistics'].docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false, linkId: d.data().linkId || null })); vedSupplies = snapshots['ved_supplies'].docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true })); weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {}; if (settingsDoc.exists) { const d = settingsDoc.data(); warehouseData.totalCapacity = d.totalCapacity || 2267; warehouseData.currentOccupancy = d.currentOccupancy || 1408; warehouseData.constantVolume = d.constantVolume || 85; warehouseData.baseExpense = d.baseExpense || 51.50; warehouseData.marchPlan = d.marchPlan || 311000000; warehouseData.salesPlan = d.salesPlan || warehouseData.salesPlan; } if (wbStockDoc.exists) wbStockData = wbStockDoc.data().items || []; if (ozonStockDoc.exists) ozonStockData = ozonStockDoc.data().items || []; if (msStockDoc.exists) msStockData = msStockDoc.data().items || []; isOnline = true; updateSyncStatus('online'); saveAllToLocalStorage(); renderAll(); showToast('Данные синхронизированы'); } catch (e) { console.error('Firebase error:', e); loadAllFromLocalStorage(); isOnline = false; updateSyncStatus('offline'); renderAll(); showToast('Офлайн-режим'); } }
+// ========== FIREBASE ОПТИМИЗИРОВАННЫЙ ==========
+async function loadFromFirebase() {
+    const TIMEOUT = 5000;
+    let emergencyFired = false;
+    
+    const emergencyFallback = setTimeout(() => {
+        if (!emergencyFired) {
+            emergencyFired = true;
+            console.warn('Firebase timeout — переключение на localStorage');
+            loadAllFromLocalStorage();
+            isOnline = false;
+            updateSyncStatus('offline');
+            renderAllDebounced();
+            showToast('Офлайн-режим (таймаут)');
+        }
+    }, TIMEOUT);
+    
+    try {
+        updateSyncStatus('loading');
+        
+        const [wbSnap, ozonSnap, logSnap, vedSnap, capDoc, settingsDoc, wbStockDoc, ozonStockDoc, msStockDoc] = 
+            await Promise.all([
+                db.collection('shipments_wb').orderBy('date').get().catch(() => ({ empty: true, docs: [] })),
+                db.collection('shipments_ozon').orderBy('date').get().catch(() => ({ empty: true, docs: [] })),
+                db.collection('logistics').orderBy('date').get().catch(() => ({ empty: true, docs: [] })),
+                db.collection('ved_supplies').orderBy('eta').get().catch(() => ({ empty: true, docs: [] })),
+                db.collection('settings').doc('capacities').get().catch(() => ({ exists: false })),
+                db.collection('settings').doc('warehouseData').get().catch(() => ({ exists: false })),
+                db.collection('settings').doc('wbStock').get().catch(() => ({ exists: false })),
+                db.collection('settings').doc('ozonStock').get().catch(() => ({ exists: false })),
+                db.collection('settings').doc('msStock').get().catch(() => ({ exists: false }))
+            ]);
+        
+        clearTimeout(emergencyFallback);
+        if (emergencyFired) return;
+        
+        wbShipments = wbSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Wildberries' }));
+        ozonShipments = ozonSnap.docs.map(d => ({ id: d.id, ...d.data(), status: d.data().status || 'in_work', linkId: d.data().linkId || null, source: d.data().source || 'Ozon' }));
+        logEntries = logSnap.docs.map(d => ({ id: d.id, ...d.data(), paid: d.data().paid || false, linkId: d.data().linkId || null }));
+        vedSupplies = vedSnap.docs.map(d => ({ id: d.id, ...d.data(), includeInModel: d.data().includeInModel !== undefined ? d.data().includeInModel : true }));
+        weekCapacities = capDoc.exists ? (capDoc.data().capacities || {}) : {};
+        
+        if (settingsDoc.exists) {
+            const d = settingsDoc.data();
+            warehouseData.totalCapacity = d.totalCapacity || 2267;
+            warehouseData.currentOccupancy = d.currentOccupancy || 1408;
+            warehouseData.constantVolume = d.constantVolume || 85;
+            warehouseData.baseExpense = d.baseExpense || 51.50;
+            warehouseData.marchPlan = d.marchPlan || 311000000;
+            warehouseData.salesPlan = d.salesPlan || warehouseData.salesPlan;
+        }
+        if (wbStockDoc.exists) wbStockData = wbStockDoc.data().items || [];
+        if (ozonStockDoc.exists) ozonStockData = ozonStockDoc.data().items || [];
+        if (msStockDoc.exists) msStockData = msStockDoc.data().items || [];
+        
+        isOnline = true;
+        updateSyncStatus('online');
+        saveAllToLocalStorage();
+        renderAllDebounced();
+        showToast('Данные синхронизированы');
+        
+    } catch (e) {
+        clearTimeout(emergencyFallback);
+        if (!emergencyFired) {
+            console.error('Firebase error:', e);
+            loadAllFromLocalStorage();
+            isOnline = false;
+            updateSyncStatus('offline');
+            renderAllDebounced();
+            showToast('Офлайн-режим');
+        }
+    }
+}
+
+// ========== ЗАЩИТА ОТ ДВОЙНОГО РЕНДЕРИНГА ==========
+let renderScheduled = false;
+function renderAllDebounced() {
+    if (renderScheduled) return;
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+        renderAll();
+        renderScheduled = false;
+    });
+}
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ==========
 function generateUniqueId() { if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID(); return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9); }
@@ -792,12 +1622,12 @@ function formatAmount(n) { if (n >= 1000000) return (n / 1000000).toFixed(2) + '
 
 // ========== WB / OZON ==========
 function showRouteInfo() { const ci = document.getElementById('shipCityWildberries'); if (!ci) return; validateCityInput(ci); const city = ci.value.trim(); const route = routesDB[city]; const info = document.getElementById('routeInfoWildberries'); if (route && info) { info.classList.add('show'); const t = document.getElementById('routeTitleWildberries'); const d = document.getElementById('routeDetailWildberries'); const s = document.getElementById('routeScheduleWildberries'); if (t) t.textContent = city; if (d) d.textContent = 'Срок: ' + route.delivery; if (s) s.innerHTML = route.schedule.split(', ').map(x => `<span class="route-chip">${x}</span>`).join(''); } else if (info) { info.classList.remove('show'); } }
-async function saveShipment(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (!de||!ce||!qe) return; const date = de.value, city = ce.value.trim(), qty = parseInt(qe.value)||0; if (!date||!city||qty<=0) { alert('Заполните дату, город и количество'); return; } if (!VALID_CITIES.has(city)) { alert('Город не найден в справочнике. Проверьте написание.'); return; } const linkId = generateUniqueId(); const shipment = { id: generateUniqueId(), date, city, qty, source: mp, status:'in_work', linkId }; const arr = mp==='Wildberries'?wbShipments:ozonShipments; arr.push(shipment); const logEntry = { id: generateUniqueId(), date, marketplace: mp, type: 'FBO', supplier: '', city, qty, boxes: 0, amount: 0, amountFull: 0, paid: false, nds: '22%', source: 'Авто из ' + mp, linkId }; logEntries.push(logEntry); if (isOnline) { const colShip = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(colShip).doc(shipment.id).set(shipment); await db.collection('logistics').doc(logEntry.id).set(logEntry); } catch(e) { showToast('Сохранено локально'); } } saveAllToLocalStorage(); renderAll(); clearShipmentForm(mp); showToast(city+' — '+qty.toLocaleString('ru-RU')+' ед. (+ логистика)'); }
+async function saveShipment(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (!de||!ce||!qe) return; const date = de.value, city = ce.value.trim(), qty = parseInt(qe.value)||0; if (!date||!city||qty<=0) { alert('Заполните дату, город и количество'); return; } if (!VALID_CITIES.has(city)) { alert('Город не найден в справочнике. Проверьте написание.'); return; } const linkId = generateUniqueId(); const shipment = { id: generateUniqueId(), date, city, qty, source: mp, status:'in_work', linkId }; const arr = mp==='Wildberries'?wbShipments:ozonShipments; arr.push(shipment); const logEntry = { id: generateUniqueId(), date, marketplace: mp, type: 'FBO', supplier: '', city, qty, boxes: 0, amount: 0, amountFull: 0, paid: false, nds: '22%', source: 'Авто из ' + mp, linkId }; logEntries.push(logEntry); if (isOnline) { const colShip = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(colShip).doc(shipment.id).set(shipment); await db.collection('logistics').doc(logEntry.id).set(logEntry); } catch(e) { showToast('Сохранено локально'); } } saveAllToLocalStorage(); renderAllDebounced(); clearShipmentForm(mp); showToast(city+' — '+qty.toLocaleString('ru-RU')+' ед. (+ логистика)'); }
 function clearShipmentForm(mp) { const de = document.getElementById('shipDate'+mp); const ce = document.getElementById('shipCity'+mp); const qe = document.getElementById('shipQty'+mp); if (de) de.value = new Date().toISOString().slice(0,10); if (ce) { ce.value = ''; ce.classList.remove('invalid'); } if (qe) qe.value = ''; if (mp==='Wildberries') { const info = document.getElementById('routeInfoWildberries'); if (info) info.classList.remove('show'); } }
-async function deleteShipment(mp, id) { if (!confirm('Удалить отгрузку? Связанная запись в логистике тоже будет удалена.')) return; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const shipment = arr.find(s => String(s.id)===String(id)); const linkId = shipment ? shipment.linkId : null; if (mp==='Wildberries') wbShipments = wbShipments.filter(s => String(s.id)!==String(id)); else ozonShipments = ozonShipments.filter(s => String(s.id)!==String(id)); if (linkId) { const linkedLog = logEntries.find(l => l.linkId === linkId); if (linkedLog) { logEntries = logEntries.filter(l => l.linkId !== linkId); if (isOnline) { try { await db.collection('logistics').doc(String(linkedLog.id)).delete(); } catch(e) {} } } } if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(col).doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAll(); showToast('Отгрузка и связанная логистика удалены'); }
+async function deleteShipment(mp, id) { if (!confirm('Удалить отгрузку? Связанная запись в логистике тоже будет удалена.')) return; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const shipment = arr.find(s => String(s.id)===String(id)); const linkId = shipment ? shipment.linkId : null; if (mp==='Wildberries') wbShipments = wbShipments.filter(s => String(s.id)!==String(id)); else ozonShipments = ozonShipments.filter(s => String(s.id)!==String(id)); if (linkId) { const linkedLog = logEntries.find(l => l.linkId === linkId); if (linkedLog) { logEntries = logEntries.filter(l => l.linkId !== linkId); if (isOnline) { try { await db.collection('logistics').doc(String(linkedLog.id)).delete(); } catch(e) {} } } } if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; try { await db.collection(col).doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAllDebounced(); showToast('Отгрузка и связанная логистика удалены'); }
 function startEditQty(mp, id) { editingShipmentId = String(id); renderShipmentCards(mp); setTimeout(() => { const input = document.getElementById('qty-input-' + id); if (input) { input.focus(); input.select(); } }, 50); }
 function cancelEditQty(mp) { editingShipmentId = null; renderShipmentCards(mp); }
-async function saveEditQty(mp, id) { const input = document.getElementById('qty-input-' + id); if (!input) return; const newQty = parseInt(input.value) || 0; if (newQty <= 0) { showToast('Количество должно быть больше 0'); return; } const arr = mp === 'Wildberries' ? wbShipments : ozonShipments; const shipment = arr.find(s => String(s.id) === String(id)); if (shipment) { const oldQty = shipment.qty; shipment.qty = newQty; if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) logEntry.qty = newQty; } if (isOnline) { const col = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon'; try { await db.collection(col).doc(String(id)).update({ qty: newQty }); } catch(e) {} if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) { try { await db.collection('logistics').doc(String(logEntry.id)).update({ qty: newQty }); } catch(e) {} } } } saveAllToLocalStorage(); showToast('Количество изменено: ' + oldQty.toLocaleString('ru-RU') + ' → ' + newQty.toLocaleString('ru-RU')); } editingShipmentId = null; renderShipmentCards(mp); renderAll(); }
+async function saveEditQty(mp, id) { const input = document.getElementById('qty-input-' + id); if (!input) return; const newQty = parseInt(input.value) || 0; if (newQty <= 0) { showToast('Количество должно быть больше 0'); return; } const arr = mp === 'Wildberries' ? wbShipments : ozonShipments; const shipment = arr.find(s => String(s.id) === String(id)); if (shipment) { const oldQty = shipment.qty; shipment.qty = newQty; if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) logEntry.qty = newQty; } if (isOnline) { const col = mp === 'Wildberries' ? 'shipments_wb' : 'shipments_ozon'; try { await db.collection(col).doc(String(id)).update({ qty: newQty }); } catch(e) {} if (shipment.linkId) { const logEntry = logEntries.find(l => l.linkId === shipment.linkId); if (logEntry) { try { await db.collection('logistics').doc(String(logEntry.id)).update({ qty: newQty }); } catch(e) {} } } } saveAllToLocalStorage(); showToast('Количество изменено: ' + oldQty.toLocaleString('ru-RU') + ' → ' + newQty.toLocaleString('ru-RU')); } editingShipmentId = null; renderShipmentCards(mp); renderAllDebounced(); }
 function renderShipmentCards(mp) { const arr = mp==='Wildberries'?wbShipments:ozonShipments; const cid = mp==='Wildberries'?'wbCards':'ozonCards'; const srt = [...arr].sort((a,b) => b.date.localeCompare(a.date)); const container = document.getElementById(cid); if (!container) return; if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет отгрузок</div>'; return; } let html = ''; for (let e of srt) { const cs = e.status||'in_work'; const so = STATUSES.find(s=>s.value===cs)||STATUSES[0]; const route = mp==='Wildberries'?(routesDB[e.city]||null):null; const accentClass = mp==='Wildberries'?'wb':'ozon'; const isEditing = editingShipmentId === String(e.id); html += `<div class="shipment-card"><div class="card-accent ${accentClass}"></div><div class="card-body"><div class="card-header"><div><div class="card-city">${escapeHtml(e.city)}</div><div class="card-date">${escapeHtml(e.date)}</div></div><div class="card-actions"><button type="button" class="card-edit" data-edit-mp="${mp}" data-edit-id="${e.id}" title="Редактировать количество">✎</button><button type="button" class="card-delete" data-mp="${mp}" data-id="${e.id}" title="Удалить">&times;</button></div></div>${isEditing ? `<div class="card-qty-row"><input type="number" class="card-qty-input" id="qty-input-${e.id}" value="${e.qty}" min="1" onkeydown="if(event.key==='Enter')saveEditQty('${mp}','${e.id}'); if(event.key==='Escape')cancelEditQty('${mp}');" onblur="saveEditQty('${mp}','${e.id}')"></div>` : `<div class="card-qty">${e.qty.toLocaleString('ru-RU')}</div>`}<div class="card-qty-label">единиц</div><div class="card-footer"><div class="card-status"><select class="status-select ${so.class}" data-mp="${mp}" data-id="${e.id}">${STATUSES.map(s=>`<option value="${s.value}" ${cs===s.value?'selected':''}>${s.label}</option>`).join('')}</select></div>${route ? `<div><span class="route-badge">${route.delivery}</span></div>` : ''}</div></div></div>`; } container.innerHTML = html; }
 function handleStatusChange(event) { const s = event.target; if (!s.classList.contains('status-select')) return; const mp = s.dataset.mp, id = s.dataset.id, st = s.value; const arr = mp==='Wildberries'?wbShipments:ozonShipments; const sh = arr.find(x => String(x.id)===String(id)); if (sh) { sh.status = st; saveAllToLocalStorage(); if (isOnline) { const col = mp==='Wildberries'?'shipments_wb':'shipments_ozon'; db.collection(col).doc(String(id)).update({status:st}).catch(()=>{}); } renderShipmentCards(mp); } }
 
@@ -852,11 +1682,11 @@ function handleVedFileForList(index, file) { if (!file||index>=vedTempLists.leng
 function addVedList() { if(vedTempLists.length>=MAX_VED_LISTS){showToast('Максимум '+MAX_VED_LISTS+' списков');return;} vedTempLists.push(null); renderVedLists(); }
 function removeVedList(index) { if(vedTempLists.length<=1){showToast('Должен быть хотя бы один список');return;} vedTempLists.splice(index,1); renderVedLists(); }
 function updateVedTotalSummary() { const summary=document.getElementById('vedTotalSummary'); if(!summary)return; const validLists=vedTempLists.filter(l=>l&&l.items&&l.items.length>0); if(validLists.length===0){summary.style.display='none';return;} let ti=0,tc=0,tq=0,tv=0; validLists.forEach(l=>{ti+=l.itemsCount||0;tc+=l.totalCartons||0;tq+=l.totalQty||0;tv+=l.totalVolume||0;}); summary.style.display='block'; summary.innerHTML=`Итого по ${validLists.length} спискам: <b>${ti} поз.</b> · ${tc.toLocaleString('ru-RU')} кор. · ${tq.toLocaleString('ru-RU')} ед. · <b>${tv.toFixed(2)} м³</b>`; }
-async function saveVedSupply() { const ne=document.getElementById('vedNumber'),ee=document.getElementById('vedEta'),se=document.getElementById('vedSupplier'),we=document.getElementById('vedWarehouse'),ste=document.getElementById('vedStatus'),ie=document.getElementById('vedIncludeInModel'); if(!ne||!ee||!se)return; const n=ne.value.trim(),e=ee.value,s=se.value.trim(),w=we?we.value:'Москва',st=ste?ste.value:'transit',inc=ie?ie.value==='yes':true; if(!n||!e||!s)return alert('Заполните номер, дату и поставщика'); const validLists=vedTempLists.filter(l=>l&&l.items&&l.items.length>0); if(validLists.length===0)return alert('Прикрепите хотя бы один список'); const allItems=[]; let tv=0,tq=0,tc=0; const fns=[]; validLists.forEach(l=>{allItems.push(...l.items);tv+=l.totalVolume||0;tq+=l.totalQty||0;tc+=l.totalCartons||0;fns.push(l.name);}); const supply={id:generateUniqueId(),number:n,eta:e,supplier:s,warehouse:w,status:st,includeInModel:inc,items:allItems,totalVolume:Math.round(tv*1000)/1000,totalQty:tq,totalCartons:tc,fileName:fns.join('; '),listsCount:validLists.length,createdAt:new Date().toISOString(),history:[{status:st,date:new Date().toISOString()}]}; vedSupplies.push(supply); if(isOnline){const{id,...data}=supply;try{await db.collection('ved_supplies').doc(id).set(data);}catch(e){showToast('Сохранено локально');}} saveAllToLocalStorage(); clearVedForm(); renderAll(); showToast('Поставка сохранена: '+n+' ('+validLists.length+' списка)'); }
+async function saveVedSupply() { const ne=document.getElementById('vedNumber'),ee=document.getElementById('vedEta'),se=document.getElementById('vedSupplier'),we=document.getElementById('vedWarehouse'),ste=document.getElementById('vedStatus'),ie=document.getElementById('vedIncludeInModel'); if(!ne||!ee||!se)return; const n=ne.value.trim(),e=ee.value,s=se.value.trim(),w=we?we.value:'Москва',st=ste?ste.value:'transit',inc=ie?ie.value==='yes':true; if(!n||!e||!s)return alert('Заполните номер, дату и поставщика'); const validLists=vedTempLists.filter(l=>l&&l.items&&l.items.length>0); if(validLists.length===0)return alert('Прикрепите хотя бы один список'); const allItems=[]; let tv=0,tq=0,tc=0; const fns=[]; validLists.forEach(l=>{allItems.push(...l.items);tv+=l.totalVolume||0;tq+=l.totalQty||0;tc+=l.totalCartons||0;fns.push(l.name);}); const supply={id:generateUniqueId(),number:n,eta:e,supplier:s,warehouse:w,status:st,includeInModel:inc,items:allItems,totalVolume:Math.round(tv*1000)/1000,totalQty:tq,totalCartons:tc,fileName:fns.join('; '),listsCount:validLists.length,createdAt:new Date().toISOString(),history:[{status:st,date:new Date().toISOString()}]}; vedSupplies.push(supply); if(isOnline){const{id,...data}=supply;try{await db.collection('ved_supplies').doc(id).set(data);}catch(e){showToast('Сохранено локально');}} saveAllToLocalStorage(); clearVedForm(); renderAllDebounced(); showToast('Поставка сохранена: '+n+' ('+validLists.length+' списка)'); }
 function clearVedForm() { ['vedNumber','vedEta','vedSupplier'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); vedTempLists=[null]; const ie=document.getElementById('vedIncludeInModel'); if(ie)ie.value='yes'; renderVedLists(); }
-async function updateVedStatus(id,status){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.status=status;s.history=s.history||[];s.history.push({status,date:new Date().toISOString()});saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({status,history:s.history});}catch(e){}}renderVedCards();renderAll();}}
-async function toggleVedIncludeInModel(id){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.includeInModel=!s.includeInModel;saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({includeInModel:s.includeInModel});}catch(e){}}renderVedCards();renderAll();}}
-async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){}}saveAllToLocalStorage();renderAll();}
+async function updateVedStatus(id,status){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.status=status;s.history=s.history||[];s.history.push({status,date:new Date().toISOString()});saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({status,history:s.history});}catch(e){}}renderVedCards();renderAllDebounced();}}
+async function toggleVedIncludeInModel(id){const s=vedSupplies.find(x=>String(x.id)===String(id));if(s){s.includeInModel=!s.includeInModel;saveAllToLocalStorage();if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).update({includeInModel:s.includeInModel});}catch(e){}}renderVedCards();renderAllDebounced();}}
+async function deleteVedSupply(id){if(!confirm('Удалить?'))return;vedSupplies=vedSupplies.filter(s=>String(s.id)!==String(id));if(isOnline){try{await db.collection('ved_supplies').doc(String(id)).delete();}catch(e){}}saveAllToLocalStorage();renderAllDebounced();}
 function toggleVedDetails(id) { if (vedExpandedId === String(id)) { vedExpandedId = null; } else { vedExpandedId = String(id); } renderVedCards(); }
 function renderVedCards() { const container = document.getElementById('vedCards'); if (!container) return; const srt = [...vedSupplies].sort((a,b)=>{if(!a.eta&&!b.eta)return 0;if(!a.eta)return 1;if(!b.eta)return-1;return a.eta.localeCompare(b.eta);}); if (!srt.length) { container.innerHTML = '<div class="empty-state">Нет поставок</div>'; renderVedKpiStrip(); return; } const query = vedSearchQuery.trim().toLowerCase(); let matchCount = 0; let html = ''; for (let s of srt) { const so = VED_STATUSES[s.status] || VED_STATUSES.transit; const tq = (s.items || []).reduce((sum, i) => sum + (i.qty || 0), 0); const inc = s.includeInModel !== false; const li = s.listsCount ? ` · ${s.listsCount} списка` : ''; const isExpanded = vedExpandedId === String(s.id); let hasMatch = false; if (query && s.items) { for (const item of s.items) { if (item.article && item.article.toLowerCase().includes(query)) { hasMatch = true; break; } } if (hasMatch) matchCount++; } const matchClass = hasMatch ? ' match-highlight' : ''; const expandClass = isExpanded ? ' expanded' : ''; html += `<div class="ved-card${matchClass}${expandClass}" id="ved-card-${s.id}" data-ved-id="${s.id}"><div class="card-accent"></div><button type="button" class="card-delete" data-ved-delete="${s.id}">&times;</button><div class="card-body" data-ved-toggle="${s.id}"><div class="card-header"><div><div class="card-number">${escapeHtml(s.number)}</div><div class="card-supplier">${escapeHtml(s.supplier)}</div></div></div><div class="card-meta"><span>${escapeHtml(s.warehouse)}</span><span>${escapeHtml(s.eta)}</span></div><div class="card-volume">${(s.totalVolume || 0).toFixed(2)} м³ · ${(s.totalCartons || 0).toLocaleString('ru-RU')} кор.</div><div style="font-size:11px;color:var(--text-secondary);">${(s.items || []).length} поз.${li} · ${tq.toLocaleString('ru-RU')} ед.</div><div class="card-footer"><div class="card-status-row"><span class="supply-status-badge ${so.class}" style="padding:3px 10px;border-radius:10px;font-size:10px;">${so.label}</span><select data-ved-status="${s.id}" style="font-size:10px;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);">${Object.entries(VED_STATUSES).map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v.label}</option>`).join('')}</select><button type="button" class="include-model ${inc?'yes':'no'}" data-ved-include="${s.id}">${inc?'Вкл':'Выкл'}</button></div><span class="card-expand-icon">&#9662;</span></div></div><div class="card-details"><div style="font-size:10px;color:var(--text-tertiary);padding:8px 0 4px 0;">${escapeHtml(s.fileName)}</div><table><thead><tr><th>Артикул</th><th>Наименование</th><th class="num">Кор.</th><th class="num">Шт/кор</th><th class="num">Всего</th><th class="num">Объём</th></tr></thead><tbody>${(s.items || []).map(i => { const isMatch = query && i.article && i.article.toLowerCase().includes(query); const mClass = isMatch ? ' item-match' : ''; const naClass = i.article === 'N/A' ? ' na-highlight' : ''; return `<tr class="${naClass}${mClass}"><td style="font-family:monospace;font-size:12px;">${escapeHtml(i.article || '—')}</td><td class="name-cell" title="${escapeHtml((i.name || '—'))}">${escapeHtml(i.name || '—')}</td><td class="num">${(i.cartons || 0)}</td><td class="num">${(i.perCarton || 0)}</td><td class="num">${(i.qty || 0)}</td><td class="num">${(i.volume || 0).toFixed(3)}</td></tr>`; }).join('')}</tbody></table></div></div>`; } container.innerHTML = html; renderVedKpiStrip(); const searchResults = document.getElementById('vedSearchResults'); if (searchResults && query) { searchResults.classList.add('show'); searchResults.textContent = `Найдено в ${matchCount} поставк${matchCount === 1 ? 'е' : matchCount >= 2 && matchCount <= 4 ? 'ах' : 'ах'}`; } else if (searchResults) { searchResults.classList.remove('show'); } }
 function handleVedSearch(query) { vedSearchQuery = query; vedExpandedId = null; renderVedCards(); }
@@ -870,11 +1700,11 @@ function updateLogPallets(id,v){const e=logEntries.find(x=>String(x.id)===String
 function updateLogAmount(id,v){const e=logEntries.find(x=>String(x.id)===String(id));if(e){const a=parseFloat(v)||0,rate=e.nds==='22%'?1.22:1.07;e.amount=a;e.amountFull=Math.round(a*rate*100)/100;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({amount:e.amount,amountFull:e.amountFull}).catch(()=>{});renderLog();renderLogAnalytics();}}
 function updateLogNds(id,v){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.nds=v;const rate=v==='22%'?1.22:1.07;e.amountFull=Math.round((e.amount||0)*rate*100)/100;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({nds:v,amountFull:e.amountFull}).catch(()=>{});renderLog();renderLogAnalytics();}}
 function toggleLogPaid(id){const e=logEntries.find(x=>String(x.id)===String(id));if(e){e.paid=!e.paid;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({paid:e.paid}).catch(()=>{});renderLog();}}
-async function deleteLogEntry(id) { if (!confirm('Удалить запись логистики? Связанная отгрузка WB/Ozon тоже будет удалена.')) return; const logEntry = logEntries.find(l => String(l.id)===String(id)); const linkId = logEntry ? logEntry.linkId : null; logEntries = logEntries.filter(l => l.id !== id); if (linkId) { const wbShip = wbShipments.find(s => s.linkId === linkId); const ozShip = ozonShipments.find(s => s.linkId === linkId); if (wbShip) { wbShipments = wbShipments.filter(s => s.linkId !== linkId); if (isOnline) { try { await db.collection('shipments_wb').doc(String(wbShip.id)).delete(); } catch(e) {} } } if (ozShip) { ozonShipments = ozonShipments.filter(s => s.linkId !== linkId); if (isOnline) { try { await db.collection('shipments_ozon').doc(String(ozShip.id)).delete(); } catch(e) {} } } } if (isOnline) { try { await db.collection('logistics').doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAll(); showToast('Запись логистики и связанная отгрузка удалены'); }
+async function deleteLogEntry(id) { if (!confirm('Удалить запись логистики? Связанная отгрузка WB/Ozon тоже будет удалена.')) return; const logEntry = logEntries.find(l => String(l.id)===String(id)); const linkId = logEntry ? logEntry.linkId : null; logEntries = logEntries.filter(l => l.id !== id); if (linkId) { const wbShip = wbShipments.find(s => s.linkId === linkId); const ozShip = ozonShipments.find(s => s.linkId === linkId); if (wbShip) { wbShipments = wbShipments.filter(s => s.linkId !== linkId); if (isOnline) { try { await db.collection('shipments_wb').doc(String(wbShip.id)).delete(); } catch(e) {} } } if (ozShip) { ozonShipments = ozonShipments.filter(s => s.linkId !== linkId); if (isOnline) { try { await db.collection('shipments_ozon').doc(String(ozShip.id)).delete(); } catch(e) {} } } } if (isOnline) { try { await db.collection('logistics').doc(String(id)).delete(); } catch(e) {} } saveAllToLocalStorage(); renderAllDebounced(); showToast('Запись логистики и связанная отгрузка удалены'); }
 function resetLogFilters(){const fme=document.getElementById('logFilterMonth'),fse=document.getElementById('logFilterStatus'),fmpe=document.getElementById('logFilterMP');if(fme)fme.value='';if(fse)fse.value='all';if(fmpe)fmpe.value='all';renderLog();showToast('Фильтры сброшены');}
 function toggleLogImport(){const block=document.getElementById('logImportBlock');if(block)block.style.display=block.style.display==='none'?'block':'none';}
 function fmtPrice(n){return n?n.toLocaleString('ru-RU')+' руб.':'0 руб.';}
-async function doLogImport() { const textEl = document.getElementById('logImportText'); if (!textEl) return; const text = textEl.value.trim(); if (!text) return; let logCount = 0, wbCount = 0, ozonCount = 0; const newLogEntries = [], newWbShipments = [], newOzShipments = []; text.split('\n').filter(l => l.trim()).forEach(line => { let cols = line.split('\t'); if (cols.length < 4) cols = line.split(/[\t,;]/); if (cols.length >= 4) { let ds = cols[0].trim(); const mpRaw = cols[1].trim(); const type = cols.length > 2 ? cols[2].trim() : 'FBO'; const supplier = cols.length > 3 ? cols[3].trim() : ''; const city = cols.length > 4 ? cols[4].trim() : ''; const qty = cols.length > 5 ? parseInt(String(cols[5]).replace(/\s/g, '')) || 0 : 0; const boxes = cols.length > 6 ? parseInt(String(cols[6]).replace(/\s/g, '')) || 0 : 0; const amount = cols.length > 7 ? parseFloat(String(cols[7]).replace(/\s/g, '').replace(',', '.')) || 0 : 0; const paidStatus = cols.length > 8 ? cols[8].trim().toLowerCase() : ''; const nds = cols.length > 9 ? cols[9].trim() : '22%'; let mp = null; if (['Wildberries','WB','ВБ'].includes(mpRaw)) mp = 'Wildberries'; else if (['Ozon','Озон'].includes(mpRaw)) mp = 'Ozon'; else return; const normalized = normalizeDateString(ds); if (!normalized) return; const paid = paidStatus === 'paid' || paidStatus === 'оплачен' || paidStatus === 'true' || paidStatus === '1'; const rate = nds === '22%' ? 1.22 : 1.07; const linkId = generateUniqueId(); const logEntry = { id: generateUniqueId(), date: normalized, marketplace: mp, type: type || 'FBO', supplier: supplier || '', city: city, qty: qty, boxes: boxes, amount: amount, amountFull: Math.round(amount * rate * 100) / 100, paid: paid, nds: nds || '22%', source: 'Логистика (импорт)', linkId }; newLogEntries.push(logEntry); logCount++; const isDuplicateInWb = wbShipments.some(s => s.date===normalized&&s.city===city&&s.qty===qty); const isDuplicateInOz = ozonShipments.some(s => s.date===normalized&&s.city===city&&s.qty===qty); if (mp==='Wildberries'&&!isDuplicateInWb){const shipment={id:generateUniqueId(),date:normalized,city,qty,source:'Wildberries',status:'in_work',linkId};newWbShipments.push(shipment);wbCount++;} if (mp==='Ozon'&&!isDuplicateInOz){const shipment={id:generateUniqueId(),date:normalized,city,qty,source:'Ozon',status:'in_work',linkId};newOzShipments.push(shipment);ozonCount++;} } }); if (newLogEntries.length>0){logEntries.push(...newLogEntries);wbShipments.push(...newWbShipments);ozonShipments.push(...newOzShipments);if(isOnline){const batch=db.batch();newLogEntries.forEach(e=>{const{id,...data}=e;batch.set(db.collection('logistics').doc(id),data);});newWbShipments.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});newOzShipments.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();} if(textEl)textEl.value=''; renderAll(); let msg='Импортировано: '+logCount+' записей в логистику'; if(wbCount>0)msg+=' · '+wbCount+' отгрузок WB'; if(ozonCount>0)msg+=' · '+ozonCount+' отгрузок Ozon'; showToast(msg); }
+async function doLogImport() { const textEl = document.getElementById('logImportText'); if (!textEl) return; const text = textEl.value.trim(); if (!text) return; let logCount = 0, wbCount = 0, ozonCount = 0; const newLogEntries = [], newWbShipments = [], newOzShipments = []; text.split('\n').filter(l => l.trim()).forEach(line => { let cols = line.split('\t'); if (cols.length < 4) cols = line.split(/[\t,;]/); if (cols.length >= 4) { let ds = cols[0].trim(); const mpRaw = cols[1].trim(); const type = cols.length > 2 ? cols[2].trim() : 'FBO'; const supplier = cols.length > 3 ? cols[3].trim() : ''; const city = cols.length > 4 ? cols[4].trim() : ''; const qty = cols.length > 5 ? parseInt(String(cols[5]).replace(/\s/g, '')) || 0 : 0; const boxes = cols.length > 6 ? parseInt(String(cols[6]).replace(/\s/g, '')) || 0 : 0; const amount = cols.length > 7 ? parseFloat(String(cols[7]).replace(/\s/g, '').replace(',', '.')) || 0 : 0; const paidStatus = cols.length > 8 ? cols[8].trim().toLowerCase() : ''; const nds = cols.length > 9 ? cols[9].trim() : '22%'; let mp = null; if (['Wildberries','WB','ВБ'].includes(mpRaw)) mp = 'Wildberries'; else if (['Ozon','Озон'].includes(mpRaw)) mp = 'Ozon'; else return; const normalized = normalizeDateString(ds); if (!normalized) return; const paid = paidStatus === 'paid' || paidStatus === 'оплачен' || paidStatus === 'true' || paidStatus === '1'; const rate = nds === '22%' ? 1.22 : 1.07; const linkId = generateUniqueId(); const logEntry = { id: generateUniqueId(), date: normalized, marketplace: mp, type: type || 'FBO', supplier: supplier || '', city: city, qty: qty, boxes: boxes, amount: amount, amountFull: Math.round(amount * rate * 100) / 100, paid: paid, nds: nds || '22%', source: 'Логистика (импорт)', linkId }; newLogEntries.push(logEntry); logCount++; const isDuplicateInWb = wbShipments.some(s => s.date===normalized&&s.city===city&&s.qty===qty); const isDuplicateInOz = ozonShipments.some(s => s.date===normalized&&s.city===city&&s.qty===qty); if (mp==='Wildberries'&&!isDuplicateInWb){const shipment={id:generateUniqueId(),date:normalized,city,qty,source:'Wildberries',status:'in_work',linkId};newWbShipments.push(shipment);wbCount++;} if (mp==='Ozon'&&!isDuplicateInOz){const shipment={id:generateUniqueId(),date:normalized,city,qty,source:'Ozon',status:'in_work',linkId};newOzShipments.push(shipment);ozonCount++;} } }); if (newLogEntries.length>0){logEntries.push(...newLogEntries);wbShipments.push(...newWbShipments);ozonShipments.push(...newOzShipments);if(isOnline){const batch=db.batch();newLogEntries.forEach(e=>{const{id,...data}=e;batch.set(db.collection('logistics').doc(id),data);});newWbShipments.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});newOzShipments.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();} if(textEl)textEl.value=''; renderAllDebounced(); let msg='Импортировано: '+logCount+' записей в логистику'; if(wbCount>0)msg+=' · '+wbCount+' отгрузок WB'; if(ozonCount>0)msg+=' · '+ozonCount+' отгрузок Ozon'; showToast(msg); }
 
 // ========== ПРОГНОЗ ==========
 function getMonthlyIncoming(month){return vedSupplies.filter(s=>s.includeInModel!==false).filter(s=>{if(!s.eta)return false;const ed=new Date(s.eta);const em=MONTHS[ed.getMonth()];return em===month;}).reduce((sum,s)=>sum+(s.totalVolume||0),0);}
@@ -900,7 +1730,7 @@ function downloadCSV(csv,fn){const b=new Blob([csv],{type:'text/csv;charset=utf-
 async function importExcelModel(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){try{const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array'});let tc=0,co=0,cv=0,mp=311000000;let sp={};const sheetNames=workbook.SheetNames;let inputSheet=null;for(const name of sheetNames){if(name.includes('Вводные')||name.includes('Input')||name.includes('Settings')){inputSheet=workbook.Sheets[name];break;}}if(!inputSheet&&sheetNames.length>0)inputSheet=workbook.Sheets[sheetNames[0]];if(inputSheet){const rows=XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;const ca=String(row[0]||'').toLowerCase();const cb=row[1];if(ca.includes('полезный')&&(ca.includes('объем')||ca.includes('объём')))tc=parseFloat(cb)||0;if(ca.includes('занято')&&!ca.includes('постоянный'))co=parseFloat(cb)||0;if(ca.includes('постоянный'))cv=parseFloat(cb)||0;}let its=false;for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Месяц')&&row.some(c=>String(c||'').includes('План'))){its=true;continue;}if(its&&row[0]&&MONTHS.includes(String(row[0]).trim())){const month=String(row[0]).trim();for(let col=1;col<row.length;col++){const plan=parseFloat(row[col])||0;if(plan>0){sp[month]=plan;break;}}}}}let expenseSheet=null;for(const name of sheetNames){if(name.includes('Уходимость')||name.includes('Расход')||name.includes('Expense')){expenseSheet=workbook.Sheets[name];break;}}if(expenseSheet){const rows=XLSX.utils.sheet_to_json(expenseSheet,{header:1,defval:''});for(let i=0;i<rows.length;i++){const row=rows[i];if(!row||!Array.isArray(row))continue;if(String(row[0]||'').includes('Март')){if(row[3])warehouseData.baseExpense=parseFloat(row[3])||51.50;if(row[1])mp=parseFloat(row[1])||311000000;}}}if(tc>0)warehouseData.totalCapacity=tc;if(co>0)warehouseData.currentOccupancy=co;if(cv>0)warehouseData.constantVolume=cv;if(mp>0)warehouseData.marchPlan=mp;if(Object.keys(sp).length>0)warehouseData.salesPlan=sp;saveAllToLocalStorage();if(isOnline){db.collection('settings').doc('warehouseData').set(warehouseData,{merge:true}).catch(()=>{});}resolve({totalCapacity:tc,currentOccupancy:co,constantVolume:cv,baseExpense:warehouseData.baseExpense,marchPlan:warehouseData.marchPlan,salesPlanCount:Object.keys(sp).length});}catch(err){reject(err);}};reader.onerror=()=>reject('Ошибка чтения файла');reader.readAsArrayBuffer(file);});}
 let showScheduleImport=false;
 function toggleScheduleImport(){showScheduleImport=!showScheduleImport;const block=document.getElementById('scheduleImportBlock');if(block)block.style.display=showScheduleImport?'block':'none';}
-async function doScheduleImport(){const textEl=document.getElementById('scheduleImportText');if(!textEl)return;const text=textEl.value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(String(cols[3]).replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const normalized=normalizeDateString(ds);if(!normalized)return;const shipment={id:generateUniqueId(),date:normalized,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();if(textEl)textEl.value='';toggleScheduleImport();renderAll();showToast('WB: '+iw+', Ozon: '+io);}
+async function doScheduleImport(){const textEl=document.getElementById('scheduleImportText');if(!textEl)return;const text=textEl.value.trim();if(!text)return;let iw=0,io=0;const nw=[],no=[];text.split('\n').filter(l=>l.trim()).forEach(line=>{let cols=line.split('\t');if(cols.length<4)cols=line.split(/[\t,;]/);if(cols.length>=4){let ds=cols[0].trim();const mp=cols[1].trim(),city=cols[2].trim(),qty=parseInt(String(cols[3]).replace(/\s/g,''))||0;if(['ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ','ЯНВАРЬ'].includes(mp))return;if(!mp||!city||qty<=0)return;let target=null;if(['Wildberries','WB','ВБ'].includes(mp))target='Wildberries';else if(['Ozon','Озон'].includes(mp))target='Ozon';else return;const normalized=normalizeDateString(ds);if(!normalized)return;const shipment={id:generateUniqueId(),date:normalized,city,qty,source:target,status:'in_work'};if(target==='Wildberries'){nw.push(shipment);wbShipments.push(shipment);iw++;}else{no.push(shipment);ozonShipments.push(shipment);io++;}}});if(isOnline&&(nw.length>0||no.length>0)){const batch=db.batch();nw.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_wb').doc(id),data);});no.forEach(s=>{const{id,...data}=s;batch.set(db.collection('shipments_ozon').doc(id),data);});try{await batch.commit();}catch(e){}}saveAllToLocalStorage();if(textEl)textEl.value='';toggleScheduleImport();renderAllDebounced();showToast('WB: '+iw+', Ozon: '+io);}
 
 // ========== НАВИГАЦИЯ ==========
 function switchPage(page){
@@ -1016,7 +1846,7 @@ function initDirectHandlers(){
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     document.querySelectorAll('.nav-btn').forEach(b=>{b.addEventListener('click',function(){switchPage(this.dataset.page);});});
     document.querySelectorAll('#page-schedule .sub-nav-btn').forEach(b=>{b.addEventListener('click',function(){switchSubPage(this.dataset.subPage);});});
-    safeAddEventListener('btnSyncNow','click',loadFromFirebase);
+    safeAddEventListener('btnSyncNow','click',() => loadFromFirebase());
     safeAddEventListener('btnImportSchedule','click',toggleScheduleImport);
     safeAddEventListener('btnDoScheduleImport','click',doScheduleImport);
     safeAddEventListener('btnExportSchedule','click',exportScheduleCSV);
@@ -1088,13 +1918,21 @@ function initApp(){
     currentPage=localStorage.getItem('currentPage')||'schedule';
     currentSubPage=localStorage.getItem('currentSubPage')||'weeks';
     if(vedTempLists.length===0)vedTempLists=[null];
+    
+    // Загружаем локальные данные мгновенно
+    loadAllFromLocalStorage();
+    
+    // Быстрый рендеринг текущей страницы
     switchPage(currentPage);
     initDirectHandlers();
-    loadFromFirebase();
-    console.log('v33.0 — Цветные sub-nav WB/Ozon + кликабельные карточки МС');
+    
+    // Асинхронная загрузка из Firebase с таймаутом
+    setTimeout(() => loadFromFirebase(), 100);
+    
+    console.log('v34.0 — Оптимизированная загрузка');
 }
 
-document.addEventListener('DOMContentLoaded',initApp);
+document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
