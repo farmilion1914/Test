@@ -182,13 +182,47 @@ function renderVedCards(){var c=document.getElementById('vedCards');if(!c)return
 function handleVedSearch(q){vedSearchQuery=q;vedExpandedId=null;renderVedCards()}
 function updateLogCalc(){var ae=document.getElementById('logAmount'),ne=document.getElementById('logNDS'),ce=document.getElementById('logCalcFull');if(!ae||!ce)return;var a=parseFloat(ae.value)||0,rate=ne&&ne.value==='22%'?1.22:1.07;ce.textContent=(Math.round(a*rate*100)/100).toLocaleString('ru-RU')+' руб.'}
 async function addLogEntry(){var de=document.getElementById('logDate'),me=document.getElementById('logMP'),te=document.getElementById('logType'),se=document.getElementById('logSupplier'),ce=document.getElementById('logCity'),qe=document.getElementById('logQty'),be=document.getElementById('logBoxes'),ae=document.getElementById('logAmount'),ne=document.getElementById('logNDS');if(!de||!ce||!qe||!ae)return;var date=de.value,mp=me?me.value:'Wildberries',type=te?te.value:'FBO',supplier=se?se.value:'',city=ce.value.trim(),qty=parseInt(qe.value)||0,boxes=be?parseInt(be.value)||0:0,amount=parseFloat(ae.value)||0,nds=ne?ne.value:'22%',rate=nds==='22%'?1.22:1.07;if(!date||!city||qty<=0||amount<=0){alert('Заполните поля');return}var entry={id:generateUniqueId(),date:date,marketplace:mp,type:type,supplier:supplier,city:city,qty:qty,boxes:boxes,amount:amount,amountFull:Math.round(amount*rate*100)/100,paid:false,nds:nds,source:'Логистика'};logEntries.push(entry);if(isOnline)try{await db.collection('logistics').doc(entry.id).set(entry)}catch(e){}saveAllToLocalStorage();if(ce)ce.value='';if(qe)qe.value='';if(be)be.value='';if(ae)ae.value='';updateLogCalc();renderLog();renderLogAnalytics();showToast('Добавлено')}
-function renderLog(){var fme=document.getElementById('logFilterMonth'),fse=document.getElementById('logFilterStatus'),fmpe=document.getElementById('logFilterMP'),tc=document.getElementById('logTable'),cnt=document.getElementById('logCount');if(!tc)return;var fm=fme?fme.value:'',fs=fse?fse.value:'all',fmp=fmpe?fmpe.value:'all';var fl=logEntries.slice();if(fm)fl=fl.filter(function(e){return e.date&&e.date.startsWith(fm)});if(fs==='paid')fl=fl.filter(function(e){return e.paid});if(fs==='unpaid')fl=fl.filter(function(e){return!e.paid});if(fmp!=='all')fl=fl.filter(function(e){return e.marketplace===fmp});fl.sort(function(a,b){return(b.date||'').localeCompare(a.date||'')});if(cnt)cnt.textContent=fl.length;if(!fl.length){tc.innerHTML='<div class="empty-state">Нет записей</div>';return}var h='<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th class="num">С НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';fl.forEach(function(e){if(!e.date)return;h+='<tr><td>'+e.date.split('-').reverse().join('.')+'</td><td><span class="badge '+(e.marketplace==='Wildberries'?'badge-wb':'badge-ozon')+'">'+escapeHtml(e.marketplace)+'</span></td><td>'+escapeHtml(e.type||'FBO')+'</td><td><select class="log-select" data-log-supplier="'+e.id+'">'+SUPPLIERS.map(function(s){return'<option value="'+s+'" '+(e.supplier===s?'selected':'')+'>'+(s||'—')+'</option>'}).join('')+'</select></td><td>'+escapeHtml(e.city||'')+'</td><td class="num">'+(e.qty||0).toLocaleString('ru-RU')+'</td><td class="num"><input class="log-edit-input" value="'+(e.boxes||0)+'" data-log-pallets="'+e.id+'"></td><td class="num"><input class="log-edit-input" value="'+(e.amount||'')+'" data-log-amount="'+e.id+'"></td><td class="num">'+fmtPrice(e.amountFull)+'</td><td><button type="button" class="btn-status '+(e.paid?'paid':'unpaid')+'" data-log-paid="'+e.id+'">'+(e.paid?'Оплачен':'Не опл.')+'</button></td><td><button type="button" class="btn btn-danger-sm" data-log-delete="'+e.id+'">x</button></td></tr>'});h+='</tbody></table>';tc.innerHTML=h}
+function renderLog(){
+    var fme=document.getElementById('logFilterMonth'),
+        fse=document.getElementById('logFilterStatus'),
+        fmpe=document.getElementById('logFilterMP'),
+        tc=document.getElementById('logTable'),
+        cnt=document.getElementById('logCount');
+    if(!tc)return;
+    var fm=fme?fme.value:'',
+        fs=fse?fse.value:'all',
+        fmp=fmpe?fmpe.value:'all';
+    var fl=logEntries.slice();
+    if(fm)fl=fl.filter(function(e){return e.date&&e.date.startsWith(fm)});
+    if(fs==='paid')fl=fl.filter(function(e){return e.paid});
+    if(fs==='unpaid')fl=fl.filter(function(e){return!e.paid});
+    if(fmp!=='all')fl=fl.filter(function(e){return e.marketplace===fmp});
+    fl.sort(function(a,b){return(b.date||'').localeCompare(a.date||'')});
+    if(cnt)cnt.textContent=fl.length;
+    if(!fl.length){
+        tc.innerHTML='<div class="empty-state">Нет записей</div>';
+        return
+    }
+    var h='<table><thead><tr><th>Дата</th><th>МП</th><th>Тип</th><th>Поставщик</th><th>Город</th><th class="num">Кол-во</th><th class="num">Пал.</th><th class="num">Сумма</th><th>НДС</th><th>Оплата</th><th></th></tr></thead><tbody>';
+    fl.forEach(function(e){
+        if(!e.date)return;
+        h+='<tr><td>'+e.date.split('-').reverse().join('.')+'</td><td><span class="badge '+(e.marketplace==='Wildberries'?'badge-wb':'badge-ozon')+'">'+escapeHtml(e.marketplace)+'</span></td><td>'+escapeHtml(e.type||'FBO')+'</td><td><select class="log-select" data-log-supplier="'+e.id+'">'+SUPPLIERS.map(function(s){return'<option value="'+s+'" '+(e.supplier===s?'selected':'')+'>'+(s||'—')+'</option>'}).join('')+'</select></td><td>'+escapeHtml(e.city||'')+'</td><td class="num">'+(e.qty||0).toLocaleString('ru-RU')+'</td><td class="num"><input class="log-edit-input" value="'+(e.boxes||0)+'" data-log-pallets="'+e.id+'"></td><td class="num"><input class="log-edit-input" value="'+(e.amount||'')+'" data-log-amount="'+e.id+'"></td><td><select class="log-select" data-log-nds="'+e.id+'"><option value="22%" '+(e.nds==='22%'?'selected':'')+'>22%</option><option value="7%" '+(e.nds==='7%'?'selected':'')+'>7%</option></select></td><td><button type="button" class="btn-status '+(e.paid?'paid':'unpaid')+'" data-log-paid="'+e.id+'">'+(e.paid?'Оплачен':'Не опл.')+'</button></td><td><button type="button" class="btn btn-danger-sm" data-log-delete="'+e.id+'">x</button></td></tr>'
+    });
+    h+='</tbody></table>';
+    tc.innerHTML=h
+}
 function updateLogSupplier(id,v){var e=logEntries.find(function(x){return String(x.id)===String(id)});if(e){e.supplier=v;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({supplier:v}).catch(function(){});renderLog()}}
 function updateLogPallets(id,v){var e=logEntries.find(function(x){return String(x.id)===String(id)});if(e){e.boxes=parseInt(v)||0;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({boxes:e.boxes}).catch(function(){});renderLog()}}
 function updateLogAmount(id,v){var e=logEntries.find(function(x){return String(x.id)===String(id)});if(e){var a=parseFloat(v)||0,rate=e.nds==='22%'?1.22:1.07;e.amount=a;e.amountFull=Math.round(a*rate*100)/100;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({amount:e.amount,amountFull:e.amountFull}).catch(function(){});renderLog();renderLogAnalytics()}}
-function updateLogNds(id,v){var e=logEntries.find(function(x){return String(x.id)===String(id)});if(e){e.nds=v;var rate=v==='22%'?1.22:1.07;e.amountFull=Math.round((e.amount||0)*rate*100)/100;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({nds:v,amountFull:e.amountFull}).catch(function(){});renderLog();renderLogAnalytics()}}
-function toggleLogPaid(id){var e=logEntries.find(function(x){return String(x.id)===String(id)});if(e){e.paid=!e.paid;saveAllToLocalStorage();if(isOnline)db.collection('logistics').doc(String(id)).update({paid:e.paid}).catch(function(){});renderLog()}}
-async function deleteLogEntry(id){if(!confirm('Удалить?'))return;var le=logEntries.find(function(l){return String(l.id)===String(id)});var lid=le?le.linkId:null;logEntries=logEntries.filter(function(l){return l.id!==id});if(lid){var ws=wbShipments.find(function(s){return s.linkId===lid}),os=ozonShipments.find(function(s){return s.linkId===lid});if(ws){wbShipments=wbShipments.filter(function(s){return s.linkId!==lid});if(isOnline)try{await db.collection('shipments_wb').doc(String(ws.id)).delete()}catch(e){}}if(os){ozonShipments=ozonShipments.filter(function(s){return s.linkId!==lid});if(isOnline)try{await db.collection('shipments_ozon').doc(String(os.id)).delete()}catch(e){}}}if(isOnline)try{await db.collection('logistics').doc(String(id)).delete()}catch(e){}saveAllToLocalStorage();renderAllDebounced()}
+function updateLogNds(id,v){
+    var e=logEntries.find(function(x){return String(x.id)===String(id)});
+    if(e){
+        e.nds=v;
+        saveAllToLocalStorage();
+        if(isOnline)db.collection('logistics').doc(String(id)).update({nds:v}).catch(function(){});
+        renderLog()
+    }
+}async function deleteLogEntry(id){if(!confirm('Удалить?'))return;var le=logEntries.find(function(l){return String(l.id)===String(id)});var lid=le?le.linkId:null;logEntries=logEntries.filter(function(l){return l.id!==id});if(lid){var ws=wbShipments.find(function(s){return s.linkId===lid}),os=ozonShipments.find(function(s){return s.linkId===lid});if(ws){wbShipments=wbShipments.filter(function(s){return s.linkId!==lid});if(isOnline)try{await db.collection('shipments_wb').doc(String(ws.id)).delete()}catch(e){}}if(os){ozonShipments=ozonShipments.filter(function(s){return s.linkId!==lid});if(isOnline)try{await db.collection('shipments_ozon').doc(String(os.id)).delete()}catch(e){}}}if(isOnline)try{await db.collection('logistics').doc(String(id)).delete()}catch(e){}saveAllToLocalStorage();renderAllDebounced()}
 function resetLogFilters(){var fme=document.getElementById('logFilterMonth'),fse=document.getElementById('logFilterStatus'),fmpe=document.getElementById('logFilterMP');if(fme)fme.value='';if(fse)fse.value='all';if(fmpe)fmpe.value='all';renderLog()}
 function toggleLogImport(){var b=document.getElementById('logImportBlock');if(b)b.style.display=b.style.display==='none'?'block':'none'}
 function fmtPrice(n){return n?n.toLocaleString('ru-RU')+' руб.':'0 руб.'}
