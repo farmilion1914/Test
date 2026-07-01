@@ -495,27 +495,425 @@ document.addEventListener('change',function(e){var t=e.target;if(t.classList.con
 document.addEventListener('input',function(e){var t=e.target;if(t.hasAttribute('data-sales-month')){updateSalesPlan(t.getAttribute('data-sales-month'),t.value);return}if(t.id==='shipCityWildberries'||t.id==='shipCityOzon'||t.id==='logCity'){validateCityInput(t)}if(t.id==='vedArticleSearch'){handleVedSearch(t.value);return}if(t.id==='wbStockSearch'){renderWbStock();return}if(t.id==='ozonStockSearch'){renderOzonStock();return}if(t.id==='msStockSearch'){msStockPage=1;renderMsStock();return}if(t.id==='msStockBalanceFilter'||t.id==='msStockWaitingFilter'||t.id==='msStockMatchFilter'){msStockPage=1;renderMsStock();return}});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'){var t=e.target;if(t.classList.contains('card-qty-input')||t.classList.contains('mini-qty-input')){e.preventDefault();var id=t.id.replace('qty-input-','');var mp='';var arr=wbShipments.concat(ozonShipments);var sh=arr.find(function(s){return String(s.id)===String(id)});if(sh)mp=sh.source||(wbShipments.some(function(x){return String(x.id)===String(id)})?'Wildberries':'Ozon');saveEditQty(mp,id);return}var al=document.getElementById('authLogin'),ar=document.getElementById('authRegister');if(al&&al.style.display!=='none')handleAuthLogin();if(ar&&ar.style.display!=='none')handleAuthRegister()}});
 function handleAuthLogin(){var email=document.getElementById('authEmail').value.trim(),pw=document.getElementById('authPassword').value,er=document.getElementById('authError');if(!email||!pw){if(er){er.textContent='Заполните поля';er.style.display='block'}return}firebase.auth().signInWithEmailAndPassword(email,pw).catch(function(err){if(er){er.textContent=err.message;er.style.display='block'}})}
-function handleAuthRegister(){var email=document.getElementById('regEmail').value.trim(),pw=document.getElementById('regPassword').value,pw2=document.getElementById('regPassword2').value,er=document.getElementById('regError');if(!email||!pw){if(er){er.textContent='Заполните поля';er.style.display='block'}return}if(pw.length<6){if(er){er.textContent='Минимум 6 символов';er.style.display='block'}return}if(pw!==pw2){if(er){er.textContent='Пароли не совпадают';er.style.display='block'}return}firebase.auth().createUserWithEmailAndPassword(email,pw).then(function(){showToast('Аккаунт создан!')}).catch(function(err){if(er){er.textContent=err.message;er.style.display='block'}})}
+function handleAuthRegister(){var email=document.getElementById('regEmail').value.trim(),pw=document.getElementById('regPassword').value,pw2=document.getElementById('regPassword2').value,er=document.getElementById('regError');if(!email||!pw){if(er){er.textContent='Заполните поля';er.style.display='block'}return}if(pw.length<6){if(er){er.textContent='Минимум 6 символов';er.style.display='block'}return}if(pw!==pw2){if(er){er.textContent='Пароли не совпадают';er.style.display='block'}return}firebase.auth().createUserWithEmailAndPassword(email,pw).then(function(){showToast('Аккаунт создан!')}).catch(function(err){if(er){er.textContent=err.message;er.style.display='block'}})
 
-// ============ ПАРСЕР ВЭД (БЕЗ ИЗМЕНЕНИЙ) ============
-function FixedVedParser(){this.cache=new Map();this.columnKeywords={article:['article','артикул','sku','код','item','part number','модель','model'],name:['name','наименование','название','product','description','description_en','english name'],cartons:['cartons','короб','ящик','case','ctn','total cartons','总箱数'],perCarton:['per carton','шт/кор','each carton','pcs/ctn','每箱数量'],totalQty:['qty','количество','total quantity','всего','pcs','шт','数量'],volume:['cbm','объём','объем','volume','all cbm','total volume','m3','总体积']};this.maxColsToScan=20;this.maxRowsToScanForHeaders=20;this.debug=false}
-FixedVedParser.prototype.log=function(msg){if(this.debug)console.log('[VedParser]',msg)}
-FixedVedParser.prototype.parseNumber=function(v){if(v===undefined||v===null)return 0;if(typeof v==='number')return v;var s=String(v).trim();if(!s||s==='无'||s==='None'||s==='N/A')return 0;var n=parseFloat(s.replace(/\s/g,'').replace(',','.'));return isNaN(n)?0:n}
-FixedVedParser.prototype.isValueEmpty=function(v){if(v===undefined||v===null)return true;var s=String(v).trim();return s===''||s==='无'||s==='None'||s==='N/A'}
-FixedVedParser.prototype.isArticleLike=function(v){if(this.isValueEmpty(v))return false;var s=String(v).trim();if(s==='N/A'||s==='无')return false;if(s.length<3||s.length>50)return false;return /^[A-Z]{1,2}\d{4,}/i.test(s)||(/[A-Za-z]/.test(s)&&/\d/.test(s)&&/[-_\/]/.test(s)&&s.length<=20)}
-FixedVedParser.prototype.isChineseOnly=function(v){if(this.isValueEmpty(v))return false;var s=String(v).trim();var chineseCount=(s.match(/[\u4e00-\u9fff]/g)||[]).length;return chineseCount/s.length>0.8}
-FixedVedParser.prototype.hasEnglishLetters=function(v){if(this.isValueEmpty(v))return false;var s=String(v).trim();return /[a-zA-Z]/.test(s)&&!/[а-яА-Я]/.test(s)}
-FixedVedParser.prototype.findColumnsByHeaders=function(rows){var cm={};var hri=-1;var headerCandidates=[];for(var i=0;i<Math.min(this.maxRowsToScanForHeaders,rows.length);i++){var row=rows[i];if(!row)continue;var matches={};var score=0;for(var col=0;col<Math.min(row.length,this.maxColsToScan);col++){var cell=String(row[col]||'').toLowerCase().trim();if(!cell)continue;for(var f in this.columnKeywords){var kws=this.columnKeywords[f];for(var k=0;k<kws.length;k++){if(cell.includes(kws[k].toLowerCase())){if(!matches[f])matches[f]=[];if(matches[f].indexOf(col)===-1){matches[f].push(col);score++}break}}}}if(Object.keys(matches).length>=2){headerCandidates.push({rowIndex:i,matches:matches,score:score,row:row})}}if(headerCandidates.length>0){headerCandidates.sort(function(a,b){return b.score-a.score});var best=headerCandidates[0];hri=best.rowIndex;for(var f in best.matches){var cols=best.matches[f];if(cols.length>1){if(f==='name'){var bestCol=this.findBestNameColumn(cols,best.row);cm[f]=bestCol!==undefined?bestCol:cols[0]}else if(f==='article'){var articleCol=this.findBestArticleColumn(cols,best.row,rows,hri);cm[f]=articleCol!==undefined?articleCol:cols[0]}else{cm[f]=cols[0]}}else{cm[f]=cols[0]}}}return{columnMap:cm,headerRowIndex:hri}}
-FixedVedParser.prototype.findBestNameColumn=function(cols,headerRow){var bestCol=undefined;var bestScore=-1;for(var i=0;i<cols.length;i++){var col=cols[i];var header=String(headerRow[col]||'').trim();var score=0;if(this.hasEnglishLetters(header)&&!/[а-яА-Я]/.test(header))score+=10;if(/description|name|product|наименование|название/i.test(header))score+=5;if(!this.isChineseOnly(header))score+=3;if(score>bestScore){bestScore=score;bestCol=col}}return bestCol}
-FixedVedParser.prototype.findBestArticleColumn=function(cols,headerRow,rows,hri){var bestCol=undefined;var bestScore=-1;for(var i=0;i<cols.length;i++){var col=cols[i];var header=String(headerRow[col]||'').trim();var score=0;var validCount=0;var sampleCount=0;for(var j=hri+1;j<Math.min(hri+20,rows.length);j++){var row=rows[j];if(!row||col>=row.length)continue;var cell=String(row[col]||'').trim();if(!cell)continue;sampleCount++;if(this.isArticleLike(cell))validCount++}if(sampleCount>0){var ratio=validCount/sampleCount;score+=ratio*10}if(/article|артикул|sku|model|модель/i.test(header))score+=5;if(score>bestScore){bestScore=score;bestCol=col}}return bestCol}
-FixedVedParser.prototype.findBestName=function(row,cm){var candidates=[];var possibleNameColumns=[];if(cm.name!==undefined&&cm.name<row.length){possibleNameColumns.push(cm.name)}for(var col=0;col<Math.min(row.length,this.maxColsToScan);col++){if(col===cm.article)continue;if(possibleNameColumns.indexOf(col)!==-1)continue;var cell=String(row[col]||'').trim();if(!cell||cell==='N/A')continue;if(/[a-zA-Zа-яА-Я]{3,}/.test(cell)&&!this.isArticleLike(cell)&&!/^\d+$/.test(cell)){possibleNameColumns.push(col)}}for(var i=0;i<possibleNameColumns.length;i++){var col=possibleNameColumns[i];var cell=String(row[col]||'').trim();if(!cell)continue;var score=0;if(this.hasEnglishLetters(cell)&&!/[а-яА-Я]/.test(cell))score+=15;if(cell.length>15)score+=5;if(cell.length>30)score+=3;if(cell.length<5)score-=3;if(/cable|кабель|adapter|адаптер|charger|заряд|plug|наушник|ear/i.test(cell))score+=8;if(/\d/.test(cell))score+=2;if(/[.,]/.test(cell))score+=2;if(cm.article!==undefined&&col>cm.article)score+=3;if(!this.isChineseOnly(cell))score+=5;if(cell.includes(' '))score+=2;if(!this.isArticleLike(cell))score+=5;candidates.push({text:cell,score:score,col:col})}if(candidates.length>0){candidates.sort(function(a,b){return b.score-a.score});return candidates[0].text}return''}
-FixedVedParser.prototype.findBestArticle=function(row,cm){var candidates=[];if(cm.article!==undefined&&cm.article<row.length){var cell=String(row[cm.article]||'').trim();if(cell&&this.isArticleLike(cell)&&cell!=='N/A'){candidates.push({text:cell,score:100,col:cm.article,source:'explicit'})}}for(var col=0;col<Math.min(row.length,10);col++){if(cm.article!==undefined&&col===cm.article)continue;var cell=String(row[col]||'').trim();if(!cell||cell==='N/A'||cell==='无')continue;var score=0;if(/^[A-Z]{1,2}\d{4,}/i.test(cell))score+=20;if(/[-_\/]/.test(cell))score+=5;if(/[A-Za-z]/.test(cell)&&/\d/.test(cell))score+=10;if(cell.length>=4&&cell.length<=20)score+=5;if(col<3)score+=10;if(!cell.includes(' '))score+=5;if(!this.isChineseOnly(cell))score+=10;if(score>=10)candidates.push({text:cell,score:score,col:col,source:'auto'})}if(candidates.length>0){candidates.sort(function(a,b){return b.score-a.score});return candidates[0].text}return'N/A'}
-FixedVedParser.prototype.parseFile=function(file){var self=this;return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(e){try{var data=new Uint8Array(e.target.result);var wb=XLSX.read(data,{type:'array',cellFormula:false,cellNF:true});var sheetName=wb.SheetNames[0];var sheet=wb.Sheets[sheetName];var rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',blankrows:false});var found=self.findColumnsByHeaders(rows);var cm=found.columnMap;var hri=found.headerRowIndex;if(Object.keys(cm).length===0){reject(new Error('Не удалось найти заголовки в файле'));return}var items=[];var tv=0,tq=0,tc=0;var naCount=0;for(var i=hri+1;i<rows.length;i++){var row=rows[i];if(!row||row.every(function(cell){return self.isValueEmpty(cell)}))continue;var firstCell=String(row[0]||'').toLowerCase();if(firstCell==='итого'||firstCell==='total'||firstCell==='合计')continue;var article=self.findBestArticle(row,cm);if(article==='N/A')naCount++;var name=self.findBestName(row,cm);if(!name&&article!=='N/A')name=article;if(!name)continue;var cartons=0;if(cm.cartons!==undefined&&cm.cartons<row.length)cartons=self.parseNumber(row[cm.cartons]);var perCarton=0;if(cm.perCarton!==undefined&&cm.perCarton<row.length)perCarton=self.parseNumber(row[cm.perCarton]);var qty=0;if(cm.totalQty!==undefined&&cm.totalQty<row.length)qty=self.parseNumber(row[cm.totalQty]);if(qty===0&&perCarton>0&&cartons>0)qty=perCarton*cartons;if(qty===0){for(var col=0;col<Math.min(row.length,10);col++){if(col===cm.article||col===cm.name)continue;var val=self.parseNumber(row[col]);if(val>0&&val<1000000){qty=val;break}}}var vol=0;if(cm.volume!==undefined&&cm.volume<row.length)vol=self.parseNumber(row[cm.volume]);if(vol===0&&qty>0)vol=qty*0.00005;tc+=cartons;tq+=qty;tv+=vol;items.push({article:article,name:name,cartons:cartons,perCarton:perCarton,qty:qty,volume:Math.round(vol*1000)/1000})}resolve({items:items,totalCartons:tc,totalQty:tq,totalVolume:Math.round(tv*1000)/1000,itemsCount:items.length,naCount:naCount})}catch(err){reject(err)}};reader.onerror=function(){reject(new Error('Ошибка чтения файла'))};reader.readAsArrayBuffer(file)})}
-FixedVedParser.prototype.parseFileWithCache=function(file){var key=file.name+'_'+file.size+'_'+file.lastModified;if(this.cache.has(key)){return Promise.resolve(this.cache.get(key))}var self=this;return this.parseFile(file).then(function(result){self.cache.set(key,result);return result})}
-FixedVedParser.prototype.clearCache=function(){this.cache.clear()}
-FixedVedParser.prototype.generateTemplate=function(){return[['Артикул','Наименование','Коробок','Шт/кор','Всего','Объём, м³'],['AB-1234','Пример товара','10','12','120','0.5']]}
-FixedVedParser.prototype.validate=function(items){var errors=[];var duplicates={};var warnings=[];items.forEach(function(item,index){if(item.article==='N/A')warnings.push('Строка '+(index+1)+': не найден артикул (будет использован N/A)');if(item.qty<=0)errors.push('Строка '+(index+1)+': количество должно быть > 0');if(!item.name||item.name.length<2)warnings.push('Строка '+(index+1)+': короткое или пустое название');if(item.article!=='N/A'){if(duplicates[item.article])duplicates[item.article].push(index+1);else duplicates[item.article]=[index+1]}});for(var article in duplicates){if(duplicates[article].length>1)warnings.push('Артикул "'+article+'" повторяется в строках: '+duplicates[article].join(', '))}return{errors:errors,warnings:warnings,isValid:errors.length===0}}
-var vedParser=new FixedVedParser()
+// ============ НОВЫЙ УНИВЕРСАЛЬНЫЙ FixedVedParser v5.0 ============
+function FixedVedParser() {
+    this.cache = new Map();
+    this.columnKeywords = {
+        article: [
+            'article', 'артикул', 'sku', 'код', 'item', 'part number',
+            'модель', 'model', '货号', '型号', '产品编号', 'product code',
+            'item no', 'item number', 'product id', 'код товара', 'item id'
+        ],
+        name: [
+            'name', 'наименование', 'название', 'product', 'description',
+            'описание', 'description_en', 'english name', '品名', '产品名称',
+            '货物名称', 'товар', 'наименование товара', 'product name',
+            'goods name', 'product description', 'desc', 'наименование продукции',
+            'english description', 'description english'
+        ],
+        cartons: [
+            'cartons', 'короб', 'ящик', 'case', 'ctn', 'total cartons',
+            '总箱数', '箱数', 'ctns', 'carton qty', 'cases', 'коробов',
+            'carton', 'ctn qty', 'total ctns', 'кол-во коробов', 'коробки'
+        ],
+        perCarton: [
+            'per carton', 'шт/кор', 'each carton', 'pcs/ctn', '每箱数量',
+            '数量/箱', 'pcs/carton', 'qty/ctn', 'pcs per carton',
+            'pcs/ctn', 'шт в кор', 'штук в коробке', 'per case', 'qty per carton'
+        ],
+        totalQty: [
+            'qty', 'количество', 'total quantity', 'всего', 'pcs', 'шт',
+            '数量', '总数', 'total pcs', 'total qty', 'quantity',
+            'кол-во', 'итого', 'total', 'общее количество', 'всего штук', 'всего единиц'
+        ],
+        volume: [
+            'cbm', 'объём', 'объем', 'volume', 'all cbm', 'total volume',
+            'm3', '总体积', '体积', 'cbm total', 'total cbm', 'куб.м',
+            'куб м', 'м3', 'общий объём', 'общий объем', 'total m3',
+            'cbm all', 'всего м3', 'всего кубов'
+        ]
+    };
+    this.maxColsToScan = 30;
+    this.maxRowsToScanForHeaders = 30;
+}
+
+FixedVedParser.prototype.parseNumber = function(v) {
+    if (v === undefined || v === null) return 0;
+    if (typeof v === 'number') return v;
+    var s = String(v).trim();
+    if (!s || s === '无' || s === 'None' || s === 'N/A') return 0;
+    var n = parseFloat(s.replace(/\s/g, '').replace(',', '.'));
+    return isNaN(n) ? 0 : n;
+};
+
+FixedVedParser.prototype.isValueEmpty = function(v) {
+    if (v === undefined || v === null) return true;
+    var s = String(v).trim();
+    return s === '' || s === '无' || s === 'None' || s === 'N/A';
+};
+
+FixedVedParser.prototype.isArticleLike = function(v) {
+    if (this.isValueEmpty(v)) return false;
+    var s = String(v).trim();
+    if (s === 'N/A' || s === '无') return false;
+    if (s.length < 3 || s.length > 50) return false;
+    return /^[A-Z]{1,3}\d{4,}/i.test(s) ||
+           /^[A-Z]{1,3}\d{2,}[-_][A-Z\d]{1,}/i.test(s) ||
+           /^[A-Z]{1,3}[-_]\d{3,}/i.test(s) ||
+           /^\d{4,}[-_\/][A-Z\d]{1,}/i.test(s) ||
+           /^\d{2,}[-_\/]\d{2,}[-_\/]\d{2,}/.test(s) ||
+           (/[A-Za-z]/.test(s) && /\d/.test(s) && /[-_\/]/.test(s) && s.length <= 20);
+};
+
+FixedVedParser.prototype.isNameLike = function(v) {
+    if (this.isValueEmpty(v)) return false;
+    var s = String(v).trim();
+    if (s === 'N/A' || s === '无') return false;
+    if (this.isArticleLike(s)) return false;
+    if (s.length > 10 && /[a-zA-Zа-яА-Я]/.test(s) && s.includes(' ')) return true;
+    if (s.length > 5 && /[a-zA-Zа-яА-Я]/.test(s) && /\d/.test(s)) return true;
+    if (s.length > 8 && /^[a-zA-Zа-яА-Я\s\-\.]+$/.test(s)) return true;
+    return false;
+};
+
+FixedVedParser.prototype.isDigitsOnly = function(v) {
+    var s = String(v).trim();
+    return /^\d+$/.test(s);
+};
+
+FixedVedParser.prototype.findColumnsByHeaders = function(rows, forcedHri) {
+    var cm = {};
+    var hri = -1;
+    var headerCandidates = [];
+    var startRow = 0;
+    var endRow = Math.min(this.maxRowsToScanForHeaders, rows.length);
+    if (forcedHri !== undefined && forcedHri >= 0 && forcedHri < rows.length) {
+        startRow = forcedHri;
+        endRow = forcedHri + 1;
+    }
+    for (var i = startRow; i < endRow; i++) {
+        var row = rows[i];
+        if (!row) continue;
+        var matches = {};
+        var score = 0;
+        for (var col = 0; col < Math.min(row.length, this.maxColsToScan); col++) {
+            var cell = String(row[col] || '').toLowerCase().trim();
+            if (!cell) continue;
+            for (var f in this.columnKeywords) {
+                var kws = this.columnKeywords[f];
+                for (var k = 0; k < kws.length; k++) {
+                    if (cell.includes(kws[k].toLowerCase())) {
+                        if (!matches[f]) matches[f] = [];
+                        if (matches[f].indexOf(col) === -1) {
+                            matches[f].push(col);
+                            score++;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if (Object.keys(matches).length >= 2) {
+            headerCandidates.push({ rowIndex: i, matches: matches, score: score });
+        }
+    }
+    if (headerCandidates.length > 0) {
+        headerCandidates.sort(function(a, b) { return b.score - a.score; });
+        var best = headerCandidates[0];
+        hri = best.rowIndex;
+        for (var f in best.matches) {
+            cm[f] = best.matches[f][0];
+        }
+    }
+    return { columnMap: cm, headerRowIndex: hri, candidates: headerCandidates };
+};
+
+FixedVedParser.prototype.findArticleByData = function(rows, hri) {
+    var candidates = {};
+    for (var i = hri + 1; i < Math.min(hri + 30, rows.length); i++) {
+        var row = rows[i];
+        if (!row) continue;
+        for (var col = 0; col < Math.min(row.length, 15); col++) {
+            var cell = String(row[col] || '').trim();
+            if (this.isArticleLike(cell)) {
+                if (!candidates[col]) candidates[col] = { count: 0, onlyDigits: true };
+                candidates[col].count++;
+                if (!this.isDigitsOnly(cell)) candidates[col].onlyDigits = false;
+            }
+        }
+    }
+    var bestCol = null, bestCount = 0;
+    for (var col in candidates) {
+        if (candidates[col].onlyDigits) continue;
+        if (candidates[col].count > bestCount) {
+            bestCount = candidates[col].count;
+            bestCol = parseInt(col);
+        }
+    }
+    return (bestCount >= 2) ? bestCol : null;
+};
+
+FixedVedParser.prototype.findNameByData = function(rows, hri, articleCol) {
+    var candidates = {};
+    for (var i = hri + 1; i < Math.min(hri + 30, rows.length); i++) {
+        var row = rows[i];
+        if (!row) continue;
+        for (var col = 0; col < Math.min(row.length, 20); col++) {
+            if (col === articleCol) continue;
+            var cell = String(row[col] || '').trim();
+            if (this.isNameLike(cell)) {
+                if (!candidates[col]) candidates[col] = { count: 0, totalLen: 0, englishCount: 0, chineseCount: 0 };
+                candidates[col].count++;
+                candidates[col].totalLen += cell.length;
+                if (/[a-zA-Z]/.test(cell) && !/[а-яА-Я]/.test(cell)) candidates[col].englishCount++;
+                if (/[\u4e00-\u9fff]/.test(cell)) candidates[col].chineseCount++;
+            }
+        }
+    }
+    var bestCol = null, bestScore = 0;
+    for (var col in candidates) {
+        var c = candidates[col];
+        var avgLen = c.totalLen / c.count;
+        var score = c.count * 2
+            + (avgLen > 15 ? 10 : 0)
+            + (c.englishCount > c.chineseCount ? 15 : 0)
+            + (parseInt(col) > (articleCol || 0) ? 5 : 0)
+            - (c.chineseCount > c.englishCount ? 10 : 0);
+        if (score > bestScore) { bestScore = score; bestCol = parseInt(col); }
+    }
+    return bestCol;
+};
+
+FixedVedParser.prototype.findVolumeByData = function(rows, hri) {
+    var candidates = {};
+    for (var i = hri + 1; i < Math.min(hri + 30, rows.length); i++) {
+        var row = rows[i];
+        if (!row) continue;
+        var startCol = Math.max(0, row.length - 12);
+        for (var col = startCol; col < row.length; col++) {
+            var cell = String(row[col] || '').trim().replace(',', '.');
+            if (!cell) continue;
+            var n = parseFloat(cell);
+            if (!isNaN(n) && n > 0.0001 && n < 100 && cell.indexOf('.') !== -1) {
+                if (!candidates[col]) candidates[col] = { count: 0, values: [], sum: 0 };
+                candidates[col].count++;
+                candidates[col].values.push(n);
+                candidates[col].sum += n;
+            }
+        }
+    }
+    var bestCol = null, bestScore = 0;
+    for (var col in candidates) {
+        var c = candidates[col];
+        var validVolumes = c.values.filter(function(v) { return v > 0.0001 && v < 10; });
+        var avgVolume = validVolumes.length > 0 ? c.sum / c.count : 0;
+        var score = validVolumes.length * 3
+            + (avgVolume > 0.005 && avgVolume < 5 ? 10 : 0)
+            + (parseInt(col) > 10 ? 5 : 0);
+        if (score > bestScore) { bestScore = score; bestCol = parseInt(col); }
+    }
+    return (bestScore >= 6) ? bestCol : null;
+};
+
+FixedVedParser.prototype.findQtyByData = function(rows, hri, articleCol) {
+    var candidates = {};
+    for (var i = hri + 1; i < Math.min(hri + 30, rows.length); i++) {
+        var row = rows[i];
+        if (!row) continue;
+        for (var col = 0; col < Math.min(row.length, 25); col++) {
+            if (col === articleCol) continue;
+            var cell = String(row[col] || '').trim().replace(/\s/g, '');
+            if (!cell || cell === '0') continue;
+            var n = parseInt(cell);
+            if (!isNaN(n) && n > 10 && n < 1000000 && cell.indexOf('.') === -1) {
+                if (!candidates[col]) candidates[col] = { count: 0, sum: 0 };
+                candidates[col].count++;
+                candidates[col].sum += n;
+            }
+        }
+    }
+    var bestCol = null, bestCount = 0;
+    for (var col in candidates) {
+        if (candidates[col].count > bestCount) {
+            bestCount = candidates[col].count;
+            bestCol = parseInt(col);
+        }
+    }
+    return (bestCount >= 2) ? bestCol : null;
+};
+
+FixedVedParser.prototype.findBestName = function(row, cm) {
+    if (cm.name !== undefined && cm.name < row.length) {
+        var cell = String(row[cm.name] || '').trim();
+        if (cell && cell !== 'N/A' && !this.isArticleLike(cell) && cell.length > 1) return cell;
+    }
+    for (var col = 0; col < Math.min(row.length, 25); col++) {
+        if (col === cm.article) continue;
+        if (col === cm.name) continue;
+        var cell = String(row[col] || '').trim();
+        if (this.isNameLike(cell)) return cell;
+    }
+    return '';
+};
+
+FixedVedParser.prototype.findBestArticle = function(row, cm) {
+    if (cm.article !== undefined && cm.article < row.length) {
+        var cell = String(row[cm.article] || '').trim();
+        if (cell && this.isArticleLike(cell) && cell !== 'N/A') return cell;
+    }
+    for (var col = 0; col < Math.min(row.length, 15); col++) {
+        if (col === cm.article) continue;
+        var cell = String(row[col] || '').trim();
+        if (this.isArticleLike(cell)) return cell;
+    }
+    return 'N/A';
+};
+
+FixedVedParser.prototype.parseFile = function(file, manualColumnMap, manualHri) {
+    var self = this;
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var data = new Uint8Array(e.target.result);
+                var wb = XLSX.read(data, { type: 'array', cellFormula: false, cellNF: true });
+                var sheet = wb.Sheets[wb.SheetNames[0]];
+                var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
+                var cm, hri;
+                var isManual = !!(manualColumnMap && Object.keys(manualColumnMap).length > 0);
+                if (isManual) {
+                    cm = manualColumnMap;
+                    hri = manualHri !== undefined ? manualHri : 0;
+                } else {
+                    var found = self.findColumnsByHeaders(rows);
+                    cm = found.columnMap;
+                    hri = found.headerRowIndex;
+                    if (hri < 0) hri = 0;
+                    if (cm.article === undefined) {
+                        var artCol = self.findArticleByData(rows, hri);
+                        if (artCol !== null) cm.article = artCol;
+                    }
+                    if (cm.name === undefined) {
+                        var nameCol = self.findNameByData(rows, hri, cm.article);
+                        if (nameCol !== null) cm.name = nameCol;
+                    }
+                    if (cm.volume === undefined) {
+                        var volCol = self.findVolumeByData(rows, hri);
+                        if (volCol !== null) cm.volume = volCol;
+                    }
+                    if (cm.totalQty === undefined) {
+                        var qtyCol = self.findQtyByData(rows, hri, cm.article);
+                        if (qtyCol !== null) cm.totalQty = qtyCol;
+                    }
+                    if (cm.volume === undefined) {
+                        var lastCols = self.findVolumeByData(rows, hri);
+                        if (lastCols !== null) cm.volume = lastCols;
+                    }
+                }
+                if (Object.keys(cm).length < 2) {
+                    reject(new Error('Не удалось найти структуру файла. Попробуйте ручной режим.'));
+                    return;
+                }
+                var items = [], tv = 0, tq = 0, tc = 0, naCount = 0;
+                var parseDetails = [];
+                var skippedFirstRow = false;
+                for (var i = hri + 1; i < rows.length; i++) {
+                    var row = rows[i];
+                    if (!row || row.every(function(c) { return self.isValueEmpty(c); })) continue;
+                    var firstCell = String(row[0] || '').toLowerCase();
+                    if (firstCell === 'итого' || firstCell === 'total' || firstCell === '合计') continue;
+                    var article = self.findBestArticle(row, cm);
+                    var name = self.findBestName(row, cm);
+                    if (!skippedFirstRow && article === 'N/A' && !name) {
+                        skippedFirstRow = true;
+                        continue;
+                    }
+                    skippedFirstRow = true;
+                    if (article === 'N/A') naCount++;
+                    if (!name && article !== 'N/A') name = article;
+                    if (!name) continue;
+                    var cartons = cm.cartons !== undefined && cm.cartons < row.length ? self.parseNumber(row[cm.cartons]) : 0;
+                    var perCarton = cm.perCarton !== undefined && cm.perCarton < row.length ? self.parseNumber(row[cm.perCarton]) : 0;
+                    var qty = cm.totalQty !== undefined && cm.totalQty < row.length ? self.parseNumber(row[cm.totalQty]) : 0;
+                    if (qty === 0 && perCarton > 0 && cartons > 0) qty = perCarton * cartons;
+                    var vol = cm.volume !== undefined && cm.volume < row.length ? self.parseNumber(row[cm.volume]) : 0;
+                    if (vol === 0 && qty > 0) vol = qty * 0.00005;
+                    tc += cartons; tq += qty; tv += vol;
+                    var itemId = 'item_' + i;
+                    items.push({
+                        id: itemId, article: article, name: name,
+                        cartons: cartons, perCarton: perCarton, qty: qty,
+                        volume: Math.round(vol * 1000) / 1000, rowIndex: i
+                    });
+                    parseDetails.push({
+                        id: itemId, rowIndex: i,
+                        article: article, name: name,
+                        cartons: cartons, perCarton: perCarton,
+                        qty: qty, volume: Math.round(vol * 1000) / 1000,
+                        isNA: article === 'N/A',
+                        hasError: qty <= 0 || !name || name.length < 2
+                    });
+                }
+                resolve({
+                    items: items, totalCartons: tc, totalQty: tq,
+                    totalVolume: Math.round(tv * 1000) / 1000,
+                    itemsCount: items.length, naCount: naCount,
+                    parseDetails: parseDetails,
+                    rows: rows, headerRowIndex: hri, columnMap: cm,
+                    isManual: isManual
+                });
+            } catch(err) { reject(err); }
+        };
+        reader.onerror = function() { reject(new Error('Ошибка чтения файла')); };
+        reader.readAsArrayBuffer(file);
+    });
+};
+
+FixedVedParser.prototype.parseFileWithCache = function(file) {
+    var key = file.name + '_' + file.size + '_' + file.lastModified;
+    if (this.cache.has(key)) {
+        return Promise.resolve(this.cache.get(key));
+    }
+    var self = this;
+    return this.parseFile(file).then(function(result) {
+        self.cache.set(key, result);
+        return result;
+    });
+};
+
+FixedVedParser.prototype.clearCache = function() {
+    this.cache.clear();
+};
+
+FixedVedParser.prototype.generateTemplate = function() {
+    return [
+        ['Артикул', 'Наименование', 'Коробок', 'Шт/кор', 'Всего', 'Объём, м³'],
+        ['AB-1234', 'Пример товара', '10', '12', '120', '0.5']
+    ];
+};
+
+FixedVedParser.prototype.validate = function(items) {
+    var errors = [];
+    var duplicates = {};
+    var warnings = [];
+    items.forEach(function(item, index) {
+        if (item.article === 'N/A') warnings.push('Строка ' + (index + 1) + ': не найден артикул (будет использован N/A)');
+        if (item.qty <= 0) errors.push('Строка ' + (index + 1) + ': количество должно быть > 0');
+        if (!item.name || item.name.length < 2) warnings.push('Строка ' + (index + 1) + ': короткое или пустое название');
+        if (item.article !== 'N/A') {
+            if (duplicates[item.article]) duplicates[item.article].push(index + 1);
+            else duplicates[item.article] = [index + 1];
+        }
+    });
+    for (var article in duplicates) {
+        if (duplicates[article].length > 1) warnings.push('Артикул "' + article + '" повторяется в строках: ' + duplicates[article].join(', '));
+    }
+    return { errors: errors, warnings: warnings, isValid: errors.length === 0 };
+};
+
+var vedParser = new FixedVedParser();
 
 // ============ ПРЯМЫЕ ОБРАБОТЧИКИ ============
 function initDirectHandlers(){
@@ -545,7 +943,7 @@ function initApp(){
     ozonStockSource=localStorage.getItem('ozonStockSource')||'firebase';ozonStockFileName=localStorage.getItem('ozonStockFileName')||'';ozonStockLastUpdate=localStorage.getItem('ozonStockLastUpdate')||null;
     loadAllFromLocalStorage();switchPage(currentPage);initDirectHandlers();
     setTimeout(function(){if(currentUser)loadFromFirebase()},100);
-    console.log('v60.2 — Компактные строки МС, WB, Ozon');
+    console.log('v61.0 — Обновлённый парсер ВЭД v5.0');
 }document.addEventListener('DOMContentLoaded',initApp);
 </script>
 </body>
